@@ -200,6 +200,8 @@ func getGenesisState(db ethdb.Database, blockhash common.Hash) (alloc types.Gene
 		genesis = DefaultSepoliaGenesisBlock()
 	case params.HoleskyGenesisHash:
 		genesis = DefaultHoleskyGenesisBlock()
+	case params.IliadGenesisHash:
+		genesis = DefaultIliadGenesisBlock()
 	}
 	if genesis != nil {
 		return genesis.Alloc, nil
@@ -398,6 +400,8 @@ func (g *Genesis) configOrDefault(ghash common.Hash) *params.ChainConfig {
 		return params.HoleskyChainConfig
 	case ghash == params.SepoliaGenesisHash:
 		return params.SepoliaChainConfig
+	case ghash == params.IliadGenesisHash:
+		return params.IliadChainConfig
 	default:
 		return params.AllEthashProtocolChanges
 	}
@@ -564,6 +568,18 @@ func DefaultHoleskyGenesisBlock() *Genesis {
 		Difficulty: big.NewInt(0x01),
 		Timestamp:  1695902100,
 		Alloc:      decodePrealloc(holeskyAllocData),
+	}
+}
+
+// DefaultIliadGenesisBlock returns the iliad network genesis block.
+func DefaultIliadGenesisBlock() *Genesis {
+	return &Genesis{
+		Config:     params.IliadChainConfig,
+		Difficulty: big.NewInt(0x20000),
+		GasLimit:   0x7A1200,
+		Nonce:      0x42,
+		Timestamp:  0,
+		Alloc:      decodePrealloc(iliadAllocData),
 	}
 }
 
