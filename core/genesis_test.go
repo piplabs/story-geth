@@ -116,6 +116,17 @@ func testSetupGenesis(t *testing.T, scheme string) {
 			wantConfig: params.GoerliChainConfig,
 		},
 		{
+			name: "custom block in DB, genesis == iliad",
+			fn: func(db ethdb.Database) (*params.ChainConfig, common.Hash, error) {
+				tdb := triedb.NewDatabase(db, newDbConfig(scheme))
+				customg.Commit(db, tdb)
+				return SetupGenesisBlock(db, tdb, DefaultIliadGenesisBlock())
+			},
+			wantErr:    &GenesisMismatchError{Stored: customghash, New: params.IliadGenesisHash},
+			wantHash:   params.IliadGenesisHash,
+			wantConfig: params.IliadChainConfig,
+		},
+		{
 			name: "compatible config in DB",
 			fn: func(db ethdb.Database) (*params.ChainConfig, common.Hash, error) {
 				tdb := triedb.NewDatabase(db, newDbConfig(scheme))
@@ -186,6 +197,7 @@ func TestGenesisHashes(t *testing.T) {
 		{DefaultGenesisBlock(), params.MainnetGenesisHash},
 		{DefaultGoerliGenesisBlock(), params.GoerliGenesisHash},
 		{DefaultSepoliaGenesisBlock(), params.SepoliaGenesisHash},
+		{DefaultIliadGenesisBlock(), params.IliadGenesisHash},
 	} {
 		// Test via MustCommit
 		db := rawdb.NewMemoryDatabase()

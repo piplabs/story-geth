@@ -47,6 +47,14 @@ var SepoliaBootnodes = []string{
 	"enode://9e9492e2e8836114cc75f5b929784f4f46c324ad01daf87d956f98b3b6c5fcba95524d6e5cf9861dc96a2c8a171ea7105bb554a197455058de185fa870970c7c@138.68.123.152:30303", // sepolia-bootnode-1-ams3
 }
 
+// IliadBootnodes are the enode URLs of the P2P bootstrap nodes running on the
+// Iliad test network.
+var IliadBootnodes = []string{
+	// Upstream bootnodes
+	"enode://5e85033276299eff126d0c86a42b76cbad98920b4f77ae894b8a52daffa558f36de1281beca96b71e67795955bf769ce6ab3e35af66790816b37ada3d9c2b09a@52.9.220.233:30303",
+	"enode://7f7685f85a6cfbdb5342ef977ae9d1c82dae4fa8d0f3b141c0c1bb86a01bbc7ac081aa336ff9b341b751f756d388ac4eabbd810e548b52dfb835de0c844bd8b9@54.241.155.73:30303",
+}
+
 // GoerliBootnodes are the enode URLs of the P2P bootstrap nodes running on the
 // Görli test network.
 var GoerliBootnodes = []string{
