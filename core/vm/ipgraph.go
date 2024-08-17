@@ -1,0 +1,339 @@
+package vm
+
+import (
+	"bytes"
+	"fmt"
+	"math/big"
+
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/log"
+)
+
+var (
+	ipGraphAddress              = common.HexToAddress("0x000000000000000000000000000000000000001A")
+	addParentIpSelector         = crypto.Keccak256Hash([]byte("addParentIp(address,address[])")).Bytes()[:4]
+	hasParentIpSelector         = crypto.Keccak256Hash([]byte("hasParentIp(address,address)")).Bytes()[:4]
+	getParentIpsSelector        = crypto.Keccak256Hash([]byte("getParentIps(address)")).Bytes()[:4]
+	getParentIpsCountSelector   = crypto.Keccak256Hash([]byte("getParentIpsCount(address)")).Bytes()[:4]
+	getAncestorIpsSelector      = crypto.Keccak256Hash([]byte("getAncestorIps(address)")).Bytes()[:4]
+	getAncestorIpsCountSelector = crypto.Keccak256Hash([]byte("getAncestorIpsCount(address)")).Bytes()[:4]
+	hasAncestorIpsSelector      = crypto.Keccak256Hash([]byte("hasAncestorIp(address,address)")).Bytes()[:4]
+	setRoyaltySelector          = crypto.Keccak256Hash([]byte("setRoyalty(address,address,uint256)")).Bytes()[:4]
+	getRoyaltySelector          = crypto.Keccak256Hash([]byte("getRoyalty(address,address)")).Bytes()[:4]
+	getRoyaltyStackSelector     = crypto.Keccak256Hash([]byte("getRoyaltyStack(address)")).Bytes()[:4]
+)
+
+type ipGraph struct{}
+
+func (c *ipGraph) RequiredGas(input []byte) uint64 {
+	return uint64(1)
+}
+
+func (c *ipGraph) Run(evm *EVM, input []byte) ([]byte, error) {
+	log.Info("ipGraph.Run", "input", input)
+
+	if len(input) < 4 {
+		return nil, fmt.Errorf("input too short")
+	}
+
+	selector := input[:4]
+	args := input[4:]
+
+	switch {
+	case bytes.Equal(selector, addParentIpSelector):
+		return c.addParentIp(args, evm)
+	case bytes.Equal(selector, hasParentIpSelector):
+		return c.hasParentIp(args, evm)
+	case bytes.Equal(selector, getParentIpsSelector):
+		return c.getParentIps(args, evm)
+	case bytes.Equal(selector, getParentIpsCountSelector):
+		return c.getParentIpsCount(args, evm)
+	case bytes.Equal(selector, getAncestorIpsSelector):
+		return c.getAncestorIps(args, evm)
+	case bytes.Equal(selector, getAncestorIpsCountSelector):
+		return c.getAncestorIpsCount(args, evm)
+	case bytes.Equal(selector, hasAncestorIpsSelector):
+		return c.hasAncestorIp(args, evm)
+	case bytes.Equal(selector, setRoyaltySelector):
+		return c.setRoyalty(args, evm)
+	case bytes.Equal(selector, getRoyaltySelector):
+		return c.getRoyalty(args, evm)
+	case bytes.Equal(selector, getRoyaltyStackSelector):
+		return c.getRoyaltyStack(args, evm)
+	default:
+		return nil, fmt.Errorf("unknown selector")
+	}
+}
+
+func (c *ipGraph) addParentIp(input []byte, evm *EVM) ([]byte, error) {
+	log.Info("addParentIp", "input", input)
+	if len(input) < 96 {
+		return nil, fmt.Errorf("input too short for addParentIp")
+	}
+	ipId := common.BytesToAddress(input[0:32])
+	log.Info("addParentIp", "ipId", ipId)
+	parentCount := new(big.Int).SetBytes(getData(input, 64, 32))
+	log.Info("addParentIp", "parentCount", parentCount)
+
+	if len(input) < int(96+parentCount.Uint64()*32) {
+		return nil, fmt.Errorf("input too short for parent IPs")
+	}
+
+	for i := 0; i < int(parentCount.Uint64()); i++ {
+		parentIpId := common.BytesToAddress(input[96+i*32 : 96+(i+1)*32])
+		index := uint64(i)
+		slot := crypto.Keccak256Hash(ipId.Bytes()).Big()
+		slot.Add(slot, new(big.Int).SetUint64(index))
+		log.Info("addParentIp", "ipId", ipId, "parentIpId", parentIpId, "slot", slot)
+		evm.StateDB.SetState(ipGraphAddress, common.BigToHash(slot), common.BytesToHash(parentIpId.Bytes()))
+	}
+
+	log.Info("addParentIp", "ipId", ipId, "parentCount", parentCount)
+	evm.StateDB.SetState(ipGraphAddress, common.BytesToHash(ipId.Bytes()), common.BigToHash(parentCount))
+
+	return nil, nil
+}
+
+func (c *ipGraph) hasParentIp(input []byte, evm *EVM) ([]byte, error) {
+	if len(input) < 64 {
+		return nil, fmt.Errorf("input too short for hasParentIp")
+	}
+	ipId := common.BytesToAddress(input[0:32])
+	parentIpId := common.BytesToAddress(input[32:64])
+
+	currentLengthHash := evm.StateDB.GetState(ipGraphAddress, common.BytesToHash(ipId.Bytes()))
+	currentLength := currentLengthHash.Big()
+	log.Info("hasParentIp", "ipId", ipId, "parentIpId", parentIpId, "currentLength", currentLength)
+	for i := uint64(0); i < currentLength.Uint64(); i++ {
+		slot := crypto.Keccak256Hash(ipId.Bytes()).Big()
+		slot.Add(slot, new(big.Int).SetUint64(i))
+		storedParent := evm.StateDB.GetState(ipGraphAddress, common.BigToHash(slot))
+		log.Info("hasParentIp", "storedParent", storedParent, "parentIpId", parentIpId)
+		if common.BytesToAddress(storedParent.Bytes()) == parentIpId {
+			log.Info("hasParentIp", "found", true)
+			return common.LeftPadBytes([]byte{1}, 32), nil
+		}
+	}
+	log.Info("hasParentIp", "found", false)
+	return common.LeftPadBytes([]byte{0}, 32), nil
+}
+
+func (c *ipGraph) getParentIps(input []byte, evm *EVM) ([]byte, error) {
+	log.Info("getParentIps", "input", input)
+	if len(input) < 32 {
+		return nil, fmt.Errorf("input too short for getParentIps")
+	}
+	ipId := common.BytesToAddress(input[0:32])
+
+	currentLengthHash := evm.StateDB.GetState(ipGraphAddress, common.BytesToHash(ipId.Bytes()))
+	currentLength := currentLengthHash.Big()
+
+	output := make([]byte, 64+currentLength.Uint64()*32)
+	copy(output[0:32], common.BigToHash(new(big.Int).SetUint64(32)).Bytes())
+	copy(output[32:64], common.BigToHash(currentLength).Bytes())
+
+	for i := uint64(0); i < currentLength.Uint64(); i++ {
+		slot := crypto.Keccak256Hash(ipId.Bytes()).Big()
+		slot.Add(slot, new(big.Int).SetUint64(i))
+		storedParent := evm.StateDB.GetState(ipGraphAddress, common.BigToHash(slot))
+		copy(output[64+i*32:], storedParent.Bytes())
+	}
+	log.Info("getParentIps", "output", output)
+	return output, nil
+}
+
+func (c *ipGraph) getParentIpsCount(input []byte, evm *EVM) ([]byte, error) {
+	log.Info("getParentIpsCount", "input", input)
+	if len(input) < 32 {
+		return nil, fmt.Errorf("input too short for getParentIpsCount")
+	}
+	ipId := common.BytesToAddress(input[0:32])
+
+	currentLengthHash := evm.StateDB.GetState(ipGraphAddress, common.BytesToHash(ipId.Bytes()))
+	currentLength := currentLengthHash.Big()
+
+	log.Info("getParentIpsCount", "ipId", ipId, "currentLength", currentLength)
+	return common.BigToHash(currentLength).Bytes(), nil
+}
+
+func (c *ipGraph) getAncestorIps(input []byte, evm *EVM) ([]byte, error) {
+	log.Info("getAncestorIps", "input", input)
+	if len(input) < 32 {
+		return nil, fmt.Errorf("input too short for getAncestorIps")
+	}
+	ipId := common.BytesToAddress(input[0:32])
+	ancestors := c.findAncestors(ipId, evm)
+
+	output := make([]byte, 64+len(ancestors)*32)
+	copy(output[0:32], common.BigToHash(new(big.Int).SetUint64(32)).Bytes())
+	copy(output[32:64], common.BigToHash(new(big.Int).SetUint64(uint64(len(ancestors)))).Bytes())
+
+	i := 0
+	for ancestor := range ancestors {
+		copy(output[64+i*32:], common.LeftPadBytes(ancestor.Bytes(), 32))
+		i++
+	}
+
+	log.Info("getAncestorIps", "output", output)
+	return output, nil
+}
+
+func (c *ipGraph) getAncestorIpsCount(input []byte, evm *EVM) ([]byte, error) {
+	log.Info("getAncestorIpsCount", "input", input)
+	if len(input) < 32 {
+		return nil, fmt.Errorf("input too short for getAncestorIpsCount")
+	}
+	ipId := common.BytesToAddress(input[0:32])
+	ancestors := c.findAncestors(ipId, evm)
+
+	count := new(big.Int).SetUint64(uint64(len(ancestors)))
+	log.Info("getAncestorIpsCount", "ipId", ipId, "count", count)
+	return common.BigToHash(count).Bytes(), nil
+}
+
+func (c *ipGraph) hasAncestorIp(input []byte, evm *EVM) ([]byte, error) {
+	if len(input) < 64 {
+		return nil, fmt.Errorf("input too short for hasAncestorIp")
+	}
+	ipId := common.BytesToAddress(input[0:32])
+	parentIpId := common.BytesToAddress(input[32:64])
+	ancestors := c.findAncestors(ipId, evm)
+
+	if _, found := ancestors[parentIpId]; found {
+		log.Info("hasAncestorIp", "found", true)
+		return common.LeftPadBytes([]byte{1}, 32), nil
+	}
+	log.Info("hasAncestorIp", "found", false)
+	return common.LeftPadBytes([]byte{0}, 32), nil
+}
+
+func (c *ipGraph) findAncestors(ipId common.Address, evm *EVM) map[common.Address]struct{} {
+	ancestors := make(map[common.Address]struct{})
+	var stack []common.Address
+	stack = append(stack, ipId)
+	for len(stack) > 0 {
+		node := stack[len(stack)-1]
+		stack = stack[:len(stack)-1]
+
+		currentLengthHash := evm.StateDB.GetState(ipGraphAddress, common.BytesToHash(node.Bytes()))
+		currentLength := currentLengthHash.Big()
+
+		for i := uint64(0); i < currentLength.Uint64(); i++ {
+			slot := crypto.Keccak256Hash(node.Bytes()).Big()
+			slot.Add(slot, new(big.Int).SetUint64(i))
+			storedParent := evm.StateDB.GetState(ipGraphAddress, common.BigToHash(slot))
+			parentIpId := common.BytesToAddress(storedParent.Bytes())
+
+			if _, found := ancestors[parentIpId]; !found {
+				ancestors[parentIpId] = struct{}{}
+				stack = append(stack, parentIpId)
+			}
+		}
+	}
+	return ancestors
+}
+
+func (c *ipGraph) setRoyalty(input []byte, evm *EVM) ([]byte, error) {
+	log.Info("setRoyalty", "input", input)
+	if len(input) < 96 {
+		return nil, fmt.Errorf("input too short for setRoyalty")
+	}
+	ipId := common.BytesToAddress(input[0:32])
+	parentIpId := common.BytesToAddress(input[32:64])
+	royalty := new(big.Int).SetBytes(getData(input, 64, 32))
+	slot := crypto.Keccak256Hash(ipId.Bytes(), parentIpId.Bytes()).Big()
+	log.Info("setRoyalty", "ipId", ipId, "parentIpId", parentIpId, "royalty", royalty, "slot", slot)
+	evm.StateDB.SetState(ipGraphAddress, common.BigToHash(slot), common.BigToHash(royalty))
+
+	return nil, nil
+}
+
+func (c *ipGraph) getRoyalty(input []byte, evm *EVM) ([]byte, error) {
+	log.Info("getRoyalty", "input", input)
+	if len(input) < 64 {
+		return nil, fmt.Errorf("input too short for getRoyalty")
+	}
+	ipId := common.BytesToAddress(input[0:32])
+	ancestorIpId := common.BytesToAddress(input[32:64])
+	ancestors := c.findAncestors(ipId, evm)
+	totalRoyalty := big.NewInt(0)
+	for ancestor := range ancestors {
+		if ancestor == ancestorIpId {
+			// Traverse the graph to accumulate royalties
+			totalRoyalty.Add(totalRoyalty, c.getRoyaltyForAncestor(ipId, ancestorIpId, evm))
+		}
+	}
+
+	log.Info("getRoyalty", "ipId", ipId, "ancestorIpId", ancestorIpId, "totalRoyalty", totalRoyalty)
+	return common.BigToHash(totalRoyalty).Bytes(), nil
+}
+
+func (c *ipGraph) getRoyaltyForAncestor(ipId, ancestorIpId common.Address, evm *EVM) *big.Int {
+	ancestors := make(map[common.Address]struct{})
+	totalRoyalty := big.NewInt(0)
+	var stack []common.Address
+	stack = append(stack, ipId)
+	for len(stack) > 0 {
+		node := stack[len(stack)-1]
+		stack = stack[:len(stack)-1]
+
+		currentLengthHash := evm.StateDB.GetState(ipGraphAddress, common.BytesToHash(node.Bytes()))
+		currentLength := currentLengthHash.Big()
+
+		for i := uint64(0); i < currentLength.Uint64(); i++ {
+			slot := crypto.Keccak256Hash(node.Bytes()).Big()
+			slot.Add(slot, new(big.Int).SetUint64(i))
+			storedParent := evm.StateDB.GetState(ipGraphAddress, common.BigToHash(slot))
+			parentIpId := common.BytesToAddress(storedParent.Bytes())
+
+			if _, found := ancestors[parentIpId]; !found {
+				ancestors[parentIpId] = struct{}{}
+				stack = append(stack, parentIpId)
+			}
+
+			if parentIpId == ancestorIpId {
+				royaltySlot := crypto.Keccak256Hash(node.Bytes(), ancestorIpId.Bytes()).Big()
+				royalty := evm.StateDB.GetState(ipGraphAddress, common.BigToHash(royaltySlot)).Big()
+				totalRoyalty.Add(totalRoyalty, royalty)
+			}
+		}
+	}
+	return totalRoyalty
+}
+
+func (c *ipGraph) getRoyaltyStack(input []byte, evm *EVM) ([]byte, error) {
+	log.Info("getRoyaltyStack", "input", input)
+	if len(input) < 32 {
+		return nil, fmt.Errorf("input too short for getRoyaltyStack")
+	}
+	ipId := common.BytesToAddress(input[0:32])
+	ancestors := make(map[common.Address]struct{})
+	totalRoyalty := big.NewInt(0)
+	var stack []common.Address
+	stack = append(stack, ipId)
+	for len(stack) > 0 {
+		node := stack[len(stack)-1]
+		stack = stack[:len(stack)-1]
+
+		currentLengthHash := evm.StateDB.GetState(ipGraphAddress, common.BytesToHash(node.Bytes()))
+		currentLength := currentLengthHash.Big()
+
+		for i := uint64(0); i < currentLength.Uint64(); i++ {
+			slot := crypto.Keccak256Hash(node.Bytes()).Big()
+			slot.Add(slot, new(big.Int).SetUint64(i))
+			storedParent := evm.StateDB.GetState(ipGraphAddress, common.BigToHash(slot))
+			parentIpId := common.BytesToAddress(storedParent.Bytes())
+
+			if _, found := ancestors[parentIpId]; !found {
+				ancestors[parentIpId] = struct{}{}
+				stack = append(stack, parentIpId)
+			}
+
+			royaltySlot := crypto.Keccak256Hash(node.Bytes(), parentIpId.Bytes()).Big()
+			royalty := evm.StateDB.GetState(ipGraphAddress, common.BigToHash(royaltySlot)).Big()
+			totalRoyalty.Add(totalRoyalty, royalty)
+		}
+	}
+	return common.BigToHash(totalRoyalty).Bytes(), nil
+}

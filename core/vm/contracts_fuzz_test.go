@@ -17,6 +17,11 @@
 package vm
 
 import (
+	"github.com/ethereum/go-ethereum/core/rawdb"
+	"github.com/ethereum/go-ethereum/core/state"
+	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/params"
+	"github.com/holiman/uint256"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -35,8 +40,13 @@ func FuzzPrecompiledContracts(f *testing.F) {
 		if gas > 10_000_000 {
 			return
 		}
+		vmctx := BlockContext{
+			Transfer: func(StateDB, common.Address, common.Address, *uint256.Int) {},
+		}
+		statedb, _ := state.New(types.EmptyRootHash, state.NewDatabase(rawdb.NewMemoryDatabase()), nil)
+		evm := NewEVM(vmctx, TxContext{}, statedb, params.AllEthashProtocolChanges, Config{})
 		inWant := string(input)
-		RunPrecompiledContract(p, input, gas, nil)
+		RunPrecompiledContract(evm, p, input, gas, nil)
 		if inHave := string(input); inWant != inHave {
 			t.Errorf("Precompiled %v modified input data", a)
 		}
