@@ -209,6 +209,8 @@ func getGenesisState(db ethdb.Database, blockhash common.Hash) (alloc types.Gene
 		genesis = DefaultSepoliaGenesisBlock()
 	case params.HoleskyGenesisHash:
 		genesis = DefaultHoleskyGenesisBlock()
+	case params.IliadGenesisHash:
+		genesis = DefaultIliadGenesisBlock()
 	}
 	if genesis != nil {
 		return genesis.Alloc, nil
@@ -409,6 +411,8 @@ func (g *Genesis) configOrDefault(ghash common.Hash) *params.ChainConfig {
 		return params.SepoliaChainConfig
 	case ghash == params.GoerliGenesisHash:
 		return params.GoerliChainConfig
+	case ghash == params.IliadGenesisHash:
+		return params.IliadChainConfig
 	default:
 		return params.AllEthashProtocolChanges
 	}
@@ -572,6 +576,18 @@ func DefaultHoleskyGenesisBlock() *Genesis {
 	}
 }
 
+// DefaultIliadGenesisBlock returns the iliad network genesis block.
+func DefaultIliadGenesisBlock() *Genesis {
+	return &Genesis{
+		Config:     params.IliadChainConfig,
+		Difficulty: big.NewInt(0x20000),
+		GasLimit:   0x7A1200,
+		Nonce:      0x42,
+		Timestamp:  0,
+		Alloc:      decodePrealloc(iliadAllocData),
+	}
+}
+
 // DeveloperGenesisBlock returns the 'geth --dev' genesis block.
 func DeveloperGenesisBlock(gasLimit uint64, faucet *common.Address) *Genesis {
 	// Override the default period to the user requested one
@@ -584,16 +600,17 @@ func DeveloperGenesisBlock(gasLimit uint64, faucet *common.Address) *Genesis {
 		BaseFee:    big.NewInt(params.InitialBaseFee),
 		Difficulty: big.NewInt(0),
 		Alloc: map[common.Address]types.Account{
-			common.BytesToAddress([]byte{1}): {Balance: big.NewInt(1)}, // ECRecover
-			common.BytesToAddress([]byte{2}): {Balance: big.NewInt(1)}, // SHA256
-			common.BytesToAddress([]byte{3}): {Balance: big.NewInt(1)}, // RIPEMD
-			common.BytesToAddress([]byte{4}): {Balance: big.NewInt(1)}, // Identity
-			common.BytesToAddress([]byte{5}): {Balance: big.NewInt(1)}, // ModExp
-			common.BytesToAddress([]byte{6}): {Balance: big.NewInt(1)}, // ECAdd
-			common.BytesToAddress([]byte{7}): {Balance: big.NewInt(1)}, // ECScalarMul
-			common.BytesToAddress([]byte{8}): {Balance: big.NewInt(1)}, // ECPairing
-			common.BytesToAddress([]byte{9}): {Balance: big.NewInt(1)}, // BLAKE2b
+			common.BytesToAddress([]byte{1}):  {Balance: big.NewInt(1)}, // ECRecover
+			common.BytesToAddress([]byte{2}):  {Balance: big.NewInt(1)}, // SHA256
+			common.BytesToAddress([]byte{3}):  {Balance: big.NewInt(1)}, // RIPEMD
+			common.BytesToAddress([]byte{4}):  {Balance: big.NewInt(1)}, // Identity
+			common.BytesToAddress([]byte{5}):  {Balance: big.NewInt(1)}, // ModExp
+			common.BytesToAddress([]byte{6}):  {Balance: big.NewInt(1)}, // ECAdd
+			common.BytesToAddress([]byte{7}):  {Balance: big.NewInt(1)}, // ECScalarMul
+			common.BytesToAddress([]byte{8}):  {Balance: big.NewInt(1)}, // ECPairing
+			common.BytesToAddress([]byte{9}):  {Balance: big.NewInt(1)}, // BLAKE2b
 			common.BytesToAddress([]byte{26}): {Balance: big.NewInt(1)}, // ipGraph
+
 			// Pre-deploy EIP-4788 system contract
 			params.BeaconRootsAddress: {Nonce: 1, Code: params.BeaconRootsCode, Balance: common.Big0},
 		},
