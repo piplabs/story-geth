@@ -628,6 +628,11 @@ var (
 		Usage:    "iliad test network: pre-configured proof-of-stake test network",
 		Category: flags.MiscCategory,
 	}
+	LocalFlag = &cli.BoolFlag{
+		Name:     "local",
+		Usage:    "local test network: pre-configured local proof-of-stake test network",
+		Category: flags.MiscCategory,
+	}
 
 	// RPC settings
 	IPCDisabledFlag = &cli.BoolFlag{
@@ -975,6 +980,7 @@ var (
 		HoleskyFlag,
 		HoodiFlag,
 		IliadFlag,
+		LocalFlag,
 	}
 	// NetworkFlags is the flag group of all built-in supported networks.
 	NetworkFlags = append([]cli.Flag{MainnetFlag}, TestnetFlags...)
@@ -1006,6 +1012,9 @@ func MakeDataDir(ctx *cli.Context) string {
 		}
 		if ctx.Bool(IliadFlag.Name) {
 			return filepath.Join(path, "iliad")
+		}
+		if ctx.Bool(LocalFlag.Name) {
+			return filepath.Join(path, "local")
 		}
 		return path
 	}
@@ -1071,6 +1080,8 @@ func setBootstrapNodes(ctx *cli.Context, cfg *p2p.Config) {
 			urls = params.HoodiBootnodes
 		case ctx.Bool(IliadFlag.Name):
 			urls = params.IliadBootnodes
+		case ctx.Bool(LocalFlag.Name):
+			urls = params.LocalBootnodes
 		}
 	}
 	cfg.BootstrapNodes = mustParseBootnodes(urls)
@@ -1152,7 +1163,7 @@ func SplitAndTrim(input string) (ret []string) {
 // setHTTP creates the HTTP RPC listener interface string from the set
 // command line flags, returning empty if the HTTP endpoint is disabled.
 func setHTTP(ctx *cli.Context, cfg *node.Config) {
-	if ctx.Bool(HTTPEnabledFlag.Name) {
+	if ctx.Bool(HTTPEnabledFlag.Name) || ctx.Bool(LocalFlag.Name) {
 		if cfg.HTTPHost == "" {
 			cfg.HTTPHost = "127.0.0.1"
 		}
@@ -1459,6 +1470,8 @@ func SetDataDir(ctx *cli.Context, cfg *node.Config) {
 		cfg.DataDir = filepath.Join(node.DefaultDataDir(), "hoodi")
 	case ctx.Bool(IliadFlag.Name) && cfg.DataDir == node.DefaultDataDir():
 		cfg.DataDir = filepath.Join(node.DefaultDataDir(), "iliad")
+	case ctx.Bool(LocalFlag.Name) && cfg.DataDir == node.DefaultDataDir():
+		cfg.DataDir = filepath.Join(node.DefaultDataDir(), "local")
 	}
 }
 
@@ -1585,7 +1598,7 @@ func setRequiredBlocks(ctx *cli.Context, cfg *ethconfig.Config) {
 // SetEthConfig applies eth-related command line flags to the config.
 func SetEthConfig(ctx *cli.Context, stack *node.Node, cfg *ethconfig.Config) {
 	// Avoid conflicting network flags
-	flags.CheckExclusive(ctx, MainnetFlag, DeveloperFlag, SepoliaFlag, HoleskyFlag, HoodiFlag, IliadFlag)
+	flags.CheckExclusive(ctx, MainnetFlag, DeveloperFlag, SepoliaFlag, HoleskyFlag, HoodiFlag, IliadFlag, LocalFlag)
 	flags.CheckExclusive(ctx, DeveloperFlag, ExternalSignerFlag) // Can't use both ephemeral unlocked and external signer
 
 	// Set configurations from CLI flags
@@ -1785,6 +1798,11 @@ func SetEthConfig(ctx *cli.Context, stack *node.Node, cfg *ethconfig.Config) {
 		}
 		cfg.Genesis = core.DefaultIliadGenesisBlock()
 		SetDNSDiscoveryDefaults(cfg, params.IliadGenesisHash)
+	case ctx.Bool(LocalFlag.Name):
+		if !ctx.IsSet(NetworkIdFlag.Name) {
+			cfg.NetworkId = 1511
+		}
+		cfg.Genesis = core.DefaultLocalGenesisBlock()
 	case ctx.Bool(DeveloperFlag.Name):
 		if !ctx.IsSet(NetworkIdFlag.Name) {
 			cfg.NetworkId = 1337
@@ -2186,6 +2204,8 @@ func MakeGenesis(ctx *cli.Context) *core.Genesis {
 		genesis = core.DefaultHoodiGenesisBlock()
 	case ctx.Bool(IliadFlag.Name):
 		genesis = core.DefaultIliadGenesisBlock()
+	case ctx.Bool(LocalFlag.Name):
+		genesis = core.DefaultLocalGenesisBlock()
 	case ctx.Bool(DeveloperFlag.Name):
 		Fatalf("Developer chains are ephemeral")
 	}
