@@ -31,6 +31,7 @@ var (
 	HoleskyGenesisHash = common.HexToHash("0xb5f7f912443c940f21fd611f12828d75b534364ed9e95ca4e307729a4661bde4")
 	SepoliaGenesisHash = common.HexToHash("0x25a5cc106eea7138acab33231d7160d69cb777ee0c2c553fcddf5138993e6dd9")
 	IliadGenesisHash   = common.HexToHash("0x0be40479b95ce64a5d7662b6ac3f4fc5de2479d68095b7cd57e752309e2f060d")
+	LocalGenesisHash   = common.HexToHash("0x0be40479b95ce64a5d7662b6ac3f4fc5de2479d68095b7cd57e752309e2f060d")
 )
 
 func newUint64(val uint64) *uint64 { return &val }
@@ -128,6 +129,26 @@ var (
 		TerminalTotalDifficulty: big.NewInt(0),
 		ShanghaiTime:            newUint64(0),
 		CancunTime:              newUint64(0),
+	}
+
+	LocalChainConfig = &ChainConfig{
+		ChainID:                       big.NewInt(1511),
+		HomesteadBlock:                big.NewInt(0),
+		EIP150Block:                   big.NewInt(0),
+		EIP155Block:                   big.NewInt(0),
+		EIP158Block:                   big.NewInt(0),
+		ByzantiumBlock:                big.NewInt(0),
+		ConstantinopleBlock:           big.NewInt(0),
+		PetersburgBlock:               big.NewInt(0),
+		IstanbulBlock:                 big.NewInt(0),
+		BerlinBlock:                   big.NewInt(0),
+		LondonBlock:                   big.NewInt(0),
+		ArrowGlacierBlock:             big.NewInt(0),
+		GrayGlacierBlock:              big.NewInt(0),
+		TerminalTotalDifficulty:       big.NewInt(0),
+		TerminalTotalDifficultyPassed: true,
+		ShanghaiTime:                  newUint64(0),
+		CancunTime:                    newUint64(0),
 	}
 
 	// AllEthashProtocolChanges contains every protocol change (EIPs) introduced
@@ -304,6 +325,7 @@ var NetworkNames = map[string]string{
 	SepoliaChainConfig.ChainID.String(): "sepolia",
 	HoleskyChainConfig.ChainID.String(): "holesky",
 	IliadChainConfig.ChainID.String():   "iliad",
+	LocalChainConfig.ChainID.String():   "local",
 }
 
 // ChainConfig is the core config which determines the blockchain settings.

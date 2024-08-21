@@ -118,6 +118,17 @@ func testSetupGenesis(t *testing.T, scheme string) {
 			wantConfig: params.IliadChainConfig,
 		},
 		{
+			name: "custom block in DB, genesis == local",
+			fn: func(db ethdb.Database) (*params.ChainConfig, common.Hash, error) {
+				tdb := triedb.NewDatabase(db, newDbConfig(scheme))
+				customg.Commit(db, tdb)
+				return SetupGenesisBlock(db, tdb, DefaultLocalGenesisBlock())
+			},
+			wantErr:    &GenesisMismatchError{Stored: customghash, New: params.LocalGenesisHash},
+			wantHash:   params.LocalGenesisHash,
+			wantConfig: params.LocalChainConfig,
+		},
+		{
 			name: "compatible config in DB",
 			fn: func(db ethdb.Database) (*params.ChainConfig, common.Hash, error) {
 				tdb := triedb.NewDatabase(db, newDbConfig(scheme))
@@ -188,6 +199,7 @@ func TestGenesisHashes(t *testing.T) {
 		{DefaultGenesisBlock(), params.MainnetGenesisHash},
 		{DefaultSepoliaGenesisBlock(), params.SepoliaGenesisHash},
 		{DefaultIliadGenesisBlock(), params.IliadGenesisHash},
+		{DefaultLocalGenesisBlock(), params.LocalGenesisHash},
 	} {
 		// Test via MustCommit
 		db := rawdb.NewMemoryDatabase()
