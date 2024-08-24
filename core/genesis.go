@@ -602,7 +602,6 @@ func DefaultLocalGenesisBlock() *Genesis {
 	}
 }
 
-
 // DeveloperGenesisBlock returns the 'geth --dev' genesis block.
 func DeveloperGenesisBlock(gasLimit uint64, faucet *common.Address) *Genesis {
 	// Override the default period to the user requested one

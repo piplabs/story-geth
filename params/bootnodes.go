@@ -54,8 +54,8 @@ var LocalBootnodes = []string{}
 // Iliad test network.
 var IliadBootnodes = []string{
 	// Upstream bootnodes
-	"enode://5e85033276299eff126d0c86a42b76cbad98920b4f77ae894b8a52daffa558f36de1281beca96b71e67795955bf769ce6ab3e35af66790816b37ada3d9c2b09a@52.9.220.233:30303",
-	"enode://7f7685f85a6cfbdb5342ef977ae9d1c82dae4fa8d0f3b141c0c1bb86a01bbc7ac081aa336ff9b341b751f756d388ac4eabbd810e548b52dfb835de0c844bd8b9@54.241.155.73:30303",
+	"enode://15b1b22e48ccb1648fa30eef8a256cfd6e5c0bb0861e63c85be025301678316c6a325457fa4896a49df91a2e57305e2b3efa28781daddb1fb249dafc39874b3f@3.209.222.188:30303",
+	"enode://996a7fc7ffc2d2cbb15f04e7425d90d5369620fc4145bbb9cdae19564b89725a37f152c2dcdcd55a6a6d5a3748dcd2601626b0874817c83e3187ebbe2d9fb062@54.183.204.164:30303",
 }
 
 // GoerliBootnodes are the enode URLs of the P2P bootstrap nodes running on the
