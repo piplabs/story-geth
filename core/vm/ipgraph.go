@@ -11,6 +11,8 @@ import (
 )
 
 var (
+	aclAddress                  = common.HexToAddress("0x680E66e4c7Df9133a7AFC1ed091089B32b89C4ae")
+	aclSlot                     = "af99b37fdaacca72ee7240cb1435cc9e498aee6ef4edc19c8cc0cd787f4e6800"
 	ipGraphAddress              = common.HexToAddress("0x000000000000000000000000000000000000001A")
 	addParentIpSelector         = crypto.Keccak256Hash([]byte("addParentIp(address,address[])")).Bytes()[:4]
 	hasParentIpSelector         = crypto.Keccak256Hash([]byte("hasParentIp(address,address)")).Bytes()[:4]
@@ -66,7 +68,32 @@ func (c *ipGraph) Run(evm *EVM, input []byte) ([]byte, error) {
 	}
 }
 
+func (c *ipGraph) isAllowed(evm *EVM) (bool, error) {
+	slot := new(big.Int)
+	slot.SetString(aclSlot, 16)
+	isAllowedHash := evm.StateDB.GetState(aclAddress, common.BigToHash(slot))
+	isAllowedBig := isAllowedHash.Big()
+
+	log.Info("isAllowed", "aclAddress", aclAddress, "slot", slot, "isAllowedBig", isAllowedBig)
+	if isAllowedBig.Cmp(big.NewInt(1)) == 0 {
+		log.Info("isAllowed", "allowed", true)
+		return true, nil
+	}
+	log.Info("isAllowed", "allowed", false)
+	return false, nil
+}
+
 func (c *ipGraph) addParentIp(input []byte, evm *EVM) ([]byte, error) {
+	allowed, err := c.isAllowed(evm)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if !allowed {
+		return nil, fmt.Errorf("caller not allowed to add parent IP")
+	}
+
 	log.Info("addParentIp", "input", input)
 	if len(input) < 96 {
 		return nil, fmt.Errorf("input too short for addParentIp")
@@ -235,6 +262,16 @@ func (c *ipGraph) findAncestors(ipId common.Address, evm *EVM) map[common.Addres
 }
 
 func (c *ipGraph) setRoyalty(input []byte, evm *EVM) ([]byte, error) {
+	allowed, err := c.isAllowed(evm)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if !allowed {
+		return nil, fmt.Errorf("caller not allowed to set Royalty")
+	}
+
 	log.Info("setRoyalty", "input", input)
 	if len(input) < 96 {
 		return nil, fmt.Errorf("input too short for setRoyalty")
