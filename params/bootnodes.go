@@ -54,8 +54,8 @@ var LocalBootnodes = []string{}
 // Iliad test network.
 var IliadBootnodes = []string{
 	// Upstream bootnodes
-	"enode://15b1b22e48ccb1648fa30eef8a256cfd6e5c0bb0861e63c85be025301678316c6a325457fa4896a49df91a2e57305e2b3efa28781daddb1fb249dafc39874b3f@3.209.222.188:30303",
-	"enode://996a7fc7ffc2d2cbb15f04e7425d90d5369620fc4145bbb9cdae19564b89725a37f152c2dcdcd55a6a6d5a3748dcd2601626b0874817c83e3187ebbe2d9fb062@54.183.204.164:30303",
+	"enode://08e4b916327f2b9ef47d6b76fb77619eacb045c1054e2cb1e3abcc4c355907e3791a2f6f873cacfe2d99671f53299c575663d647e6bc855bf9d2c73751d1208e@b1.testnet.storyrpc.io:30303",
+	"enode://3bae9a46ddf39b805f678dd8ba8624c28285417d4bdbf5212234ee83a4cf94335bfd32b449a37bcf39b609208f8556ce42d6ee60c657f2a75b893350c1bd347f@b2.testnet.storyrpc.io:30303",
 }
 
 var V5Bootnodes = []string{

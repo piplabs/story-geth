@@ -1767,7 +1767,7 @@ func SetEthConfig(ctx *cli.Context, stack *node.Node, cfg *ethconfig.Config) {
 		SetDNSDiscoveryDefaults(cfg, params.SepoliaGenesisHash)
 	case ctx.Bool(IliadFlag.Name):
 		if !ctx.IsSet(NetworkIdFlag.Name) {
-			cfg.NetworkId = 1513
+			cfg.NetworkId = 1
 		}
 		cfg.Genesis = core.DefaultIliadGenesisBlock()
 		SetDNSDiscoveryDefaults(cfg, params.IliadGenesisHash)
