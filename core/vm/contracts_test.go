@@ -100,7 +100,6 @@ var blake2FMalformedInputTests = []precompiledFailureTest{
 
 func testPrecompiled(addr string, test precompiledTest, t *testing.T) {
 	p := allPrecompiles[common.HexToAddress(addr)]
-	caller := common.HexToAddress("0x0")
 	in := common.Hex2Bytes(test.Input)
 	gas := p.RequiredGas(in)
 	vmctx := BlockContext{
@@ -109,7 +108,7 @@ func testPrecompiled(addr string, test precompiledTest, t *testing.T) {
 	statedb, _ := state.New(types.EmptyRootHash, state.NewDatabase(rawdb.NewMemoryDatabase()), nil)
 	evm := NewEVM(vmctx, TxContext{}, statedb, params.AllEthashProtocolChanges, Config{})
 	t.Run(fmt.Sprintf("%s-Gas=%d", test.Name, gas), func(t *testing.T) {
-		if res, _, err := RunPrecompiledContract(evm, caller, p, in, gas, nil); err != nil {
+		if res, _, err := RunPrecompiledContract(evm, p, in, gas, nil); err != nil {
 			t.Error(err)
 		} else if common.Bytes2Hex(res) != test.Expected {
 			t.Errorf("Expected %v, got %v", test.Expected, common.Bytes2Hex(res))
@@ -127,7 +126,6 @@ func testPrecompiled(addr string, test precompiledTest, t *testing.T) {
 
 func testPrecompiledOOG(addr string, test precompiledTest, t *testing.T) {
 	p := allPrecompiles[common.HexToAddress(addr)]
-	caller := common.HexToAddress("0x0")
 	in := common.Hex2Bytes(test.Input)
 	gas := p.RequiredGas(in) - 1
 
@@ -138,7 +136,7 @@ func testPrecompiledOOG(addr string, test precompiledTest, t *testing.T) {
 	evm := NewEVM(vmctx, TxContext{}, statedb, params.AllEthashProtocolChanges, Config{})
 
 	t.Run(fmt.Sprintf("%s-Gas=%d", test.Name, gas), func(t *testing.T) {
-		_, _, err := RunPrecompiledContract(evm, caller, p, in, gas, nil)
+		_, _, err := RunPrecompiledContract(evm, p, in, gas, nil)
 		if err.Error() != "out of gas" {
 			t.Errorf("Expected error [out of gas], got [%v]", err)
 		}
@@ -152,7 +150,6 @@ func testPrecompiledOOG(addr string, test precompiledTest, t *testing.T) {
 
 func testPrecompiledFailure(addr string, test precompiledFailureTest, t *testing.T) {
 	p := allPrecompiles[common.HexToAddress(addr)]
-	caller := common.HexToAddress("0x0")
 	in := common.Hex2Bytes(test.Input)
 	gas := p.RequiredGas(in)
 
@@ -163,7 +160,7 @@ func testPrecompiledFailure(addr string, test precompiledFailureTest, t *testing
 	evm := NewEVM(vmctx, TxContext{}, statedb, params.AllEthashProtocolChanges, Config{})
 
 	t.Run(test.Name, func(t *testing.T) {
-		_, _, err := RunPrecompiledContract(evm, caller, p, in, gas, nil)
+		_, _, err := RunPrecompiledContract(evm, p, in, gas, nil)
 		if err.Error() != test.ExpectedError {
 			t.Errorf("Expected error [%v], got [%v]", test.ExpectedError, err)
 		}
@@ -180,7 +177,6 @@ func benchmarkPrecompiled(addr string, test precompiledTest, bench *testing.B) {
 		return
 	}
 	p := allPrecompiles[common.HexToAddress(addr)]
-	caller := common.HexToAddress("0x0")
 	in := common.Hex2Bytes(test.Input)
 	reqGas := p.RequiredGas(in)
 
@@ -201,7 +197,7 @@ func benchmarkPrecompiled(addr string, test precompiledTest, bench *testing.B) {
 			statedb, _ := state.New(types.EmptyRootHash, state.NewDatabase(rawdb.NewMemoryDatabase()), nil)
 			evm := NewEVM(vmctx, TxContext{}, statedb, params.AllEthashProtocolChanges, Config{})
 			copy(data, in)
-			res, _, err = RunPrecompiledContract(evm, caller, p, data, reqGas, nil)
+			res, _, err = RunPrecompiledContract(evm, p, data, reqGas, nil)
 		}
 		bench.StopTimer()
 		elapsed := uint64(time.Since(start))

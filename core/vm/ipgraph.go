@@ -12,6 +12,7 @@ import (
 
 var (
 	aclAddress                  = common.HexToAddress("0x680E66e4c7Df9133a7AFC1ed091089B32b89C4ae")
+	aclSlot                     = "af99b37fdaacca72ee7240cb1435cc9e498aee6ef4edc19c8cc0cd787f4e6800"
 	ipGraphAddress              = common.HexToAddress("0x000000000000000000000000000000000000001A")
 	addParentIpSelector         = crypto.Keccak256Hash([]byte("addParentIp(address,address[])")).Bytes()[:4]
 	hasParentIpSelector         = crypto.Keccak256Hash([]byte("hasParentIp(address,address)")).Bytes()[:4]
@@ -31,8 +32,8 @@ func (c *ipGraph) RequiredGas(input []byte) uint64 {
 	return uint64(1)
 }
 
-func (c *ipGraph) Run(evm *EVM, caller common.Address, input []byte) ([]byte, error) {
-	log.Info("ipGraph.Run", "caller", caller, "input", input)
+func (c *ipGraph) Run(evm *EVM, input []byte) ([]byte, error) {
+	log.Info("ipGraph.Run", "input", input)
 
 	if len(input) < 4 {
 		return nil, fmt.Errorf("input too short")
@@ -43,7 +44,7 @@ func (c *ipGraph) Run(evm *EVM, caller common.Address, input []byte) ([]byte, er
 
 	switch {
 	case bytes.Equal(selector, addParentIpSelector):
-		return c.addParentIp(args, evm, caller)
+		return c.addParentIp(args, evm)
 	case bytes.Equal(selector, hasParentIpSelector):
 		return c.hasParentIp(args, evm)
 	case bytes.Equal(selector, getParentIpsSelector):
@@ -57,7 +58,7 @@ func (c *ipGraph) Run(evm *EVM, caller common.Address, input []byte) ([]byte, er
 	case bytes.Equal(selector, hasAncestorIpsSelector):
 		return c.hasAncestorIp(args, evm)
 	case bytes.Equal(selector, setRoyaltySelector):
-		return c.setRoyalty(args, evm, caller)
+		return c.setRoyalty(args, evm)
 	case bytes.Equal(selector, getRoyaltySelector):
 		return c.getRoyalty(args, evm)
 	case bytes.Equal(selector, getRoyaltyStackSelector):
@@ -67,28 +68,23 @@ func (c *ipGraph) Run(evm *EVM, caller common.Address, input []byte) ([]byte, er
 	}
 }
 
-func (c *ipGraph) isCallerAllowed(caller common.Address, evm *EVM) (bool, error) {
-	log.Info("isCallerAllowed", "aclAddress", aclAddress, "caller", caller)
-	// Read the length of whitelist addresses
-	lengthHash := evm.StateDB.GetState(aclAddress, common.BigToHash(big.NewInt(0)))
-	length := lengthHash.Big()
-	log.Info("isCallerAllowed", "aclAddress", aclAddress, "length", length)
+func (c *ipGraph) isAllowed(evm *EVM) (bool, error) {
+	slot := new(big.Int)
+	slot.SetString(aclSlot, 16)
+	isAllowedHash := evm.StateDB.GetState(aclAddress, common.BigToHash(slot))
+	isAllowedBig := isAllowedHash.Big()
 
-	// Loop through the whitelisted addresses to check if the caller is allowed
-	for i := uint64(1); i <= length.Uint64(); i++ {
-		allowedAddress := evm.StateDB.GetState(aclAddress, common.BigToHash(new(big.Int).SetUint64(i)))
-		log.Info("isCallerAllowed", "aclAddress", aclAddress, "slot", i, "allowedAddress", allowedAddress)
-		if common.BytesToAddress(allowedAddress.Bytes()) == caller {
-			log.Info("isCallerAllowed", "allowed", true)
-			return true, nil
-		}
+	log.Info("isAllowed", "aclAddress", aclAddress, "slot", slot, "isAllowedBig", isAllowedBig)
+	if isAllowedBig.Cmp(big.NewInt(1)) == 0 {
+		log.Info("isAllowed", "allowed", true)
+		return true, nil
 	}
-	log.Info("isCallerAllowed", "allowed", false)
+	log.Info("isAllowed", "allowed", false)
 	return false, nil
 }
 
-func (c *ipGraph) addParentIp(input []byte, evm *EVM, caller common.Address) ([]byte, error) {
-	allowed, err := c.isCallerAllowed(caller, evm)
+func (c *ipGraph) addParentIp(input []byte, evm *EVM) ([]byte, error) {
+	allowed, err := c.isAllowed(evm)
 
 	if err != nil {
 		return nil, err
@@ -265,8 +261,8 @@ func (c *ipGraph) findAncestors(ipId common.Address, evm *EVM) map[common.Addres
 	return ancestors
 }
 
-func (c *ipGraph) setRoyalty(input []byte, evm *EVM, caller common.Address) ([]byte, error) {
-	allowed, err := c.isCallerAllowed(caller, evm)
+func (c *ipGraph) setRoyalty(input []byte, evm *EVM) ([]byte, error) {
+	allowed, err := c.isAllowed(evm)
 
 	if err != nil {
 		return nil, err

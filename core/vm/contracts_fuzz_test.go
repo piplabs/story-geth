@@ -36,7 +36,6 @@ func FuzzPrecompiledContracts(f *testing.F) {
 	f.Fuzz(func(t *testing.T, addr uint8, input []byte) {
 		a := addrs[int(addr)%len(addrs)]
 		p := allPrecompiles[a]
-		caller := common.HexToAddress("0x0")
 		gas := p.RequiredGas(input)
 		if gas > 10_000_000 {
 			return
@@ -47,7 +46,7 @@ func FuzzPrecompiledContracts(f *testing.F) {
 		statedb, _ := state.New(types.EmptyRootHash, state.NewDatabase(rawdb.NewMemoryDatabase()), nil)
 		evm := NewEVM(vmctx, TxContext{}, statedb, params.AllEthashProtocolChanges, Config{})
 		inWant := string(input)
-		RunPrecompiledContract(evm, caller, p, input, gas, nil)
+		RunPrecompiledContract(evm, p, input, gas, nil)
 		if inHave := string(input); inWant != inHave {
 			t.Errorf("Precompiled %v modified input data", a)
 		}
