@@ -13,7 +13,6 @@ import (
 var (
 	aclAddress                  = common.HexToAddress("0x680E66e4c7Df9133a7AFC1ed091089B32b89C4ae")
 	aclSlot                     = "af99b37fdaacca72ee7240cb1435cc9e498aee6ef4edc19c8cc0cd787f4e6800"
-	ipGraphAddress              = common.HexToAddress("0x000000000000000000000000000000000000001A")
 	addParentIpSelector         = crypto.Keccak256Hash([]byte("addParentIp(address,address[])")).Bytes()[:4]
 	hasParentIpSelector         = crypto.Keccak256Hash([]byte("hasParentIp(address,address)")).Bytes()[:4]
 	getParentIpsSelector        = crypto.Keccak256Hash([]byte("getParentIps(address)")).Bytes()[:4]
@@ -33,7 +32,8 @@ func (c *ipGraph) RequiredGas(input []byte) uint64 {
 }
 
 func (c *ipGraph) Run(evm *EVM, input []byte) ([]byte, error) {
-	log.Info("ipGraph.Run", "input", input)
+	ipGraphAddress := common.HexToAddress("0x000000000000000000000000000000000000001A")
+	log.Info("ipGraph.Run", "ipGraphAddress", ipGraphAddress, "input", input)
 
 	if len(input) < 4 {
 		return nil, fmt.Errorf("input too short")
@@ -44,25 +44,25 @@ func (c *ipGraph) Run(evm *EVM, input []byte) ([]byte, error) {
 
 	switch {
 	case bytes.Equal(selector, addParentIpSelector):
-		return c.addParentIp(args, evm)
+		return c.addParentIp(args, evm, ipGraphAddress)
 	case bytes.Equal(selector, hasParentIpSelector):
-		return c.hasParentIp(args, evm)
+		return c.hasParentIp(args, evm, ipGraphAddress)
 	case bytes.Equal(selector, getParentIpsSelector):
-		return c.getParentIps(args, evm)
+		return c.getParentIps(args, evm, ipGraphAddress)
 	case bytes.Equal(selector, getParentIpsCountSelector):
-		return c.getParentIpsCount(args, evm)
+		return c.getParentIpsCount(args, evm, ipGraphAddress)
 	case bytes.Equal(selector, getAncestorIpsSelector):
-		return c.getAncestorIps(args, evm)
+		return c.getAncestorIps(args, evm, ipGraphAddress)
 	case bytes.Equal(selector, getAncestorIpsCountSelector):
-		return c.getAncestorIpsCount(args, evm)
+		return c.getAncestorIpsCount(args, evm, ipGraphAddress)
 	case bytes.Equal(selector, hasAncestorIpsSelector):
-		return c.hasAncestorIp(args, evm)
+		return c.hasAncestorIp(args, evm, ipGraphAddress)
 	case bytes.Equal(selector, setRoyaltySelector):
-		return c.setRoyalty(args, evm)
+		return c.setRoyalty(args, evm, ipGraphAddress)
 	case bytes.Equal(selector, getRoyaltySelector):
-		return c.getRoyalty(args, evm)
+		return c.getRoyalty(args, evm, ipGraphAddress)
 	case bytes.Equal(selector, getRoyaltyStackSelector):
-		return c.getRoyaltyStack(args, evm)
+		return c.getRoyaltyStack(args, evm, ipGraphAddress)
 	default:
 		return nil, fmt.Errorf("unknown selector")
 	}
@@ -83,7 +83,7 @@ func (c *ipGraph) isAllowed(evm *EVM) (bool, error) {
 	return false, nil
 }
 
-func (c *ipGraph) addParentIp(input []byte, evm *EVM) ([]byte, error) {
+func (c *ipGraph) addParentIp(input []byte, evm *EVM, ipGraphAddress common.Address) ([]byte, error) {
 	allowed, err := c.isAllowed(evm)
 
 	if err != nil {
@@ -122,7 +122,7 @@ func (c *ipGraph) addParentIp(input []byte, evm *EVM) ([]byte, error) {
 	return nil, nil
 }
 
-func (c *ipGraph) hasParentIp(input []byte, evm *EVM) ([]byte, error) {
+func (c *ipGraph) hasParentIp(input []byte, evm *EVM, ipGraphAddress common.Address) ([]byte, error) {
 	if len(input) < 64 {
 		return nil, fmt.Errorf("input too short for hasParentIp")
 	}
@@ -146,7 +146,7 @@ func (c *ipGraph) hasParentIp(input []byte, evm *EVM) ([]byte, error) {
 	return common.LeftPadBytes([]byte{0}, 32), nil
 }
 
-func (c *ipGraph) getParentIps(input []byte, evm *EVM) ([]byte, error) {
+func (c *ipGraph) getParentIps(input []byte, evm *EVM, ipGraphAddress common.Address) ([]byte, error) {
 	log.Info("getParentIps", "input", input)
 	if len(input) < 32 {
 		return nil, fmt.Errorf("input too short for getParentIps")
@@ -170,7 +170,7 @@ func (c *ipGraph) getParentIps(input []byte, evm *EVM) ([]byte, error) {
 	return output, nil
 }
 
-func (c *ipGraph) getParentIpsCount(input []byte, evm *EVM) ([]byte, error) {
+func (c *ipGraph) getParentIpsCount(input []byte, evm *EVM, ipGraphAddress common.Address) ([]byte, error) {
 	log.Info("getParentIpsCount", "input", input)
 	if len(input) < 32 {
 		return nil, fmt.Errorf("input too short for getParentIpsCount")
@@ -184,13 +184,13 @@ func (c *ipGraph) getParentIpsCount(input []byte, evm *EVM) ([]byte, error) {
 	return common.BigToHash(currentLength).Bytes(), nil
 }
 
-func (c *ipGraph) getAncestorIps(input []byte, evm *EVM) ([]byte, error) {
+func (c *ipGraph) getAncestorIps(input []byte, evm *EVM, ipGraphAddress common.Address) ([]byte, error) {
 	log.Info("getAncestorIps", "input", input)
 	if len(input) < 32 {
 		return nil, fmt.Errorf("input too short for getAncestorIps")
 	}
 	ipId := common.BytesToAddress(input[0:32])
-	ancestors := c.findAncestors(ipId, evm)
+	ancestors := c.findAncestors(ipId, evm, ipGraphAddress)
 
 	output := make([]byte, 64+len(ancestors)*32)
 	copy(output[0:32], common.BigToHash(new(big.Int).SetUint64(32)).Bytes())
@@ -206,26 +206,26 @@ func (c *ipGraph) getAncestorIps(input []byte, evm *EVM) ([]byte, error) {
 	return output, nil
 }
 
-func (c *ipGraph) getAncestorIpsCount(input []byte, evm *EVM) ([]byte, error) {
+func (c *ipGraph) getAncestorIpsCount(input []byte, evm *EVM, ipGraphAddress common.Address) ([]byte, error) {
 	log.Info("getAncestorIpsCount", "input", input)
 	if len(input) < 32 {
 		return nil, fmt.Errorf("input too short for getAncestorIpsCount")
 	}
 	ipId := common.BytesToAddress(input[0:32])
-	ancestors := c.findAncestors(ipId, evm)
+	ancestors := c.findAncestors(ipId, evm, ipGraphAddress)
 
 	count := new(big.Int).SetUint64(uint64(len(ancestors)))
 	log.Info("getAncestorIpsCount", "ipId", ipId, "count", count)
 	return common.BigToHash(count).Bytes(), nil
 }
 
-func (c *ipGraph) hasAncestorIp(input []byte, evm *EVM) ([]byte, error) {
+func (c *ipGraph) hasAncestorIp(input []byte, evm *EVM, ipGraphAddress common.Address) ([]byte, error) {
 	if len(input) < 64 {
 		return nil, fmt.Errorf("input too short for hasAncestorIp")
 	}
 	ipId := common.BytesToAddress(input[0:32])
 	parentIpId := common.BytesToAddress(input[32:64])
-	ancestors := c.findAncestors(ipId, evm)
+	ancestors := c.findAncestors(ipId, evm, ipGraphAddress)
 
 	if _, found := ancestors[parentIpId]; found {
 		log.Info("hasAncestorIp", "found", true)
@@ -235,7 +235,7 @@ func (c *ipGraph) hasAncestorIp(input []byte, evm *EVM) ([]byte, error) {
 	return common.LeftPadBytes([]byte{0}, 32), nil
 }
 
-func (c *ipGraph) findAncestors(ipId common.Address, evm *EVM) map[common.Address]struct{} {
+func (c *ipGraph) findAncestors(ipId common.Address, evm *EVM, ipGraphAddress common.Address) map[common.Address]struct{} {
 	ancestors := make(map[common.Address]struct{})
 	var stack []common.Address
 	stack = append(stack, ipId)
@@ -261,7 +261,7 @@ func (c *ipGraph) findAncestors(ipId common.Address, evm *EVM) map[common.Addres
 	return ancestors
 }
 
-func (c *ipGraph) setRoyalty(input []byte, evm *EVM) ([]byte, error) {
+func (c *ipGraph) setRoyalty(input []byte, evm *EVM, ipGraphAddress common.Address) ([]byte, error) {
 	allowed, err := c.isAllowed(evm)
 
 	if err != nil {
@@ -286,19 +286,19 @@ func (c *ipGraph) setRoyalty(input []byte, evm *EVM) ([]byte, error) {
 	return nil, nil
 }
 
-func (c *ipGraph) getRoyalty(input []byte, evm *EVM) ([]byte, error) {
+func (c *ipGraph) getRoyalty(input []byte, evm *EVM, ipGraphAddress common.Address) ([]byte, error) {
 	log.Info("getRoyalty", "input", input)
 	if len(input) < 64 {
 		return nil, fmt.Errorf("input too short for getRoyalty")
 	}
 	ipId := common.BytesToAddress(input[0:32])
 	ancestorIpId := common.BytesToAddress(input[32:64])
-	ancestors := c.findAncestors(ipId, evm)
+	ancestors := c.findAncestors(ipId, evm, ipGraphAddress)
 	totalRoyalty := big.NewInt(0)
 	for ancestor := range ancestors {
 		if ancestor == ancestorIpId {
 			// Traverse the graph to accumulate royalties
-			totalRoyalty.Add(totalRoyalty, c.getRoyaltyForAncestor(ipId, ancestorIpId, evm))
+			totalRoyalty.Add(totalRoyalty, c.getRoyaltyForAncestor(ipId, ancestorIpId, evm, ipGraphAddress))
 		}
 	}
 
@@ -306,7 +306,7 @@ func (c *ipGraph) getRoyalty(input []byte, evm *EVM) ([]byte, error) {
 	return common.BigToHash(totalRoyalty).Bytes(), nil
 }
 
-func (c *ipGraph) getRoyaltyForAncestor(ipId, ancestorIpId common.Address, evm *EVM) *big.Int {
+func (c *ipGraph) getRoyaltyForAncestor(ipId, ancestorIpId common.Address, evm *EVM, ipGraphAddress common.Address) *big.Int {
 	ancestors := make(map[common.Address]struct{})
 	totalRoyalty := big.NewInt(0)
 	var stack []common.Address
@@ -339,7 +339,7 @@ func (c *ipGraph) getRoyaltyForAncestor(ipId, ancestorIpId common.Address, evm *
 	return totalRoyalty
 }
 
-func (c *ipGraph) getRoyaltyStack(input []byte, evm *EVM) ([]byte, error) {
+func (c *ipGraph) getRoyaltyStack(input []byte, evm *EVM, ipGraphAddress common.Address) ([]byte, error) {
 	log.Info("getRoyaltyStack", "input", input)
 	if len(input) < 32 {
 		return nil, fmt.Errorf("input too short for getRoyaltyStack")
