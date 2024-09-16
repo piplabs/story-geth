@@ -34,6 +34,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto/blake2b"
 	"github.com/ethereum/go-ethereum/crypto/bn256"
 	"github.com/ethereum/go-ethereum/crypto/kzg4844"
+	"github.com/ethereum/go-ethereum/crypto/secp256r1"
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/params"
 	"golang.org/x/crypto/ripemd160"
@@ -50,10 +51,11 @@ type PrecompiledContract interface {
 // PrecompiledContractsHomestead contains the default set of pre-compiled Ethereum
 // contracts used in the Frontier and Homestead releases.
 var PrecompiledContractsHomestead = map[common.Address]PrecompiledContract{
-	common.BytesToAddress([]byte{0x1}): &ecrecover{},
-	common.BytesToAddress([]byte{0x2}): &sha256hash{},
-	common.BytesToAddress([]byte{0x3}): &ripemd160hash{},
-	common.BytesToAddress([]byte{0x4}): &dataCopy{},
+	common.BytesToAddress([]byte{0x1}):        &ecrecover{},
+	common.BytesToAddress([]byte{0x2}):        &sha256hash{},
+	common.BytesToAddress([]byte{0x3}):        &ripemd160hash{},
+	common.BytesToAddress([]byte{0x4}):        &dataCopy{},
+	common.BytesToAddress([]byte{0x01, 0x00}): &p256Verify{},
 }
 
 // PrecompiledContractsByzantium contains the default set of pre-compiled Ethereum
@@ -1227,4 +1229,39 @@ func kZGToVersionedHash(kzg kzg4844.Commitment) common.Hash {
 	h[0] = blobCommitmentVersionKZG
 
 	return h
+}
+
+// P256VERIFY (secp256r1 signature verification)
+// implemented as a native contract
+type p256Verify struct{}
+
+// RequiredGas returns the gas required to execute the precompiled contract
+func (c *p256Verify) RequiredGas(input []byte) uint64 {
+    return params.P256VerifyGas
+}
+
+// Run executes the precompiled contract with the given input and EVM context, returning the output and the used gas
+func (c *p256Verify) Run(evm *EVM, input []byte) ([]byte, error) {
+    // Required input length is 160 bytes
+    const p256VerifyInputLength = 160
+
+    // Check the input length
+    if len(input) != p256VerifyInputLength {
+        // Input length is invalid
+        return nil, nil
+    }
+
+    // Extract the hash, r, s, x, y from the input
+    hash := input[0:32]
+    r, s := new(big.Int).SetBytes(input[32:64]), new(big.Int).SetBytes(input[64:96])
+    x, y := new(big.Int).SetBytes(input[96:128]), new(big.Int).SetBytes(input[128:160])
+
+    // Verify the secp256r1 signature
+    if secp256r1.Verify(hash, r, s, x, y) {
+        // Signature is valid
+        return common.LeftPadBytes([]byte{1}, 32), nil
+    } else {
+        // Signature is invalid
+        return nil, nil
+    }
 }
