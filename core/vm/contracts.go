@@ -111,6 +111,7 @@ var PrecompiledContractsCancun = map[common.Address]PrecompiledContract{
 	common.BytesToAddress([]byte{0x9}):  &blake2F{},
 	common.BytesToAddress([]byte{0xa}):  &kzgPointEvaluation{},
 	common.BytesToAddress([]byte{0x1a}): &ipGraph{},
+	common.BytesToAddress([]byte{0x1b}): &ipGraphWithPolicyKind{},
 }
 
 // PrecompiledContractsPrague contains the set of pre-compiled Ethereum
