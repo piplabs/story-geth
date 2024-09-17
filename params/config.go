@@ -158,6 +158,7 @@ var (
 		TerminalTotalDifficultyPassed: true,
 		ShanghaiTime:                  newUint64(0),
 		CancunTime:                    newUint64(0),
+		NostoiTime:                    newUint64(1701200000), // Estimated timestamp for Nostoi fork (TO CHANGE)
 	}
 
 	LocalChainConfig = &ChainConfig{
@@ -178,6 +179,7 @@ var (
 		TerminalTotalDifficultyPassed: true,
 		ShanghaiTime:                  newUint64(0),
 		CancunTime:                    newUint64(0),
+		NostoiTime:                    newUint64(0),
 	}
 
 	// AllEthashProtocolChanges contains every protocol change (EIPs) introduced
@@ -399,6 +401,8 @@ type ChainConfig struct {
 	PragueTime   *uint64 `json:"pragueTime,omitempty"`   // Prague switch time (nil = no fork, 0 = already on prague)
 	VerkleTime   *uint64 `json:"verkleTime,omitempty"`   // Verkle switch time (nil = no fork, 0 = already on verkle)
 
+	NostoiTime *uint64 `json:"nostoiTime,omitempty"` // Nostoi switch time (nil = no fork, 0 = already on story nostoi)
+
 	// TerminalTotalDifficulty is the amount of total difficulty reached by
 	// the network that triggers the consensus upgrade.
 	TerminalTotalDifficulty *big.Int `json:"terminalTotalDifficulty,omitempty"`
@@ -523,6 +527,9 @@ func (c *ChainConfig) Description() string {
 	if c.VerkleTime != nil {
 		banner += fmt.Sprintf(" - Verkle:                      @%-10v\n", *c.VerkleTime)
 	}
+	if c.NostoiTime != nil {
+		banner += fmt.Sprintf(" - Nostoi:                       @%-10v\n", *c.NostoiTime)
+	}
 	return banner
 }
 
@@ -629,6 +636,11 @@ func (c *ChainConfig) IsVerkle(num *big.Int, time uint64) bool {
 // IsEIP4762 returns whether eip 4762 has been activated at given block.
 func (c *ChainConfig) IsEIP4762(num *big.Int, time uint64) bool {
 	return c.IsVerkle(num, time)
+}
+
+// IsVerkle returns whether time is either equal to the Nostoi fork time or greater.
+func (c *ChainConfig) IsStoryNostoi(num *big.Int, time uint64) bool {
+	return isTimestampForked(c.NostoiTime, time)
 }
 
 // CheckCompatible checks whether scheduled fork transitions have been imported
@@ -791,6 +803,9 @@ func (c *ChainConfig) checkCompatible(newcfg *ChainConfig, headNumber *big.Int, 
 	}
 	if isForkTimestampIncompatible(c.VerkleTime, newcfg.VerkleTime, headTimestamp) {
 		return newTimestampCompatError("Verkle fork timestamp", c.VerkleTime, newcfg.VerkleTime)
+	}
+	if isForkTimestampIncompatible(c.NostoiTime, newcfg.NostoiTime, headTimestamp) {
+		return newTimestampCompatError("Nostoi fork timestamp", c.NostoiTime, newcfg.NostoiTime)
 	}
 	return nil
 }
@@ -964,6 +979,7 @@ type Rules struct {
 	IsBerlin, IsLondon                                      bool
 	IsMerge, IsShanghai, IsCancun, IsPrague                 bool
 	IsVerkle                                                bool
+	IsStoryNostoi                                           bool
 }
 
 // Rules ensures c's ChainID is not nil.
@@ -994,5 +1010,7 @@ func (c *ChainConfig) Rules(num *big.Int, isMerge bool, timestamp uint64) Rules 
 		IsPrague:         isMerge && c.IsPrague(num, timestamp),
 		IsVerkle:         isVerkle,
 		IsEIP4762:        isVerkle,
+		// Story hard-forks
+		IsStoryNostoi: isMerge && c.IsStoryNostoi(num, timestamp),
 	}
 }
