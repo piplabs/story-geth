@@ -61,83 +61,88 @@ var PrecompiledContractsHomestead = map[common.Address]PrecompiledContract{
 // PrecompiledContractsByzantium contains the default set of pre-compiled Ethereum
 // contracts used in the Byzantium release.
 var PrecompiledContractsByzantium = map[common.Address]PrecompiledContract{
-	common.BytesToAddress([]byte{0x1}): &ecrecover{},
-	common.BytesToAddress([]byte{0x2}): &sha256hash{},
-	common.BytesToAddress([]byte{0x3}): &ripemd160hash{},
-	common.BytesToAddress([]byte{0x4}): &dataCopy{},
-	common.BytesToAddress([]byte{0x5}): &bigModExp{eip2565: false},
-	common.BytesToAddress([]byte{0x6}): &bn256AddByzantium{},
-	common.BytesToAddress([]byte{0x7}): &bn256ScalarMulByzantium{},
-	common.BytesToAddress([]byte{0x8}): &bn256PairingByzantium{},
+	common.BytesToAddress([]byte{0x1}):        &ecrecover{},
+	common.BytesToAddress([]byte{0x2}):        &sha256hash{},
+	common.BytesToAddress([]byte{0x3}):        &ripemd160hash{},
+	common.BytesToAddress([]byte{0x4}):        &dataCopy{},
+	common.BytesToAddress([]byte{0x5}):        &bigModExp{eip2565: false},
+	common.BytesToAddress([]byte{0x6}):        &bn256AddByzantium{},
+	common.BytesToAddress([]byte{0x7}):        &bn256ScalarMulByzantium{},
+	common.BytesToAddress([]byte{0x8}):        &bn256PairingByzantium{},
+	common.BytesToAddress([]byte{0x01, 0x00}): &p256Verify{},
 }
 
 // PrecompiledContractsIstanbul contains the default set of pre-compiled Ethereum
 // contracts used in the Istanbul release.
 var PrecompiledContractsIstanbul = map[common.Address]PrecompiledContract{
-	common.BytesToAddress([]byte{0x1}): &ecrecover{},
-	common.BytesToAddress([]byte{0x2}): &sha256hash{},
-	common.BytesToAddress([]byte{0x3}): &ripemd160hash{},
-	common.BytesToAddress([]byte{0x4}): &dataCopy{},
-	common.BytesToAddress([]byte{0x5}): &bigModExp{eip2565: false},
-	common.BytesToAddress([]byte{0x6}): &bn256AddIstanbul{},
-	common.BytesToAddress([]byte{0x7}): &bn256ScalarMulIstanbul{},
-	common.BytesToAddress([]byte{0x8}): &bn256PairingIstanbul{},
-	common.BytesToAddress([]byte{0x9}): &blake2F{},
+	common.BytesToAddress([]byte{0x1}):        &ecrecover{},
+	common.BytesToAddress([]byte{0x2}):        &sha256hash{},
+	common.BytesToAddress([]byte{0x3}):        &ripemd160hash{},
+	common.BytesToAddress([]byte{0x4}):        &dataCopy{},
+	common.BytesToAddress([]byte{0x5}):        &bigModExp{eip2565: false},
+	common.BytesToAddress([]byte{0x6}):        &bn256AddIstanbul{},
+	common.BytesToAddress([]byte{0x7}):        &bn256ScalarMulIstanbul{},
+	common.BytesToAddress([]byte{0x8}):        &bn256PairingIstanbul{},
+	common.BytesToAddress([]byte{0x9}):        &blake2F{},
+	common.BytesToAddress([]byte{0x01, 0x00}): &p256Verify{},
 }
 
 // PrecompiledContractsBerlin contains the default set of pre-compiled Ethereum
 // contracts used in the Berlin release.
 var PrecompiledContractsBerlin = map[common.Address]PrecompiledContract{
-	common.BytesToAddress([]byte{0x1}): &ecrecover{},
-	common.BytesToAddress([]byte{0x2}): &sha256hash{},
-	common.BytesToAddress([]byte{0x3}): &ripemd160hash{},
-	common.BytesToAddress([]byte{0x4}): &dataCopy{},
-	common.BytesToAddress([]byte{0x5}): &bigModExp{eip2565: true},
-	common.BytesToAddress([]byte{0x6}): &bn256AddIstanbul{},
-	common.BytesToAddress([]byte{0x7}): &bn256ScalarMulIstanbul{},
-	common.BytesToAddress([]byte{0x8}): &bn256PairingIstanbul{},
-	common.BytesToAddress([]byte{0x9}): &blake2F{},
+	common.BytesToAddress([]byte{0x1}):        &ecrecover{},
+	common.BytesToAddress([]byte{0x2}):        &sha256hash{},
+	common.BytesToAddress([]byte{0x3}):        &ripemd160hash{},
+	common.BytesToAddress([]byte{0x4}):        &dataCopy{},
+	common.BytesToAddress([]byte{0x5}):        &bigModExp{eip2565: true},
+	common.BytesToAddress([]byte{0x6}):        &bn256AddIstanbul{},
+	common.BytesToAddress([]byte{0x7}):        &bn256ScalarMulIstanbul{},
+	common.BytesToAddress([]byte{0x8}):        &bn256PairingIstanbul{},
+	common.BytesToAddress([]byte{0x9}):        &blake2F{},
+	common.BytesToAddress([]byte{0x01, 0x00}): &p256Verify{},
 }
 
 // PrecompiledContractsCancun contains the default set of pre-compiled Ethereum
 // contracts used in the Cancun release.
 var PrecompiledContractsCancun = map[common.Address]PrecompiledContract{
-	common.BytesToAddress([]byte{0x1}):  &ecrecover{},
-	common.BytesToAddress([]byte{0x2}):  &sha256hash{},
-	common.BytesToAddress([]byte{0x3}):  &ripemd160hash{},
-	common.BytesToAddress([]byte{0x4}):  &dataCopy{},
-	common.BytesToAddress([]byte{0x5}):  &bigModExp{eip2565: true},
-	common.BytesToAddress([]byte{0x6}):  &bn256AddIstanbul{},
-	common.BytesToAddress([]byte{0x7}):  &bn256ScalarMulIstanbul{},
-	common.BytesToAddress([]byte{0x8}):  &bn256PairingIstanbul{},
-	common.BytesToAddress([]byte{0x9}):  &blake2F{},
-	common.BytesToAddress([]byte{0xa}):  &kzgPointEvaluation{},
-	common.BytesToAddress([]byte{0x1a}): &ipGraph{},
-	common.BytesToAddress([]byte{0x1b}): &ipGraphWithPolicyKind{},
+	common.BytesToAddress([]byte{0x1}):        &ecrecover{},
+	common.BytesToAddress([]byte{0x2}):        &sha256hash{},
+	common.BytesToAddress([]byte{0x3}):        &ripemd160hash{},
+	common.BytesToAddress([]byte{0x4}):        &dataCopy{},
+	common.BytesToAddress([]byte{0x5}):        &bigModExp{eip2565: true},
+	common.BytesToAddress([]byte{0x6}):        &bn256AddIstanbul{},
+	common.BytesToAddress([]byte{0x7}):        &bn256ScalarMulIstanbul{},
+	common.BytesToAddress([]byte{0x8}):        &bn256PairingIstanbul{},
+	common.BytesToAddress([]byte{0x9}):        &blake2F{},
+	common.BytesToAddress([]byte{0xa}):        &kzgPointEvaluation{},
+	common.BytesToAddress([]byte{0x1a}):       &ipGraph{},
+	common.BytesToAddress([]byte{0x1b}):       &ipGraphWithPolicyKind{},
+	common.BytesToAddress([]byte{0x01, 0x00}): &p256Verify{},
 }
 
 // PrecompiledContractsPrague contains the set of pre-compiled Ethereum
 // contracts used in the Prague release.
 var PrecompiledContractsPrague = map[common.Address]PrecompiledContract{
-	common.BytesToAddress([]byte{0x01}): &ecrecover{},
-	common.BytesToAddress([]byte{0x02}): &sha256hash{},
-	common.BytesToAddress([]byte{0x03}): &ripemd160hash{},
-	common.BytesToAddress([]byte{0x04}): &dataCopy{},
-	common.BytesToAddress([]byte{0x05}): &bigModExp{eip2565: true},
-	common.BytesToAddress([]byte{0x06}): &bn256AddIstanbul{},
-	common.BytesToAddress([]byte{0x07}): &bn256ScalarMulIstanbul{},
-	common.BytesToAddress([]byte{0x08}): &bn256PairingIstanbul{},
-	common.BytesToAddress([]byte{0x09}): &blake2F{},
-	common.BytesToAddress([]byte{0x0a}): &kzgPointEvaluation{},
-	common.BytesToAddress([]byte{0x0b}): &bls12381G1Add{},
-	common.BytesToAddress([]byte{0x0c}): &bls12381G1Mul{},
-	common.BytesToAddress([]byte{0x0d}): &bls12381G1MultiExp{},
-	common.BytesToAddress([]byte{0x0e}): &bls12381G2Add{},
-	common.BytesToAddress([]byte{0x0f}): &bls12381G2Mul{},
-	common.BytesToAddress([]byte{0x10}): &bls12381G2MultiExp{},
-	common.BytesToAddress([]byte{0x11}): &bls12381Pairing{},
-	common.BytesToAddress([]byte{0x12}): &bls12381MapG1{},
-	common.BytesToAddress([]byte{0x13}): &bls12381MapG2{},
+	common.BytesToAddress([]byte{0x01}):       &ecrecover{},
+	common.BytesToAddress([]byte{0x02}):       &sha256hash{},
+	common.BytesToAddress([]byte{0x03}):       &ripemd160hash{},
+	common.BytesToAddress([]byte{0x04}):       &dataCopy{},
+	common.BytesToAddress([]byte{0x05}):       &bigModExp{eip2565: true},
+	common.BytesToAddress([]byte{0x06}):       &bn256AddIstanbul{},
+	common.BytesToAddress([]byte{0x07}):       &bn256ScalarMulIstanbul{},
+	common.BytesToAddress([]byte{0x08}):       &bn256PairingIstanbul{},
+	common.BytesToAddress([]byte{0x09}):       &blake2F{},
+	common.BytesToAddress([]byte{0x0a}):       &kzgPointEvaluation{},
+	common.BytesToAddress([]byte{0x0b}):       &bls12381G1Add{},
+	common.BytesToAddress([]byte{0x0c}):       &bls12381G1Mul{},
+	common.BytesToAddress([]byte{0x0d}):       &bls12381G1MultiExp{},
+	common.BytesToAddress([]byte{0x0e}):       &bls12381G2Add{},
+	common.BytesToAddress([]byte{0x0f}):       &bls12381G2Mul{},
+	common.BytesToAddress([]byte{0x10}):       &bls12381G2MultiExp{},
+	common.BytesToAddress([]byte{0x11}):       &bls12381Pairing{},
+	common.BytesToAddress([]byte{0x12}):       &bls12381MapG1{},
+	common.BytesToAddress([]byte{0x13}):       &bls12381MapG2{},
+	common.BytesToAddress([]byte{0x01, 0x00}): &p256Verify{},
 }
 
 var PrecompiledContractsBLS = PrecompiledContractsPrague
@@ -1237,31 +1242,31 @@ type p256Verify struct{}
 
 // RequiredGas returns the gas required to execute the precompiled contract
 func (c *p256Verify) RequiredGas(input []byte) uint64 {
-    return params.P256VerifyGas
+	return params.P256VerifyGas
 }
 
 // Run executes the precompiled contract with the given input and EVM context, returning the output and the used gas
 func (c *p256Verify) Run(evm *EVM, input []byte) ([]byte, error) {
-    // Required input length is 160 bytes
-    const p256VerifyInputLength = 160
+	// Required input length is 160 bytes
+	const p256VerifyInputLength = 160
 
-    // Check the input length
-    if len(input) != p256VerifyInputLength {
-        // Input length is invalid
-        return nil, nil
-    }
+	// Check the input length
+	if len(input) != p256VerifyInputLength {
+		// Input length is invalid
+		return nil, nil
+	}
 
-    // Extract the hash, r, s, x, y from the input
-    hash := input[0:32]
-    r, s := new(big.Int).SetBytes(input[32:64]), new(big.Int).SetBytes(input[64:96])
-    x, y := new(big.Int).SetBytes(input[96:128]), new(big.Int).SetBytes(input[128:160])
+	// Extract the hash, r, s, x, y from the input
+	hash := input[0:32]
+	r, s := new(big.Int).SetBytes(input[32:64]), new(big.Int).SetBytes(input[64:96])
+	x, y := new(big.Int).SetBytes(input[96:128]), new(big.Int).SetBytes(input[128:160])
 
-    // Verify the secp256r1 signature
-    if secp256r1.Verify(hash, r, s, x, y) {
-        // Signature is valid
-        return common.LeftPadBytes([]byte{1}, 32), nil
-    } else {
-        // Signature is invalid
-        return nil, nil
-    }
+	// Verify the secp256r1 signature
+	if secp256r1.Verify(hash, r, s, x, y) {
+		// Signature is valid
+		return common.LeftPadBytes([]byte{1}, 32), nil
+	} else {
+		// Signature is invalid
+		return nil, nil
+	}
 }
