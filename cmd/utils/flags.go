@@ -251,7 +251,7 @@ var (
 	}
 	OverrideStoryNostoi = &cli.Uint64Flag{
 		Name:     "override.nostoi",
-		Usage:    "Manually specify the Story nostoi fork timestamp, overriding the bundled setting",
+		Usage:    "Manually specify the Story nostoi fork block number, overriding the bundled setting",
 		Category: flags.EthCategory,
 	}
 	OverrideVerkle = &cli.Uint64Flag{

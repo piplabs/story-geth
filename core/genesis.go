@@ -282,7 +282,7 @@ func SetupGenesisBlockWithOverride(db ethdb.Database, triedb *triedb.Database, g
 				config.VerkleTime = overrides.OverrideVerkle
 			}
 			if overrides != nil && overrides.OverrideStoryNostoi != nil {
-				config.NostoiTime = overrides.OverrideStoryNostoi
+				config.NostoiBlock = new(big.Int).SetUint64(*overrides.OverrideStoryNostoi)
 			}
 		}
 	}
