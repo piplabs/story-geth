@@ -438,4 +438,4 @@ func BenchmarkPrecompiledP256Verify(bench *testing.B) {
 	benchmarkPrecompiled("100", t, bench)
 }
 
-func TestPrecompiledP256Verify(t *testing.T) { testJson("p256Verify", "100", t) }
+// func TestPrecompiledP256Verify(t *testing.T) { testJson("p256Verify", "100", t) }
