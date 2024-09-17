@@ -10,6 +10,14 @@ import (
 	"github.com/ethereum/go-ethereum/log"
 )
 
+const (
+	ipGraphWriteGas        = 100
+	ipGraphReadGas         = 10
+	averageAncestorIpCount = 30
+	averageParentIpCount   = 4
+	intrinsicGas           = 100
+)
+
 var (
 	aclAddress                  = common.HexToAddress("0x680E66e4c7Df9133a7AFC1ed091089B32b89C4ae")
 	aclSlot                     = "af99b37fdaacca72ee7240cb1435cc9e498aee6ef4edc19c8cc0cd787f4e6800"
@@ -28,7 +36,36 @@ var (
 type ipGraph struct{}
 
 func (c *ipGraph) RequiredGas(input []byte) uint64 {
-	return uint64(1)
+	if len(input) < 4 {
+		return intrinsicGas
+	}
+
+	selector := input[:4]
+
+	switch {
+	case bytes.Equal(selector, addParentIpSelector):
+		return ipGraphWriteGas
+	case bytes.Equal(selector, hasParentIpSelector):
+		return ipGraphReadGas * averageParentIpCount
+	case bytes.Equal(selector, getParentIpsSelector):
+		return ipGraphReadGas * averageParentIpCount
+	case bytes.Equal(selector, getParentIpsCountSelector):
+		return ipGraphReadGas
+	case bytes.Equal(selector, getAncestorIpsSelector):
+		return ipGraphReadGas * averageAncestorIpCount * 2
+	case bytes.Equal(selector, getAncestorIpsCountSelector):
+		return ipGraphReadGas * averageParentIpCount * 2
+	case bytes.Equal(selector, hasAncestorIpsSelector):
+		return ipGraphReadGas * averageAncestorIpCount * 2
+	case bytes.Equal(selector, setRoyaltySelector):
+		return ipGraphWriteGas
+	case bytes.Equal(selector, getRoyaltySelector):
+		return ipGraphReadGas * averageAncestorIpCount * 2
+	case bytes.Equal(selector, getRoyaltyStackSelector):
+		return ipGraphReadGas * averageAncestorIpCount * 2
+	default:
+		return intrinsicGas
+	}
 }
 
 func (c *ipGraph) Run(evm *EVM, input []byte) ([]byte, error) {

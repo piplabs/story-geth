@@ -23,7 +23,48 @@ type ipGraphWithPolicyKind struct {
 }
 
 func (c *ipGraphWithPolicyKind) RequiredGas(input []byte) uint64 {
-	return c.ipGraph.RequiredGas(input)
+	if len(input) < 4 {
+		return 0
+	}
+	selector := input[:4]
+	switch {
+	case bytes.Equal(selector, addParentIpSelector):
+		return c.ipGraph.RequiredGas(input)
+	case bytes.Equal(selector, hasParentIpSelector):
+		return c.ipGraph.RequiredGas(input)
+	case bytes.Equal(selector, getParentIpsSelector):
+		return c.ipGraph.RequiredGas(input)
+	case bytes.Equal(selector, getParentIpsCountSelector):
+		return c.ipGraph.RequiredGas(input)
+	case bytes.Equal(selector, getAncestorIpsSelector):
+		return c.ipGraph.RequiredGas(input)
+	case bytes.Equal(selector, getAncestorIpsCountSelector):
+		return c.ipGraph.RequiredGas(input)
+	case bytes.Equal(selector, hasAncestorIpsSelector):
+		return c.ipGraph.RequiredGas(input)
+	case bytes.Equal(selector, setRoyaltyWithKindSelector):
+		return ipGraphWriteGas
+	case bytes.Equal(selector, getRoyaltyWithKindSelector):
+		royaltyPolicyKind := new(big.Int).SetBytes(getData(input, 64, 32))
+		if royaltyPolicyKind.Cmp(royaltyPolicyKindLAP) == 0 {
+			return ipGraphReadGas * (averageAncestorIpCount * 3)
+		} else if royaltyPolicyKind.Cmp(royaltyPolicyKindLRP) == 0 {
+			return ipGraphReadGas * (averageAncestorIpCount*2 + 2)
+		} else {
+			return intrinsicGas
+		}
+	case bytes.Equal(selector, getRoyaltyStackWithKindSelector):
+		royaltyPolicyKind := new(big.Int).SetBytes(getData(input, 64, 32))
+		if royaltyPolicyKind.Cmp(royaltyPolicyKindLAP) == 0 {
+			return ipGraphReadGas * (averageParentIpCount + 1)
+		} else if royaltyPolicyKind.Cmp(royaltyPolicyKindLRP) == 0 {
+			return ipGraphReadGas * (averageAncestorIpCount * 2)
+		} else {
+			return intrinsicGas
+		}
+	default:
+		return intrinsicGas
+	}
 }
 
 func (c *ipGraphWithPolicyKind) Run(evm *EVM, input []byte) ([]byte, error) {
@@ -197,7 +238,7 @@ func (c *ipGraphWithPolicyKind) getRoyaltyLrp(ipId, ancestorIpId common.Address,
 	log.Info("getRoyaltyLrp", "ipId", ipId, "ancestorIpId", ancestorIpId)
 
 	// Constants
-	hundredPercent := big.NewInt(10000) // Assuming royalties are represented in basis points (1% = 100)
+	hundredPercent := big.NewInt(100000000) // royalties are represented in basis points (1% = 1000000)
 
 	// Initialize result to accumulate the final royalty percentage
 	result := big.NewInt(0)
