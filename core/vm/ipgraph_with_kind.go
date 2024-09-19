@@ -104,6 +104,7 @@ func (c *ipGraphWithPolicyKind) Run(evm *EVM, input []byte) ([]byte, error) {
 	}
 }
 
+
 // Royalty has two kinds of policies: LAP and LRP.
 func (c *ipGraphWithPolicyKind) setRoyaltyWithKind(input []byte, evm *EVM, ipGraphAddress common.Address) ([]byte, error) {
 	allowed, err := c.ipGraph.isAllowed(evm)

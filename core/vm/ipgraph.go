@@ -36,7 +36,36 @@ var (
 type ipGraph struct{}
 
 func (c *ipGraph) RequiredGas(input []byte) uint64 {
-	return uint64(1)
+	if len(input) < 4 {
+		return intrinsicGas
+	}
+
+	selector := input[:4]
+
+	switch {
+	case bytes.Equal(selector, addParentIpSelector):
+		return ipGraphWriteGas
+	case bytes.Equal(selector, hasParentIpSelector):
+		return ipGraphReadGas * averageParentIpCount
+	case bytes.Equal(selector, getParentIpsSelector):
+		return ipGraphReadGas * averageParentIpCount
+	case bytes.Equal(selector, getParentIpsCountSelector):
+		return ipGraphReadGas
+	case bytes.Equal(selector, getAncestorIpsSelector):
+		return ipGraphReadGas * averageAncestorIpCount * 2
+	case bytes.Equal(selector, getAncestorIpsCountSelector):
+		return ipGraphReadGas * averageParentIpCount * 2
+	case bytes.Equal(selector, hasAncestorIpsSelector):
+		return ipGraphReadGas * averageAncestorIpCount * 2
+	case bytes.Equal(selector, setRoyaltySelector):
+		return ipGraphWriteGas
+	case bytes.Equal(selector, getRoyaltySelector):
+		return ipGraphReadGas * averageAncestorIpCount * 2
+	case bytes.Equal(selector, getRoyaltyStackSelector):
+		return ipGraphReadGas * averageAncestorIpCount * 2
+	default:
+		return intrinsicGas
+	}
 }
 
 func (c *ipGraph) Run(evm *EVM, input []byte) ([]byte, error) {
