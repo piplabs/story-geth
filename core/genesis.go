@@ -624,6 +624,11 @@ func DeveloperGenesisBlock(gasLimit uint64, faucet *common.Address) *Genesis {
 			common.BytesToAddress([]byte{8}):  {Balance: big.NewInt(1)}, // ECPairing
 			common.BytesToAddress([]byte{9}):  {Balance: big.NewInt(1)}, // BLAKE2b
 			common.BytesToAddress([]byte{26}): {Balance: big.NewInt(1)}, // ipGraph
+			common.BytesToAddress([]byte{27}): {Balance: big.NewInt(1)}, // ipGraphWithKind
+			// allocate 100 eth gas token to address 0x3fab184622dc19b6109349b94811493bf2a45362
+			common.HexToAddress("0x3fab184622dc19b6109349b94811493bf2a45362"): {Balance: new(big.Int).Mul(big.NewInt(100), big.NewInt(params.Ether))},
+			common.HexToAddress("0xf398C12A45Bc409b6C652E25bb0a3e702492A4ab"): {Balance: new(big.Int).Mul(big.NewInt(100), big.NewInt(params.Ether))},
+			common.HexToAddress("0x4a311575D3dD3e4c70A7C8A3B4C2056e26427Dbf"): {Balance: new(big.Int).Mul(big.NewInt(100), big.NewInt(params.Ether))},
 
 			// Pre-deploy EIP-4788 system contract
 			params.BeaconRootsAddress: {Nonce: 1, Code: params.BeaconRootsCode, Balance: common.Big0},
