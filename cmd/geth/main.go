@@ -156,7 +156,6 @@ var (
 		utils.BeaconGenesisRootFlag,
 		utils.BeaconGenesisTimeFlag,
 		utils.BeaconCheckpointFlag,
-		utils.CollectWitnessFlag,
 		utils.Override4844Flag,
 		utils.GuardianEnabledFlag,
 		utils.GuardianFilterFilePathFlag,
