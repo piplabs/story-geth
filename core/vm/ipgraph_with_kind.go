@@ -20,31 +20,34 @@ var (
 
 type ipGraphWithPolicyKind struct {
 	ipGraph
+	ipGraphDynamicGas
 }
 
 func (c *ipGraphWithPolicyKind) RequiredGas(input []byte) uint64 {
+	log.Info("ipGraphWithPolicyKind.RequiredGas", "input", input)
 	if len(input) < 4 {
 		return 0
 	}
 	selector := input[:4]
 	switch {
 	case bytes.Equal(selector, addParentIpSelector):
-		return c.ipGraph.RequiredGas(input)
+		return c.ipGraphDynamicGas.RequiredGas(input)
 	case bytes.Equal(selector, hasParentIpSelector):
-		return c.ipGraph.RequiredGas(input)
+		return c.ipGraphDynamicGas.RequiredGas(input)
 	case bytes.Equal(selector, getParentIpsSelector):
-		return c.ipGraph.RequiredGas(input)
+		return c.ipGraphDynamicGas.RequiredGas(input)
 	case bytes.Equal(selector, getParentIpsCountSelector):
-		return c.ipGraph.RequiredGas(input)
+		return c.ipGraphDynamicGas.RequiredGas(input)
 	case bytes.Equal(selector, getAncestorIpsSelector):
-		return c.ipGraph.RequiredGas(input)
+		return c.ipGraphDynamicGas.RequiredGas(input)
 	case bytes.Equal(selector, getAncestorIpsCountSelector):
-		return c.ipGraph.RequiredGas(input)
+		return c.ipGraphDynamicGas.RequiredGas(input)
 	case bytes.Equal(selector, hasAncestorIpsSelector):
-		return c.ipGraph.RequiredGas(input)
+		return c.ipGraphDynamicGas.RequiredGas(input)
 	case bytes.Equal(selector, setRoyaltyWithKindSelector):
 		return ipGraphWriteGas
 	case bytes.Equal(selector, getRoyaltyWithKindSelector):
+		log.Info("getRoyaltyWithKindSelector")
 		royaltyPolicyKind := new(big.Int).SetBytes(getData(input, 64, 32))
 		if royaltyPolicyKind.Cmp(royaltyPolicyKindLAP) == 0 {
 			return ipGraphReadGas * (averageAncestorIpCount * 3)
@@ -54,7 +57,8 @@ func (c *ipGraphWithPolicyKind) RequiredGas(input []byte) uint64 {
 			return intrinsicGas
 		}
 	case bytes.Equal(selector, getRoyaltyStackWithKindSelector):
-		royaltyPolicyKind := new(big.Int).SetBytes(getData(input, 64, 32))
+		log.Info("getRoyaltyStackWithKindSelector")
+		royaltyPolicyKind := new(big.Int).SetBytes(getData(input, 32, 32))
 		if royaltyPolicyKind.Cmp(royaltyPolicyKindLAP) == 0 {
 			return ipGraphReadGas * (averageParentIpCount + 1)
 		} else if royaltyPolicyKind.Cmp(royaltyPolicyKindLRP) == 0 {
@@ -63,13 +67,14 @@ func (c *ipGraphWithPolicyKind) RequiredGas(input []byte) uint64 {
 			return intrinsicGas
 		}
 	default:
+		log.Info("ipGraphWithPolicyKind.RequiredGas", "selector", selector, "Default")
 		return intrinsicGas
 	}
 }
 
 func (c *ipGraphWithPolicyKind) Run(evm *EVM, input []byte) ([]byte, error) {
 	ipGraphAddress := common.HexToAddress("0x000000000000000000000000000000000000001B")
-	log.Info("ipGraph.Run", "input", input)
+	log.Info("ipGraph.Run", "ipGraphAddress", ipGraphAddress, "input", input)
 
 	if len(input) < 4 {
 		return nil, fmt.Errorf("input too short")
@@ -94,12 +99,16 @@ func (c *ipGraphWithPolicyKind) Run(evm *EVM, input []byte) ([]byte, error) {
 	case bytes.Equal(selector, hasAncestorIpsSelector):
 		return c.ipGraph.hasAncestorIp(args, evm, ipGraphAddress)
 	case bytes.Equal(selector, setRoyaltyWithKindSelector):
+		log.Info("ipGraph.Run.setRoyaltyWithKindSelector")
 		return c.setRoyaltyWithKind(args, evm, ipGraphAddress)
 	case bytes.Equal(selector, getRoyaltyWithKindSelector):
+		log.Info("ipGraph.Run.getRoyaltyWithKindSelector")
 		return c.getRoyaltyWithKind(args, evm, ipGraphAddress)
 	case bytes.Equal(selector, getRoyaltyStackWithKindSelector):
+		log.Info("ipGraph.Run.getRoyaltyStackWithKindSelector")
 		return c.getRoyaltyStackWithKind(args, evm, ipGraphAddress)
 	default:
+		log.Info("ipGraph.Run.Default")
 		return nil, fmt.Errorf("unknown selector")
 	}
 }
