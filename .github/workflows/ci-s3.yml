@@ -4,9 +4,9 @@ on:
   push:
     branches:
       - main
-  # pull_request:
-  #   branches:
-  #     - main
+  pull_request:
+    branches:
+      - main
 
 permissions:
   id-token: write
@@ -92,6 +92,7 @@ jobs:
           export TZ=America/Los_Angeles
           IFS="-" read -r GOOS GOARCH <<< "${{ matrix.platform }}"
           TIMESTAMP=$(date +%Y%m%d%H%M%S)
+          echo "Timestamp: $TIMESTAMP"
           HUMAN_READABLE_VERSION=$(date)
           COMMIT_HASH=$(git rev-parse --short HEAD)
           FOLDER_NAME="geth-${{ matrix.platform }}-${VERSION}-${COMMIT_HASH}"
