@@ -273,6 +273,7 @@ func (c *ipGraph) hasAncestorIp(input []byte, evm *EVM, ipGraphAddress common.Ad
 }
 
 func (c *ipGraph) findAncestors(ipId common.Address, evm *EVM, ipGraphAddress common.Address) map[common.Address]struct{} {
+	log.Info("findAncestors", "ipId", ipId, "ipGraphAddress", ipGraphAddress)
 	ancestors := make(map[common.Address]struct{})
 	var stack []common.Address
 	stack = append(stack, ipId)
@@ -282,16 +283,19 @@ func (c *ipGraph) findAncestors(ipId common.Address, evm *EVM, ipGraphAddress co
 
 		currentLengthHash := evm.StateDB.GetState(ipGraphAddress, common.BytesToHash(node.Bytes()))
 		currentLength := currentLengthHash.Big()
+		log.Info("findAncestors", "ipGraphAddress", ipGraphAddress, "node", node, "currentLength", currentLength)
 
 		for i := uint64(0); i < currentLength.Uint64(); i++ {
 			slot := crypto.Keccak256Hash(node.Bytes()).Big()
 			slot.Add(slot, new(big.Int).SetUint64(i))
 			storedParent := evm.StateDB.GetState(ipGraphAddress, common.BigToHash(slot))
+			log.Info("findAncestors", "slot", slot, "storedParent", storedParent)
 			parentIpId := common.BytesToAddress(storedParent.Bytes())
-
+			log.Info("findAncestors", "parentIpId", parentIpId)
 			if _, found := ancestors[parentIpId]; !found {
 				ancestors[parentIpId] = struct{}{}
 				stack = append(stack, parentIpId)
+				log.Info("findAncestors", "added", parentIpId)
 			}
 		}
 	}
