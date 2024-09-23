@@ -113,7 +113,6 @@ func (c *ipGraphWithPolicyKind) Run(evm *EVM, input []byte) ([]byte, error) {
 	}
 }
 
-
 // Royalty has two kinds of policies: LAP and LRP.
 func (c *ipGraphWithPolicyKind) setRoyaltyWithKind(input []byte, evm *EVM, ipGraphAddress common.Address) ([]byte, error) {
 	allowed, err := c.ipGraph.isAllowed(evm)
@@ -237,6 +236,7 @@ func (c *ipGraphWithPolicyKind) getRoyaltyLap(ipId, ancestorIpId common.Address,
 	ancestors := c.ipGraph.findAncestors(ipId, evm, ipGraphAddress)
 	totalRoyalty := big.NewInt(0)
 	for ancestor := range ancestors {
+		log.Info("getRoyaltyLap", "found_ancestor", ancestor)
 		if ancestor == ancestorIpId {
 			// Traverse the graph to accumulate royalties
 			totalRoyalty.Add(totalRoyalty, c.getRoyaltyLapForAncestor(ipId, ancestorIpId, evm, ipGraphAddress))
@@ -343,6 +343,7 @@ func (c *ipGraphWithPolicyKind) getRoyaltyLrp(ipId, ancestorIpId common.Address,
 }
 
 func (c *ipGraphWithPolicyKind) getRoyaltyLapForAncestor(ipId, ancestorIpId common.Address, evm *EVM, ipGraphAddress common.Address) *big.Int {
+	log.Info("getRoyaltyLapForAncestor", "ipId", ipId, "ancestorIpId", ancestorIpId, "ipGraphAddress", ipGraphAddress)
 	ancestors := make(map[common.Address]struct{})
 	totalRoyalty := big.NewInt(0)
 	var stack []common.Address
@@ -366,11 +367,15 @@ func (c *ipGraphWithPolicyKind) getRoyaltyLapForAncestor(ipId, ancestorIpId comm
 			}
 
 			if parentIpId == ancestorIpId {
+				log.Info("getRoyaltyLapForAncestor", "ipId", ipId, "ancestorIpId", ancestorIpId, "node", node, "parentIpId", parentIpId)
 				royaltySlot := crypto.Keccak256Hash(node.Bytes(), ancestorIpId.Bytes(), royaltyPolicyKindLAP.Bytes()).Big()
+				log.Info("getRoyaltyLapForAncestor", "royaltySlot", royaltySlot)
 				royalty := evm.StateDB.GetState(ipGraphAddress, common.BigToHash(royaltySlot)).Big()
+				log.Info("getRoyaltyLapForAncestor", "royalty", royalty)
 				totalRoyalty.Add(totalRoyalty, royalty)
 			}
 		}
 	}
+	log.Info("getRoyaltyLapForAncestor", "totalRoyalty", totalRoyalty)
 	return totalRoyalty
 }
