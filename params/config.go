@@ -31,7 +31,7 @@ var (
 	SepoliaGenesisHash = common.HexToHash("0x25a5cc106eea7138acab33231d7160d69cb777ee0c2c553fcddf5138993e6dd9")
 	GoerliGenesisHash  = common.HexToHash("0xbf7e331f7f7c1dd2e05159666b3bf8bc7a8a3a9eb1d518969eab529dd9b88c1a")
 	IliadGenesisHash   = common.HexToHash("0x5e577bc1f9b8129bcf43f2457c9c7c5c10f0e9e412a83669ba1008927d608c26")
-	LocalGenesisHash   = common.HexToHash("0xc070ebc5e40309e00af74260326aaafe320bee14bf131a4852f73b089b592123")
+	LocalGenesisHash   = common.HexToHash("0x5e577bc1f9b8129bcf43f2457c9c7c5c10f0e9e412a83669ba1008927d608c26")
 )
 
 func newUint64(val uint64) *uint64 { return &val }
