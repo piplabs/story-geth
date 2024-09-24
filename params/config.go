@@ -179,7 +179,7 @@ var (
 		TerminalTotalDifficultyPassed: true,
 		ShanghaiTime:                  newUint64(0),
 		CancunTime:                    newUint64(0),
-		NostoiBlock:                   big.NewInt(0),
+		NostoiBlock:                   big.NewInt(10),
 	}
 
 	// AllEthashProtocolChanges contains every protocol change (EIPs) introduced
