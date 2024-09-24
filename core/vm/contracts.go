@@ -55,7 +55,6 @@ var PrecompiledContractsHomestead = map[common.Address]PrecompiledContract{
 	common.BytesToAddress([]byte{0x2}):  &sha256hash{},
 	common.BytesToAddress([]byte{0x3}):  &ripemd160hash{},
 	common.BytesToAddress([]byte{0x4}):  &dataCopy{},
-	common.BytesToAddress([]byte{0x1a}): &ipGraph{},
 }
 
 // PrecompiledContractsByzantium contains the default set of pre-compiled Ethereum
@@ -69,7 +68,6 @@ var PrecompiledContractsByzantium = map[common.Address]PrecompiledContract{
 	common.BytesToAddress([]byte{0x6}):  &bn256AddByzantium{},
 	common.BytesToAddress([]byte{0x7}):  &bn256ScalarMulByzantium{},
 	common.BytesToAddress([]byte{0x8}):  &bn256PairingByzantium{},
-	common.BytesToAddress([]byte{0x1a}): &ipGraph{},
 }
 
 // PrecompiledContractsIstanbul contains the default set of pre-compiled Ethereum
@@ -84,7 +82,6 @@ var PrecompiledContractsIstanbul = map[common.Address]PrecompiledContract{
 	common.BytesToAddress([]byte{0x7}):  &bn256ScalarMulIstanbul{},
 	common.BytesToAddress([]byte{0x8}):  &bn256PairingIstanbul{},
 	common.BytesToAddress([]byte{0x9}):  &blake2F{},
-	common.BytesToAddress([]byte{0x1a}): &ipGraph{},
 }
 
 // PrecompiledContractsBerlin contains the default set of pre-compiled Ethereum
@@ -99,7 +96,6 @@ var PrecompiledContractsBerlin = map[common.Address]PrecompiledContract{
 	common.BytesToAddress([]byte{0x7}):  &bn256ScalarMulIstanbul{},
 	common.BytesToAddress([]byte{0x8}):  &bn256PairingIstanbul{},
 	common.BytesToAddress([]byte{0x9}):  &blake2F{},
-	common.BytesToAddress([]byte{0x1a}): &ipGraph{},
 }
 
 // PrecompiledContractsCancun contains the default set of pre-compiled Ethereum
