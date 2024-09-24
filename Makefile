@@ -10,7 +10,7 @@ GORUN = go run
 
 #? geth: Build geth.
 geth:
-	$(GORUN) build/ci.go install ./cmd/geth
+	GOOS=$(GOOS) GOARCH=$(GOARCH) go build -o $(GOBIN)/geth ./cmd/geth
 	@echo "Done building."
 	@echo "Run \"$(GOBIN)/geth\" to launch geth."
 
