@@ -158,7 +158,7 @@ var (
 		TerminalTotalDifficultyPassed: true,
 		ShanghaiTime:                  newUint64(0),
 		CancunTime:                    newUint64(0),
-		NostoiBlock:                   big.NewInt(928975), // Estimated timestamp for Nostoi fork (TO CHANGE)
+		NostoiBlock:                   big.NewInt(1069000), // Estimated timestamp for Nostoi fork (TO CHANGE)
 	}
 
 	LocalChainConfig = &ChainConfig{
