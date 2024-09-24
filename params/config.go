@@ -30,7 +30,7 @@ var (
 	HoleskyGenesisHash = common.HexToHash("0xb5f7f912443c940f21fd611f12828d75b534364ed9e95ca4e307729a4661bde4")
 	SepoliaGenesisHash = common.HexToHash("0x25a5cc106eea7138acab33231d7160d69cb777ee0c2c553fcddf5138993e6dd9")
 	GoerliGenesisHash  = common.HexToHash("0xbf7e331f7f7c1dd2e05159666b3bf8bc7a8a3a9eb1d518969eab529dd9b88c1a")
-	IliadGenesisHash   = common.HexToHash("0xf688549151cee34b707abd49c32c019aefb766d701488dd0c668601a91a67978")
+	IliadGenesisHash   = common.HexToHash("0x5e577bc1f9b8129bcf43f2457c9c7c5c10f0e9e412a83669ba1008927d608c26")
 	LocalGenesisHash   = common.HexToHash("0xc070ebc5e40309e00af74260326aaafe320bee14bf131a4852f73b089b592123")
 )
 
@@ -141,7 +141,7 @@ var (
 	}
 
 	IliadChainConfig = &ChainConfig{
-		ChainID:                       big.NewInt(1513),
+		ChainID:                       big.NewInt(1512),
 		HomesteadBlock:                big.NewInt(0),
 		EIP150Block:                   big.NewInt(0),
 		EIP155Block:                   big.NewInt(0),
