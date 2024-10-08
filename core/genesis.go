@@ -248,8 +248,10 @@ func (e *GenesisMismatchError) Error() string {
 type ChainOverrides struct {
 	OverrideCancun *uint64
 	OverrideVerkle *uint64
+
 	// Story iliad
 	OverrideStoryNostoi *uint64
+	Override4844        bool
 }
 
 // SetupGenesisBlock writes or updates the genesis block in db.
@@ -283,6 +285,9 @@ func SetupGenesisBlockWithOverride(db ethdb.Database, triedb *triedb.Database, g
 			}
 			if overrides != nil && overrides.OverrideStoryNostoi != nil {
 				config.NostoiBlock = new(big.Int).SetUint64(*overrides.OverrideStoryNostoi)
+			}
+			if overrides != nil && overrides.Override4844 {
+				config.Enable4844 = overrides.Override4844
 			}
 		}
 	}

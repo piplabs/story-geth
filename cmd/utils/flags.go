@@ -974,6 +974,12 @@ Please note that --` + MetricsHTTPFlag.Name + ` must be set to start the server.
 		Value:    metrics.DefaultConfig.InfluxDBOrganization,
 		Category: flags.MetricsCategory,
 	}
+
+	Override4844Flag = &cli.BoolFlag{
+		Name:     "override.4844",
+		Usage:    "Enable 4844 blob transactions",
+		Category: flags.EthCategory,
+	}
 )
 
 var (

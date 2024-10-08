@@ -417,6 +417,9 @@ type ChainConfig struct {
 	// Various consensus engines
 	Ethash *EthashConfig `json:"ethash,omitempty"`
 	Clique *CliqueConfig `json:"clique,omitempty"`
+
+	// 4844 Overrides
+	Enable4844 bool `json:"enable4844,omitempty"`
 }
 
 // EthashConfig is the consensus engine configs for proof-of-work based sealing.
@@ -818,6 +821,11 @@ func (c *ChainConfig) BaseFeeChangeDenominator() uint64 {
 // ElasticityMultiplier bounds the maximum gas limit an EIP-1559 block may have.
 func (c *ChainConfig) ElasticityMultiplier() uint64 {
 	return DefaultElasticityMultiplier
+}
+
+// Is4844Enabled checks whether blob transactions are supported.
+func (c *ChainConfig) Is4844Enabled() bool {
+	return c.Enable4844
 }
 
 // LatestFork returns the latest time-based fork that would be active for the given time.

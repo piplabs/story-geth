@@ -183,6 +183,11 @@ func makeFullNode(ctx *cli.Context) *node.Node {
 		cfg.Eth.OverrideStoryNostoi = &v
 	}
 
+	if ctx.IsSet(utils.Override4844Flag.Name) {
+		override4844 := ctx.Bool(utils.Override4844Flag.Name)
+		cfg.Eth.Enable4844 = override4844
+	}
+
 	backend, eth := utils.RegisterEthService(stack, &cfg.Eth)
 
 	// Create gauge with geth system and build information
