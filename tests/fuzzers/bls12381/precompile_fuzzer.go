@@ -19,6 +19,11 @@ package bls
 import (
 	"bytes"
 	"fmt"
+	"github.com/ethereum/go-ethereum/core/rawdb"
+	"github.com/ethereum/go-ethereum/core/state"
+	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/params"
+	"github.com/holiman/uint256"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
@@ -70,6 +75,11 @@ func checkInput(id byte, inputLen int) bool {
 //
 // other values are reserved for future use.
 func fuzz(id byte, data []byte) int {
+	vmctx := vm.BlockContext{
+		Transfer: func(vm.StateDB, common.Address, common.Address, *uint256.Int) {},
+	}
+	statedb, _ := state.New(types.EmptyRootHash, state.NewDatabase(rawdb.NewMemoryDatabase()), nil)
+	evm := vm.NewEVM(vmctx, vm.TxContext{}, statedb, params.AllEthashProtocolChanges, vm.Config{})
 	// Even on bad input, it should not crash, so we still test the gas calc
 	precompile := vm.PrecompiledContractsBLS[common.BytesToAddress([]byte{id})]
 	gas := precompile.RequiredGas(data)
@@ -82,7 +92,7 @@ func fuzz(id byte, data []byte) int {
 	}
 	cpy := make([]byte, len(data))
 	copy(cpy, data)
-	_, err := precompile.Run(cpy)
+	_, err := precompile.Run(evm, cpy)
 	if !bytes.Equal(cpy, data) {
 		panic(fmt.Sprintf("input data modified, precompile %d: %x %x", id, data, cpy))
 	}
