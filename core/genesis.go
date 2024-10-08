@@ -248,6 +248,8 @@ func (e *GenesisMismatchError) Error() string {
 type ChainOverrides struct {
 	OverrideCancun *uint64
 	OverrideVerkle *uint64
+	// Story iliad
+	OverrideStoryNostoi *uint64
 }
 
 // SetupGenesisBlock writes or updates the genesis block in db.
@@ -278,6 +280,9 @@ func SetupGenesisBlockWithOverride(db ethdb.Database, triedb *triedb.Database, g
 			}
 			if overrides != nil && overrides.OverrideVerkle != nil {
 				config.VerkleTime = overrides.OverrideVerkle
+			}
+			if overrides != nil && overrides.OverrideStoryNostoi != nil {
+				config.NostoiBlock = new(big.Int).SetUint64(*overrides.OverrideStoryNostoi)
 			}
 		}
 	}
@@ -624,7 +629,7 @@ func DeveloperGenesisBlock(gasLimit uint64, faucet *common.Address) *Genesis {
 			common.BytesToAddress([]byte{8}):  {Balance: big.NewInt(1)}, // ECPairing
 			common.BytesToAddress([]byte{9}):  {Balance: big.NewInt(1)}, // BLAKE2b
 			common.BytesToAddress([]byte{26}): {Balance: big.NewInt(1)}, // ipGraph
-
+			common.BytesToAddress([]byte{27}): {Balance: big.NewInt(1)}, // ipGraphWithKind
 			// Pre-deploy EIP-4788 system contract
 			params.BeaconRootsAddress: {Nonce: 1, Code: params.BeaconRootsCode, Balance: common.Big0},
 		},

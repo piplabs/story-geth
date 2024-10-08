@@ -178,6 +178,10 @@ func makeFullNode(ctx *cli.Context) *node.Node {
 		v := ctx.Uint64(utils.OverrideVerkle.Name)
 		cfg.Eth.OverrideVerkle = &v
 	}
+	if ctx.IsSet(utils.OverrideStoryNostoi.Name) {
+		v := ctx.Uint64(utils.OverrideStoryNostoi.Name)
+    cfg.Eth.OverrideStoryNostoi = &v
+	}
 
 	backend, eth := utils.RegisterEthService(stack, &cfg.Eth)
 
