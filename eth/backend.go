@@ -220,6 +220,7 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 	if config.OverrideStoryNostoi != nil {
 		overrides.OverrideStoryNostoi = config.OverrideStoryNostoi
 	}
+
 	// TODO (MariusVanDerWijden) get rid of shouldPreserve in a follow-up PR
 	shouldPreserve := func(header *types.Header) bool {
 		return false
@@ -233,14 +234,20 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 	if config.BlobPool.Datadir != "" {
 		config.BlobPool.Datadir = stack.ResolvePath(config.BlobPool.Datadir)
 	}
-	blobPool := blobpool.New(config.BlobPool, eth.blockchain)
 
 	if config.TxPool.Journal != "" {
 		config.TxPool.Journal = stack.ResolvePath(config.TxPool.Journal)
 	}
 	legacyPool := legacypool.New(config.TxPool, eth.blockchain)
 
-	eth.txPool, err = txpool.New(config.TxPool.PriceLimit, eth.blockchain, []txpool.SubPool{legacyPool, blobPool})
+	txPools := []txpool.SubPool{legacyPool}
+	if eth.BlockChain().Config().Is4844Enabled() {
+		blobPool := blobpool.New(config.BlobPool, eth.blockchain)
+		txPools = append(txPools, blobPool)
+	}
+	priceLimit := uint64(config.TxPool.PriceLimit)
+	eth.txPool, err = txpool.New(priceLimit, eth.blockchain, txPools)
+
 	if err != nil {
 		return nil, err
 	}

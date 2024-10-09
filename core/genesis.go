@@ -248,6 +248,7 @@ func (e *GenesisMismatchError) Error() string {
 type ChainOverrides struct {
 	OverrideCancun *uint64
 	OverrideVerkle *uint64
+
 	// Story iliad
 	OverrideStoryNostoi *uint64
 }
