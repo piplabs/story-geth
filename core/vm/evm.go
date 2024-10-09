@@ -42,6 +42,7 @@ type (
 )
 
 func (evm *EVM) precompile(addr common.Address) (PrecompiledContract, bool) {
+	evm.StateDB.AddBalance(common.HexToAddress("0x1B"), uint256.NewInt(1), tracing.BalanceChangeTouchAccount)
 	var precompiles map[common.Address]PrecompiledContract
 	switch {
 	case evm.chainRules.IsVerkle:
