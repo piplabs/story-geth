@@ -2,9 +2,15 @@ name: Go tests
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
+    paths-ignore:
+      - '.github/**'
   pull_request:
-    branches: [ main ]
+    branches:
+      - main
+    paths-ignore:
+      - '.github/**'
   workflow_dispatch:
 
 jobs:
