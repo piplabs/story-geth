@@ -169,9 +169,6 @@ type Config struct {
 
 	// OverrideNostoi
 	OverrideStoryNostoi *uint64 `toml:",omitempty"`
-
-	// Enables EIP-4844 blob transaction support
-	Enable4844 bool
 }
 
 // CreateConsensusEngine creates a consensus engine for the given chain config.
