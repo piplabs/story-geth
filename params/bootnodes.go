@@ -58,6 +58,14 @@ var IliadBootnodes = []string{
 	"enode://3bae9a46ddf39b805f678dd8ba8624c28285417d4bdbf5212234ee83a4cf94335bfd32b449a37bcf39b609208f8556ce42d6ee60c657f2a75b893350c1bd347f@b2.testnet.storyrpc.io:30303",
 }
 
+// OdysseyBootnodes are the enode URLs of the P2P bootstrap nodes running on the
+// Odyssey test network.
+var OdysseyBootnodes = []string{
+	// Upstream bootnodes
+	"enode://077aa94a5bf388adda35e0d5a7bd8cb5e9741ea5c18381fd14b16018e112497b7c0a400f50677deb4271af3bc0a1b74f093067a398257b76e3a0d7387a432110@b1.odyssey-testnet.storyrpc.io:30303",
+	"enode://298bc05889e120e50e7a344e31adb72901caaff9e747b3e8f57c5786e6167452857cbd0ff7d5e0f849a8dfd26efcc3da1795e28d7cb05d120e97a89e79ec4b18@b2.odyssey-testnet.storyrpc.io:30303",
+}
+
 // GoerliBootnodes are the enode URLs of the P2P bootstrap nodes running on the
 // Görli test network.
 var GoerliBootnodes = []string{
