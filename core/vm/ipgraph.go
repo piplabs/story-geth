@@ -19,8 +19,8 @@ const (
 )
 
 var (
-	royaltyPolicyKindLAP        = big.NewInt(0)
-	royaltyPolicyKindLRP        = big.NewInt(1)
+	royaltyPolicyKindLAP        = big.NewInt(0)         // Liquid Absolute Percentage (LAP) Royalty Policy
+	royaltyPolicyKindLRP        = big.NewInt(1)         // Liquid Relative Percentage (LRP) Royalty Policy
 	hundredPercent              = big.NewInt(100000000) // 100% in the integer format
 	ipGraphAddress              = common.HexToAddress("0x0000000000000000000000000000000000000101")
 	aclAddress                  = common.HexToAddress("0x680E66e4c7Df9133a7AFC1ed091089B32b89C4ae")
@@ -40,6 +40,7 @@ var (
 type ipGraph struct{}
 
 func (c *ipGraph) RequiredGas(input []byte) uint64 {
+	// Smart contract function's selector is the first 4 bytes of the input
 	if len(input) < 4 {
 		return intrinsicGas
 	}
