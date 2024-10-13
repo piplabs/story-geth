@@ -1,4 +1,4 @@
-name: Build and Upload geth Binary
+name: Build and Upload geth Binary to ECR
 
 on:
   workflow_dispatch:
