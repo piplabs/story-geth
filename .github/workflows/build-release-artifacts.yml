@@ -53,6 +53,5 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           tag: ${{ github.event.release.tag_name }}
           file: |
-            ./build/bin/geth-${{ matrix.platform }}
-            ./build/bin/geth-${{ matrix.platform }}.sha256
-          file_glob: false
+            ./build/bin/geth-${{ matrix.platform }}*
+          file_glob: true
