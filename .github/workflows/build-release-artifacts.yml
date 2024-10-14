@@ -43,6 +43,10 @@ jobs:
           echo "Building for $GOOS/$GOARCH..."
           env GOOS=$GOOS GOARCH=$GOARCH go build -o $output_name ./cmd/geth
 
+      - name: Calculate checksum
+        run: |
+          sha256sum ./build/bin/geth-${{ matrix.platform }} > ./build/bin/geth-${{ matrix.platform }}.sha256
+
       - name: Upload binaries and source code to GitHub Release
         uses: svenstaro/upload-release-action@v2
         with:
@@ -50,4 +54,5 @@ jobs:
           tag: ${{ github.event.release.tag_name }}
           file: |
             ./build/bin/geth-${{ matrix.platform }}
+            ./build/bin/geth-${{ matrix.platform }}.sha256
           file_glob: false
