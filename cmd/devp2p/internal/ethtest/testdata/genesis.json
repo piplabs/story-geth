@@ -19,7 +19,8 @@
     "cancunTime": 840,
     "terminalTotalDifficulty": 9454784,
     "terminalTotalDifficultyPassed": true,
-    "ethash": {}
+    "ethash": {},
+    "enable4844": true
   },
   "nonce": "0x0",
   "timestamp": "0x0",
