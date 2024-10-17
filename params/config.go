@@ -329,6 +329,7 @@ var (
 		TerminalTotalDifficultyPassed: true,
 		Ethash:                        new(EthashConfig),
 		Clique:                        nil,
+		Enable4844:                    true,
 	}
 
 	// NonActivatedConfig defines the chain configuration without activating
