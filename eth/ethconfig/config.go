@@ -162,6 +162,9 @@ type Config struct {
 
 	// OverrideVerkle (TODO: remove after the fork)
 	OverrideVerkle *uint64 `toml:",omitempty"`
+
+	// Enables EIP-4844 blob transaction support
+	Enable4844 bool
 }
 
 // CreateConsensusEngine creates a consensus engine for the given chain config.

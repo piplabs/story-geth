@@ -19,6 +19,7 @@
     "cancunTime": 840,
     "terminalTotalDifficulty": 9454784,
     "ethash": {},
+    "enable4844": true,
     "blobSchedule": {
       "cancun": {
         "target": 3,

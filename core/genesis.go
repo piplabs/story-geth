@@ -262,6 +262,8 @@ func (e *GenesisMismatchError) Error() string {
 type ChainOverrides struct {
 	OverridePrague *uint64
 	OverrideVerkle *uint64
+
+	Override4844 bool
 }
 
 // apply applies the chain overrides on the supplied chain config.

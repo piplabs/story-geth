@@ -69,6 +69,7 @@ var (
 			Cancun: DefaultCancunBlobConfig,
 			Prague: DefaultPragueBlobConfig,
 		},
+		Enable4844: true,
 	}
 	// HoleskyChainConfig contains the chain parameters to run a node on the Holesky test network.
 	HoleskyChainConfig = &ChainConfig{
@@ -99,6 +100,7 @@ var (
 			Cancun: DefaultCancunBlobConfig,
 			Prague: DefaultPragueBlobConfig,
 		},
+		Enable4844: true,
 	}
 	// SepoliaChainConfig contains the chain parameters to run a node on the Sepolia test network.
 	SepoliaChainConfig = &ChainConfig{
@@ -159,6 +161,7 @@ var (
 			Cancun: DefaultCancunBlobConfig,
 			Prague: DefaultPragueBlobConfig,
 		},
+		Enable4844: true,
 	}
 
 	IliadChainConfig = &ChainConfig{
@@ -178,6 +181,7 @@ var (
 		TerminalTotalDifficulty: big.NewInt(0),
 		ShanghaiTime:            newUint64(0),
 		CancunTime:              newUint64(0),
+		Enable4844:              false,
 	}
 
 	LocalChainConfig = &ChainConfig{
@@ -197,6 +201,7 @@ var (
 		TerminalTotalDifficulty: big.NewInt(0),
 		ShanghaiTime:            newUint64(0),
 		CancunTime:              newUint64(0),
+		Enable4844:              false,
 	}
 
 	// AllEthashProtocolChanges contains every protocol change (EIPs) introduced
@@ -227,6 +232,7 @@ var (
 		VerkleTime:              nil,
 		Ethash:                  new(EthashConfig),
 		Clique:                  nil,
+		Enable4844:              true,
 	}
 
 	AllDevChainProtocolChanges = &ChainConfig{
@@ -252,6 +258,7 @@ var (
 			Cancun: DefaultCancunBlobConfig,
 			Prague: DefaultPragueBlobConfig,
 		},
+		Enable4844: true,
 	}
 
 	// AllCliqueProtocolChanges contains every protocol change (EIPs) introduced
@@ -282,6 +289,7 @@ var (
 		TerminalTotalDifficulty: big.NewInt(math.MaxInt64),
 		Ethash:                  nil,
 		Clique:                  &CliqueConfig{Period: 0, Epoch: 30000},
+		Enable4844:              true,
 	}
 
 	// TestChainConfig contains every protocol change (EIPs) introduced
@@ -312,6 +320,7 @@ var (
 		TerminalTotalDifficulty: big.NewInt(math.MaxInt64),
 		Ethash:                  new(EthashConfig),
 		Clique:                  nil,
+		Enable4844:              true,
 	}
 
 	// MergedTestChainConfig contains every protocol change (EIPs) introduced
@@ -346,6 +355,7 @@ var (
 			Cancun: DefaultCancunBlobConfig,
 			Prague: DefaultPragueBlobConfig,
 		},
+		Enable4844: true,
 	}
 
 	// NonActivatedConfig defines the chain configuration without activating
@@ -376,6 +386,7 @@ var (
 		TerminalTotalDifficulty: big.NewInt(math.MaxInt64),
 		Ethash:                  new(EthashConfig),
 		Clique:                  nil,
+		Enable4844:              true,
 	}
 	TestRules = TestChainConfig.Rules(new(big.Int), false, 0)
 )
@@ -477,6 +488,9 @@ type ChainConfig struct {
 	Ethash             *EthashConfig       `json:"ethash,omitempty"`
 	Clique             *CliqueConfig       `json:"clique,omitempty"`
 	BlobScheduleConfig *BlobScheduleConfig `json:"blobSchedule,omitempty"`
+
+	// 4844 Overrides
+	Enable4844 bool `json:"enable4844,omitempty"`
 }
 
 // EthashConfig is the consensus engine configs for proof-of-work based sealing.
@@ -931,6 +945,11 @@ func (c *ChainConfig) BaseFeeChangeDenominator() uint64 {
 // ElasticityMultiplier bounds the maximum gas limit an EIP-1559 block may have.
 func (c *ChainConfig) ElasticityMultiplier() uint64 {
 	return DefaultElasticityMultiplier
+}
+
+// Is4844Enabled checks whether blob transactions are supported.
+func (c *ChainConfig) Is4844Enabled() bool {
+	return c.Enable4844
 }
 
 // LatestFork returns the latest time-based fork that would be active for the given time.

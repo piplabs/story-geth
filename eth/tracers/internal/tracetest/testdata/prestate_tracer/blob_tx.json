@@ -40,6 +40,7 @@
       "shanghaiTime": 0,
       "cancunTime": 0,
       "terminalTotalDifficulty": 0,
+      "enable4844": true,
       "blobSchedule": {
         "cancun": {
           "target": 3,
