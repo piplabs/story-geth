@@ -595,6 +595,18 @@ func DefaultIliadGenesisBlock() *Genesis {
 	}
 }
 
+// DefaultOdysseyGenesisBlock returns the odyssey network genesis block.
+func DefaultOdysseyGenesisBlock() *Genesis {
+	return &Genesis{
+		Config:     params.OdysseyChainConfig,
+		Difficulty: big.NewInt(0x20000),
+		GasLimit:   0x7A1200,
+		Nonce:      0x42,
+		Timestamp:  0,
+		Alloc:      decodePrealloc(odysseyAllocData),
+	}
+}
+
 // DefaultLocalGenesisBlock returns the network genesis block for local testing.
 func DefaultLocalGenesisBlock() *Genesis {
 	return &Genesis{
