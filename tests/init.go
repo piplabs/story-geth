@@ -29,16 +29,19 @@ func u64(val uint64) *uint64 { return &val }
 // Forks table defines supported forks and their chain config.
 var Forks = map[string]*params.ChainConfig{
 	"Frontier": {
-		ChainID: big.NewInt(1),
+		ChainID:    big.NewInt(1),
+		Enable4844: true,
 	},
 	"Homestead": {
 		ChainID:        big.NewInt(1),
 		HomesteadBlock: big.NewInt(0),
+		Enable4844:     true,
 	},
 	"EIP150": {
 		ChainID:        big.NewInt(1),
 		HomesteadBlock: big.NewInt(0),
 		EIP150Block:    big.NewInt(0),
+		Enable4844:     true,
 	},
 	"EIP158": {
 		ChainID:        big.NewInt(1),
@@ -46,6 +49,7 @@ var Forks = map[string]*params.ChainConfig{
 		EIP150Block:    big.NewInt(0),
 		EIP155Block:    big.NewInt(0),
 		EIP158Block:    big.NewInt(0),
+		Enable4844:     true,
 	},
 	"Byzantium": {
 		ChainID:        big.NewInt(1),
@@ -55,6 +59,7 @@ var Forks = map[string]*params.ChainConfig{
 		EIP158Block:    big.NewInt(0),
 		DAOForkBlock:   big.NewInt(0),
 		ByzantiumBlock: big.NewInt(0),
+		Enable4844:     true,
 	},
 	"Constantinople": {
 		ChainID:             big.NewInt(1),
@@ -66,6 +71,7 @@ var Forks = map[string]*params.ChainConfig{
 		ByzantiumBlock:      big.NewInt(0),
 		ConstantinopleBlock: big.NewInt(0),
 		PetersburgBlock:     big.NewInt(10000000),
+		Enable4844:          true,
 	},
 	"ConstantinopleFix": {
 		ChainID:             big.NewInt(1),
@@ -77,6 +83,7 @@ var Forks = map[string]*params.ChainConfig{
 		ByzantiumBlock:      big.NewInt(0),
 		ConstantinopleBlock: big.NewInt(0),
 		PetersburgBlock:     big.NewInt(0),
+		Enable4844:          true,
 	},
 	"Istanbul": {
 		ChainID:             big.NewInt(1),
@@ -89,6 +96,7 @@ var Forks = map[string]*params.ChainConfig{
 		ConstantinopleBlock: big.NewInt(0),
 		PetersburgBlock:     big.NewInt(0),
 		IstanbulBlock:       big.NewInt(0),
+		Enable4844:          true,
 	},
 	"MuirGlacier": {
 		ChainID:             big.NewInt(1),
@@ -102,10 +110,12 @@ var Forks = map[string]*params.ChainConfig{
 		PetersburgBlock:     big.NewInt(0),
 		IstanbulBlock:       big.NewInt(0),
 		MuirGlacierBlock:    big.NewInt(0),
+		Enable4844:          true,
 	},
 	"FrontierToHomesteadAt5": {
 		ChainID:        big.NewInt(1),
 		HomesteadBlock: big.NewInt(5),
+		Enable4844:     true,
 	},
 	"HomesteadToEIP150At5": {
 		ChainID:        big.NewInt(1),
@@ -117,6 +127,7 @@ var Forks = map[string]*params.ChainConfig{
 		HomesteadBlock: big.NewInt(0),
 		DAOForkBlock:   big.NewInt(5),
 		DAOForkSupport: true,
+		Enable4844:     true,
 	},
 	"EIP158ToByzantiumAt5": {
 		ChainID:        big.NewInt(1),
@@ -125,6 +136,7 @@ var Forks = map[string]*params.ChainConfig{
 		EIP155Block:    big.NewInt(0),
 		EIP158Block:    big.NewInt(0),
 		ByzantiumBlock: big.NewInt(5),
+		Enable4844:     true,
 	},
 	"ByzantiumToConstantinopleAt5": {
 		ChainID:             big.NewInt(1),
@@ -134,6 +146,7 @@ var Forks = map[string]*params.ChainConfig{
 		EIP158Block:         big.NewInt(0),
 		ByzantiumBlock:      big.NewInt(0),
 		ConstantinopleBlock: big.NewInt(5),
+		Enable4844:          true,
 	},
 	"ByzantiumToConstantinopleFixAt5": {
 		ChainID:             big.NewInt(1),
@@ -144,6 +157,7 @@ var Forks = map[string]*params.ChainConfig{
 		ByzantiumBlock:      big.NewInt(0),
 		ConstantinopleBlock: big.NewInt(5),
 		PetersburgBlock:     big.NewInt(5),
+		Enable4844:          true,
 	},
 	"ConstantinopleFixToIstanbulAt5": {
 		ChainID:             big.NewInt(1),
@@ -155,6 +169,7 @@ var Forks = map[string]*params.ChainConfig{
 		ConstantinopleBlock: big.NewInt(0),
 		PetersburgBlock:     big.NewInt(0),
 		IstanbulBlock:       big.NewInt(5),
+		Enable4844:          true,
 	},
 	"Berlin": {
 		ChainID:             big.NewInt(1),
@@ -168,6 +183,7 @@ var Forks = map[string]*params.ChainConfig{
 		IstanbulBlock:       big.NewInt(0),
 		MuirGlacierBlock:    big.NewInt(0),
 		BerlinBlock:         big.NewInt(0),
+		Enable4844:          true,
 	},
 	"BerlinToLondonAt5": {
 		ChainID:             big.NewInt(1),
@@ -182,6 +198,7 @@ var Forks = map[string]*params.ChainConfig{
 		MuirGlacierBlock:    big.NewInt(0),
 		BerlinBlock:         big.NewInt(0),
 		LondonBlock:         big.NewInt(5),
+		Enable4844:          true,
 	},
 	"London": {
 		ChainID:             big.NewInt(1),
@@ -196,6 +213,7 @@ var Forks = map[string]*params.ChainConfig{
 		MuirGlacierBlock:    big.NewInt(0),
 		BerlinBlock:         big.NewInt(0),
 		LondonBlock:         big.NewInt(0),
+		Enable4844:          true,
 	},
 	"ArrowGlacier": {
 		ChainID:             big.NewInt(1),
@@ -211,6 +229,7 @@ var Forks = map[string]*params.ChainConfig{
 		BerlinBlock:         big.NewInt(0),
 		LondonBlock:         big.NewInt(0),
 		ArrowGlacierBlock:   big.NewInt(0),
+		Enable4844:          true,
 	},
 	"ArrowGlacierToParisAtDiffC0000": {
 		ChainID:                 big.NewInt(1),
@@ -229,6 +248,7 @@ var Forks = map[string]*params.ChainConfig{
 		GrayGlacierBlock:        big.NewInt(0),
 		MergeNetsplitBlock:      big.NewInt(0),
 		TerminalTotalDifficulty: big.NewInt(0xC0000),
+		Enable4844:              true,
 	},
 	"GrayGlacier": {
 		ChainID:             big.NewInt(1),
@@ -245,6 +265,7 @@ var Forks = map[string]*params.ChainConfig{
 		LondonBlock:         big.NewInt(0),
 		ArrowGlacierBlock:   big.NewInt(0),
 		GrayGlacierBlock:    big.NewInt(0),
+		Enable4844:          true,
 	},
 	"Paris": {
 		ChainID:                 big.NewInt(1),
@@ -262,6 +283,7 @@ var Forks = map[string]*params.ChainConfig{
 		ArrowGlacierBlock:       big.NewInt(0),
 		MergeNetsplitBlock:      big.NewInt(0),
 		TerminalTotalDifficulty: big.NewInt(0),
+		Enable4844:              true,
 	},
 	"Merge": {
 		ChainID:                 big.NewInt(1),
@@ -279,6 +301,7 @@ var Forks = map[string]*params.ChainConfig{
 		ArrowGlacierBlock:       big.NewInt(0),
 		MergeNetsplitBlock:      big.NewInt(0),
 		TerminalTotalDifficulty: big.NewInt(0),
+		Enable4844:              true,
 	},
 	"Shanghai": {
 		ChainID:                 big.NewInt(1),
@@ -297,6 +320,7 @@ var Forks = map[string]*params.ChainConfig{
 		MergeNetsplitBlock:      big.NewInt(0),
 		TerminalTotalDifficulty: big.NewInt(0),
 		ShanghaiTime:            u64(0),
+		Enable4844:              true,
 	},
 	"ParisToShanghaiAtTime15k": {
 		ChainID:                 big.NewInt(1),
@@ -315,6 +339,7 @@ var Forks = map[string]*params.ChainConfig{
 		MergeNetsplitBlock:      big.NewInt(0),
 		TerminalTotalDifficulty: big.NewInt(0),
 		ShanghaiTime:            u64(15_000),
+		Enable4844:              true,
 	},
 	"Cancun": {
 		ChainID:                 big.NewInt(1),
@@ -334,6 +359,7 @@ var Forks = map[string]*params.ChainConfig{
 		TerminalTotalDifficulty: big.NewInt(0),
 		ShanghaiTime:            u64(0),
 		CancunTime:              u64(0),
+		Enable4844:              true,
 	},
 	"ShanghaiToCancunAtTime15k": {
 		ChainID:                 big.NewInt(1),
@@ -353,6 +379,7 @@ var Forks = map[string]*params.ChainConfig{
 		TerminalTotalDifficulty: big.NewInt(0),
 		ShanghaiTime:            u64(0),
 		CancunTime:              u64(15_000),
+		Enable4844:              true,
 	},
 	"Prague": {
 		ChainID:                 big.NewInt(1),
@@ -374,6 +401,7 @@ var Forks = map[string]*params.ChainConfig{
 		CancunTime:              u64(0),
 		PragueTime:              u64(0),
 		DepositContractAddress:  params.MainnetChainConfig.DepositContractAddress,
+		Enable4844:              true,
 	},
 	"CancunToPragueAtTime15k": {
 		ChainID:                 big.NewInt(1),
@@ -395,6 +423,7 @@ var Forks = map[string]*params.ChainConfig{
 		CancunTime:              u64(0),
 		PragueTime:              u64(15_000),
 		DepositContractAddress:  params.MainnetChainConfig.DepositContractAddress,
+		Enable4844:              true,
 	},
 }
 

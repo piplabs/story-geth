@@ -239,6 +239,8 @@ func (e *GenesisMismatchError) Error() string {
 type ChainOverrides struct {
 	OverrideCancun *uint64
 	OverrideVerkle *uint64
+
+	Override4844 bool
 }
 
 // SetupGenesisBlock writes or updates the genesis block in db.
@@ -269,6 +271,9 @@ func SetupGenesisBlockWithOverride(db ethdb.Database, triedb *triedb.Database, g
 			}
 			if overrides != nil && overrides.OverrideVerkle != nil {
 				config.VerkleTime = overrides.OverrideVerkle
+			}
+			if overrides != nil && overrides.Override4844 {
+				config.Enable4844 = overrides.Override4844
 			}
 		}
 	}
