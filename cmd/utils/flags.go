@@ -628,6 +628,11 @@ var (
 		Usage:    "iliad test network: pre-configured proof-of-stake test network",
 		Category: flags.MiscCategory,
 	}
+	OdysseyFlag = &cli.BoolFlag{
+		Name:     "odyssey",
+		Usage:    "odyssey test network: pre-configured proof-of-stake test network",
+		Category: flags.MiscCategory,
+	}
 	LocalFlag = &cli.BoolFlag{
 		Name:     "local",
 		Usage:    "local test network: pre-configured local proof-of-stake test network",
@@ -986,6 +991,7 @@ var (
 		HoleskyFlag,
 		HoodiFlag,
 		IliadFlag,
+		OdysseyFlag,
 		LocalFlag,
 	}
 	// NetworkFlags is the flag group of all built-in supported networks.
@@ -1018,6 +1024,9 @@ func MakeDataDir(ctx *cli.Context) string {
 		}
 		if ctx.Bool(IliadFlag.Name) {
 			return filepath.Join(path, "iliad")
+		}
+		if ctx.Bool(OdysseyFlag.Name) {
+			return filepath.Join(path, "odyssey")
 		}
 		if ctx.Bool(LocalFlag.Name) {
 			return filepath.Join(path, "local")
@@ -1086,6 +1095,8 @@ func setBootstrapNodes(ctx *cli.Context, cfg *p2p.Config) {
 			urls = params.HoodiBootnodes
 		case ctx.Bool(IliadFlag.Name):
 			urls = params.IliadBootnodes
+		case ctx.Bool(OdysseyFlag.Name):
+			urls = params.OdysseyBootnodes
 		case ctx.Bool(LocalFlag.Name):
 			urls = params.LocalBootnodes
 		}
@@ -1476,6 +1487,8 @@ func SetDataDir(ctx *cli.Context, cfg *node.Config) {
 		cfg.DataDir = filepath.Join(node.DefaultDataDir(), "hoodi")
 	case ctx.Bool(IliadFlag.Name) && cfg.DataDir == node.DefaultDataDir():
 		cfg.DataDir = filepath.Join(node.DefaultDataDir(), "iliad")
+	case ctx.Bool(OdysseyFlag.Name) && cfg.DataDir == node.DefaultDataDir():
+		cfg.DataDir = filepath.Join(node.DefaultDataDir(), "odyssey")
 	case ctx.Bool(LocalFlag.Name) && cfg.DataDir == node.DefaultDataDir():
 		cfg.DataDir = filepath.Join(node.DefaultDataDir(), "local")
 	}
@@ -1604,7 +1617,7 @@ func setRequiredBlocks(ctx *cli.Context, cfg *ethconfig.Config) {
 // SetEthConfig applies eth-related command line flags to the config.
 func SetEthConfig(ctx *cli.Context, stack *node.Node, cfg *ethconfig.Config) {
 	// Avoid conflicting network flags
-	flags.CheckExclusive(ctx, MainnetFlag, DeveloperFlag, SepoliaFlag, HoleskyFlag, HoodiFlag, IliadFlag, LocalFlag)
+	flags.CheckExclusive(ctx, MainnetFlag, DeveloperFlag, SepoliaFlag, HoleskyFlag, HoodiFlag, IliadFlag, OdysseyFlag, LocalFlag)
 	flags.CheckExclusive(ctx, DeveloperFlag, ExternalSignerFlag) // Can't use both ephemeral unlocked and external signer
 
 	// Set configurations from CLI flags
@@ -1804,6 +1817,12 @@ func SetEthConfig(ctx *cli.Context, stack *node.Node, cfg *ethconfig.Config) {
 		}
 		cfg.Genesis = core.DefaultIliadGenesisBlock()
 		SetDNSDiscoveryDefaults(cfg, params.IliadGenesisHash)
+	case ctx.Bool(OdysseyFlag.Name):
+		if !ctx.IsSet(NetworkIdFlag.Name) {
+			cfg.NetworkId = 1516
+		}
+		cfg.Genesis = core.DefaultOdysseyGenesisBlock()
+		SetDNSDiscoveryDefaults(cfg, params.OdysseyGenesisHash)
 	case ctx.Bool(LocalFlag.Name):
 		if !ctx.IsSet(NetworkIdFlag.Name) {
 			cfg.NetworkId = 1511
@@ -2210,6 +2229,8 @@ func MakeGenesis(ctx *cli.Context) *core.Genesis {
 		genesis = core.DefaultHoodiGenesisBlock()
 	case ctx.Bool(IliadFlag.Name):
 		genesis = core.DefaultIliadGenesisBlock()
+	case ctx.Bool(OdysseyFlag.Name):
+		genesis = core.DefaultOdysseyGenesisBlock()
 	case ctx.Bool(LocalFlag.Name):
 		genesis = core.DefaultLocalGenesisBlock()
 	case ctx.Bool(DeveloperFlag.Name):
