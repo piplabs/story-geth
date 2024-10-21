@@ -22,7 +22,7 @@ import (
 	"errors"
 	"fmt"
 	"maps"
-	gomath "math"
+	"math"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/crypto"
@@ -32,7 +32,6 @@ import (
 	"github.com/consensys/gnark-crypto/ecc/bls12-381/fp"
 	"github.com/consensys/gnark-crypto/ecc/bls12-381/fr"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/core/tracing"
 	"github.com/ethereum/go-ethereum/crypto/blake2b"
 	"github.com/ethereum/go-ethereum/crypto/bn256"
@@ -405,7 +404,12 @@ func (c *bigModExp) RequiredGas(input []byte) uint64 {
 	}
 	adjExpLen.Add(adjExpLen, big.NewInt(int64(msb)))
 	// Calculate the gas cost of the operation
-	gas := new(big.Int).Set(math.BigMax(modLen, baseLen))
+	gas := new(big.Int)
+	if modLen.Cmp(baseLen) < 0 {
+		gas.Set(baseLen)
+	} else {
+		gas.Set(modLen)
+	}
 	if c.eip2565 {
 		// EIP-2565 has three changes
 		// 1. Different multComplexity (inlined here)
@@ -419,11 +423,13 @@ func (c *bigModExp) RequiredGas(input []byte) uint64 {
 		gas.Rsh(gas, 3)
 		gas.Mul(gas, gas)
 
-		gas.Mul(gas, math.BigMax(adjExpLen, big1))
+		if adjExpLen.Cmp(big1) > 0 {
+			gas.Mul(gas, adjExpLen)
+		}
 		// 2. Different divisor (`GQUADDIVISOR`) (3)
 		gas.Div(gas, big3)
 		if gas.BitLen() > 64 {
-			return gomath.MaxUint64
+			return math.MaxUint64
 		}
 		// 3. Minimum price of 200 gas
 		if gas.Uint64() < 200 {
@@ -432,11 +438,13 @@ func (c *bigModExp) RequiredGas(input []byte) uint64 {
 		return gas.Uint64()
 	}
 	gas = modexpMultComplexity(gas)
-	gas.Mul(gas, math.BigMax(adjExpLen, big1))
+	if adjExpLen.Cmp(big1) > 0 {
+		gas.Mul(gas, adjExpLen)
+	}
 	gas.Div(gas, big20)
 
 	if gas.BitLen() > 64 {
-		return gomath.MaxUint64
+		return math.MaxUint64
 	}
 	return gas.Uint64()
 }
