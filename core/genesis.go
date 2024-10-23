@@ -248,6 +248,8 @@ func (e *GenesisMismatchError) Error() string {
 type ChainOverrides struct {
 	OverrideCancun *uint64
 	OverrideVerkle *uint64
+
+	Override4844 bool
 }
 
 // SetupGenesisBlock writes or updates the genesis block in db.
@@ -278,6 +280,9 @@ func SetupGenesisBlockWithOverride(db ethdb.Database, triedb *triedb.Database, g
 			}
 			if overrides != nil && overrides.OverrideVerkle != nil {
 				config.VerkleTime = overrides.OverrideVerkle
+			}
+			if overrides != nil && overrides.Override4844 {
+				config.Enable4844 = overrides.Override4844
 			}
 		}
 	}
@@ -587,6 +592,18 @@ func DefaultIliadGenesisBlock() *Genesis {
 		Nonce:      0x42,
 		Timestamp:  0,
 		Alloc:      decodePrealloc(iliadAllocData),
+	}
+}
+
+// DefaultOdysseyGenesisBlock returns the odyssey network genesis block.
+func DefaultOdysseyGenesisBlock() *Genesis {
+	return &Genesis{
+		Config:     params.OdysseyChainConfig,
+		Difficulty: big.NewInt(0x20000),
+		GasLimit:   0x7A1200,
+		Nonce:      0x42,
+		Timestamp:  0,
+		Alloc:      decodePrealloc(odysseyAllocData),
 	}
 }
 

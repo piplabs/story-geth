@@ -31,7 +31,8 @@ var (
 	SepoliaGenesisHash = common.HexToHash("0x25a5cc106eea7138acab33231d7160d69cb777ee0c2c553fcddf5138993e6dd9")
 	GoerliGenesisHash  = common.HexToHash("0xbf7e331f7f7c1dd2e05159666b3bf8bc7a8a3a9eb1d518969eab529dd9b88c1a")
 	IliadGenesisHash   = common.HexToHash("0xf5ebc6f0982e8bf7fd532b3f959f84d12b3dedd2827af8d31f5389447bedafc6")
-	LocalGenesisHash   = common.HexToHash("0x8f3fc56b0dc3a009e6771da99ff737900da84b9aeae15d1bae225cc8b4dbbdc3")
+	OdysseyGenesisHash = common.HexToHash("0xf5ebc6f0982e8bf7fd532b3f959f84d12b3dedd2827af8d31f5389447bedafc6")
+	LocalGenesisHash   = common.HexToHash("0x16152175edd8931dbf10912ea3e09c8bb2ffe8ce60e4ff5d3c4a973276e614e9")
 )
 
 func newUint64(val uint64) *uint64 { return &val }
@@ -62,6 +63,7 @@ var (
 		ShanghaiTime:                  newUint64(1681338455),
 		CancunTime:                    newUint64(1710338135),
 		Ethash:                        new(EthashConfig),
+		Enable4844:                    true,
 	}
 	// HoleskyChainConfig contains the chain parameters to run a node on the Holesky test network.
 	HoleskyChainConfig = &ChainConfig{
@@ -87,6 +89,7 @@ var (
 		ShanghaiTime:                  newUint64(1696000704),
 		CancunTime:                    newUint64(1707305664),
 		Ethash:                        new(EthashConfig),
+		Enable4844:                    true,
 	}
 	// SepoliaChainConfig contains the chain parameters to run a node on the Sepolia test network.
 	SepoliaChainConfig = &ChainConfig{
@@ -112,6 +115,7 @@ var (
 		ShanghaiTime:                  newUint64(1677557088),
 		CancunTime:                    newUint64(1706655072),
 		Ethash:                        new(EthashConfig),
+		Enable4844:                    true,
 	}
 	// GoerliChainConfig contains the chain parameters to run a node on the Görli test network.
 	GoerliChainConfig = &ChainConfig{
@@ -138,10 +142,32 @@ var (
 			Period: 15,
 			Epoch:  30000,
 		},
+		Enable4844: true,
 	}
 
 	IliadChainConfig = &ChainConfig{
 		ChainID:                       big.NewInt(1513),
+		HomesteadBlock:                big.NewInt(0),
+		EIP150Block:                   big.NewInt(0),
+		EIP155Block:                   big.NewInt(0),
+		EIP158Block:                   big.NewInt(0),
+		ByzantiumBlock:                big.NewInt(0),
+		ConstantinopleBlock:           big.NewInt(0),
+		PetersburgBlock:               big.NewInt(0),
+		IstanbulBlock:                 big.NewInt(0),
+		BerlinBlock:                   big.NewInt(0),
+		LondonBlock:                   big.NewInt(0),
+		ArrowGlacierBlock:             big.NewInt(0),
+		GrayGlacierBlock:              big.NewInt(0),
+		TerminalTotalDifficulty:       big.NewInt(0),
+		TerminalTotalDifficultyPassed: true,
+		ShanghaiTime:                  newUint64(0),
+		CancunTime:                    newUint64(0),
+		Enable4844:                    false,
+	}
+
+	OdysseyChainConfig = &ChainConfig{
+		ChainID:                       big.NewInt(1516),
 		HomesteadBlock:                big.NewInt(0),
 		EIP150Block:                   big.NewInt(0),
 		EIP155Block:                   big.NewInt(0),
@@ -178,6 +204,7 @@ var (
 		TerminalTotalDifficultyPassed: true,
 		ShanghaiTime:                  newUint64(0),
 		CancunTime:                    newUint64(0),
+		Enable4844:                    false,
 	}
 
 	// AllEthashProtocolChanges contains every protocol change (EIPs) introduced
@@ -208,6 +235,7 @@ var (
 		TerminalTotalDifficultyPassed: true,
 		Ethash:                        new(EthashConfig),
 		Clique:                        nil,
+		Enable4844:                    true,
 	}
 
 	AllDevChainProtocolChanges = &ChainConfig{
@@ -229,6 +257,7 @@ var (
 		CancunTime:                    newUint64(0),
 		TerminalTotalDifficulty:       big.NewInt(0),
 		TerminalTotalDifficultyPassed: true,
+		Enable4844:                    true,
 	}
 
 	// AllCliqueProtocolChanges contains every protocol change (EIPs) introduced
@@ -259,6 +288,7 @@ var (
 		TerminalTotalDifficultyPassed: false,
 		Ethash:                        nil,
 		Clique:                        &CliqueConfig{Period: 0, Epoch: 30000},
+		Enable4844:                    true,
 	}
 
 	// TestChainConfig contains every protocol change (EIPs) introduced
@@ -289,6 +319,7 @@ var (
 		TerminalTotalDifficultyPassed: false,
 		Ethash:                        new(EthashConfig),
 		Clique:                        nil,
+		Enable4844:                    true,
 	}
 
 	// MergedTestChainConfig contains every protocol change (EIPs) introduced
@@ -319,6 +350,7 @@ var (
 		TerminalTotalDifficultyPassed: true,
 		Ethash:                        new(EthashConfig),
 		Clique:                        nil,
+		Enable4844:                    true,
 	}
 
 	// NonActivatedConfig defines the chain configuration without activating
@@ -349,6 +381,7 @@ var (
 		TerminalTotalDifficultyPassed: false,
 		Ethash:                        new(EthashConfig),
 		Clique:                        nil,
+		Enable4844:                    true,
 	}
 	TestRules = TestChainConfig.Rules(new(big.Int), false, 0)
 )
@@ -413,6 +446,9 @@ type ChainConfig struct {
 	// Various consensus engines
 	Ethash *EthashConfig `json:"ethash,omitempty"`
 	Clique *CliqueConfig `json:"clique,omitempty"`
+
+	// 4844 Overrides
+	Enable4844 bool `json:"enable4844,omitempty"`
 }
 
 // EthashConfig is the consensus engine configs for proof-of-work based sealing.
@@ -803,6 +839,11 @@ func (c *ChainConfig) BaseFeeChangeDenominator() uint64 {
 // ElasticityMultiplier bounds the maximum gas limit an EIP-1559 block may have.
 func (c *ChainConfig) ElasticityMultiplier() uint64 {
 	return DefaultElasticityMultiplier
+}
+
+// Is4844Enabled checks whether blob transactions are supported.
+func (c *ChainConfig) Is4844Enabled() bool {
+	return c.Enable4844
 }
 
 // LatestFork returns the latest time-based fork that would be active for the given time.

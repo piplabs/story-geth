@@ -43,7 +43,8 @@
       "shanghaiTime": 0,
       "cancunTime": 0,
       "terminalTotalDifficulty": 0,
-      "terminalTotalDifficultyPassed": true
+      "terminalTotalDifficultyPassed": true,
+      "enable4844": true
     }
   },
   "context": {
