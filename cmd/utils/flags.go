@@ -1823,6 +1823,7 @@ func SetEthConfig(ctx *cli.Context, stack *node.Node, cfg *ethconfig.Config) {
 		}
 		cfg.Genesis = core.DefaultOdysseyGenesisBlock()
 		SetDNSDiscoveryDefaults(cfg, params.OdysseyGenesisHash)
+		cfg.Miner.GasPrice = big.NewInt(params.GWei * 16)
 	case ctx.Bool(LocalFlag.Name):
 		if !ctx.IsSet(NetworkIdFlag.Name) {
 			cfg.NetworkId = 1511
