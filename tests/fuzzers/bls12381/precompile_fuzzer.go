@@ -19,6 +19,7 @@ package bls
 import (
 	"bytes"
 	"fmt"
+
 	"github.com/ethereum/go-ethereum/core/rawdb"
 	"github.com/ethereum/go-ethereum/core/state"
 	"github.com/ethereum/go-ethereum/core/types"
