@@ -202,6 +202,7 @@ var (
 		TerminalTotalDifficulty: big.NewInt(0),
 		ShanghaiTime:            newUint64(0),
 		CancunTime:              newUint64(0),
+		Enable4844:              false,
 	}
 
 	LocalChainConfig = &ChainConfig{
