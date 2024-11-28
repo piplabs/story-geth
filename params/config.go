@@ -164,6 +164,7 @@ var (
 		ShanghaiTime:                  newUint64(0),
 		CancunTime:                    newUint64(0),
 		Enable4844:                    false,
+		OdysseyForkTime:               newUint64(0),
 		EIP1559Denominator:            newUint64(24),
 	}
 
@@ -186,7 +187,8 @@ var (
 		ShanghaiTime:                  newUint64(0),
 		CancunTime:                    newUint64(0),
 		Enable4844:                    false,
-		EIP1559Denominator:            newUint64(24),
+		// TODO(0xHansLee): Need to bake timestamp for Odyssey hard fork
+		EIP1559Denominator: newUint64(24),
 	}
 
 	LocalChainConfig = &ChainConfig{
@@ -208,7 +210,7 @@ var (
 		ShanghaiTime:                  newUint64(0),
 		CancunTime:                    newUint64(0),
 		Enable4844:                    false,
-		OdysseyForkTime:               newUint64(1732777620),
+		OdysseyForkTime:               newUint64(0),
 		EIP1559Denominator:            newUint64(24),
 	}
 

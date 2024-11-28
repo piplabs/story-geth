@@ -184,6 +184,11 @@ func makeFullNode(ctx *cli.Context) *node.Node {
 		cfg.Eth.Enable4844 = override4844
 	}
 
+	if ctx.IsSet(utils.OverrideOdysseyForkTimeFlag.Name) {
+		overrideOdysseyForkTime := ctx.Uint64(utils.OverrideOdysseyForkTimeFlag.Name)
+		cfg.Eth.OverrideOdysseyForkTime = &overrideOdysseyForkTime
+	}
+
 	backend, eth := utils.RegisterEthService(stack, &cfg.Eth)
 
 	// Create gauge with geth system and build information

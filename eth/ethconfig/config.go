@@ -169,6 +169,9 @@ type Config struct {
 
 	// Enables EIP-4844 blob transaction support
 	Enable4844 bool
+
+	// Override Odyssey fork timestamp
+	OverrideOdysseyForkTime *uint64 `toml:",omitempty"`
 }
 
 // CreateConsensusEngine creates a consensus engine for the given chain config.
