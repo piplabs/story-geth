@@ -164,6 +164,7 @@ var (
 		ShanghaiTime:                  newUint64(0),
 		CancunTime:                    newUint64(0),
 		Enable4844:                    false,
+		EIP1559Denominator:            newUint64(24),
 	}
 
 	OdysseyChainConfig = &ChainConfig{
@@ -185,6 +186,7 @@ var (
 		ShanghaiTime:                  newUint64(0),
 		CancunTime:                    newUint64(0),
 		Enable4844:                    false,
+		EIP1559Denominator:            newUint64(24),
 	}
 
 	LocalChainConfig = &ChainConfig{
@@ -206,6 +208,8 @@ var (
 		ShanghaiTime:                  newUint64(0),
 		CancunTime:                    newUint64(0),
 		Enable4844:                    false,
+		OdysseyForkTime:               newUint64(1732777620),
+		EIP1559Denominator:            newUint64(24),
 	}
 
 	// AllEthashProtocolChanges contains every protocol change (EIPs) introduced
@@ -450,6 +454,12 @@ type ChainConfig struct {
 
 	// 4844 Overrides
 	Enable4844 bool `json:"enable4844,omitempty"`
+
+	// Story fork time
+	OdysseyForkTime *uint64 `json:"odysseyForkTime,omitempty"` // Odyssey Fork Activation time (nil = no fork, 0 = already on forked)
+
+	// EIP1559 Denominator overrides
+	EIP1559Denominator *uint64 `json:"eip1559Denominator,omitempty"`
 }
 
 // EthashConfig is the consensus engine configs for proof-of-work based sealing.
@@ -668,6 +678,10 @@ func (c *ChainConfig) IsEIP4762(num *big.Int, time uint64) bool {
 	return c.IsVerkle(num, time)
 }
 
+func (c *ChainConfig) IsOdysseyForked(time uint64) bool {
+	return isTimestampForked(c.OdysseyForkTime, time)
+}
+
 // CheckCompatible checks whether scheduled fork transitions have been imported
 // with a mismatching chain configuration.
 func (c *ChainConfig) CheckCompatible(newcfg *ChainConfig, height uint64, time uint64) *ConfigCompatError {
@@ -833,7 +847,11 @@ func (c *ChainConfig) checkCompatible(newcfg *ChainConfig, headNumber *big.Int, 
 }
 
 // BaseFeeChangeDenominator bounds the amount the base fee can change between blocks.
-func (c *ChainConfig) BaseFeeChangeDenominator() uint64 {
+func (c *ChainConfig) BaseFeeChangeDenominator(time uint64) uint64 {
+	if c.IsOdysseyForked(time) && c.EIP1559Denominator != nil && *c.EIP1559Denominator > 0 {
+		return *c.EIP1559Denominator
+	}
+
 	return DefaultBaseFeeChangeDenominator
 }
 
