@@ -49,7 +49,9 @@ func (c *ipGraph) RequiredGas(input []byte) uint64 {
 
 	switch {
 	case bytes.Equal(selector, addParentIpSelector):
-		return ipGraphWriteGas
+		args := input[4:]
+		parentCount := new(big.Int).SetBytes(getData(args, 64, 32))
+		return ipGraphWriteGas * parentCount.Uint64()
 	case bytes.Equal(selector, hasParentIpSelector):
 		return ipGraphReadGas * averageParentIpCount
 	case bytes.Equal(selector, getParentIpsSelector):
