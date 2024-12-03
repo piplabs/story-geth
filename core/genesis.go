@@ -251,7 +251,7 @@ type ChainOverrides struct {
 
 	// For Story
 	Override4844          bool
-	OverrideStoryTheogony *uint64
+	OverrideStoryTheogony *big.Int
 }
 
 // SetupGenesisBlock writes or updates the genesis block in db.
@@ -287,7 +287,7 @@ func SetupGenesisBlockWithOverride(db ethdb.Database, triedb *triedb.Database, g
 				config.Enable4844 = overrides.Override4844
 			}
 			if overrides != nil && overrides.OverrideStoryTheogony != nil {
-				config.TheogonyTime = overrides.OverrideStoryTheogony
+				config.TheogonyHeight = overrides.OverrideStoryTheogony
 			}
 		}
 	}

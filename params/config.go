@@ -164,7 +164,7 @@ var (
 		ShanghaiTime:                  newUint64(0),
 		CancunTime:                    newUint64(0),
 		Enable4844:                    false,
-		TheogonyTime:                  newUint64(0),
+		TheogonyHeight:                big.NewInt(0),
 		EIP1559DenomTheogony:          newUint64(24),
 	}
 
@@ -187,8 +187,8 @@ var (
 		ShanghaiTime:                  newUint64(0),
 		CancunTime:                    newUint64(0),
 		Enable4844:                    false,
-		// TODO(0xHansLee): Need to bake timestamp for Theogony hardfork
-		EIP1559DenomTheogony: newUint64(24),
+		TheogonyHeight:                big.NewInt(1243000),
+		EIP1559DenomTheogony:          newUint64(24),
 	}
 
 	LocalChainConfig = &ChainConfig{
@@ -210,7 +210,7 @@ var (
 		ShanghaiTime:                  newUint64(0),
 		CancunTime:                    newUint64(0),
 		Enable4844:                    false,
-		TheogonyTime:                  newUint64(0),
+		TheogonyHeight:                big.NewInt(0),
 		EIP1559DenomTheogony:          newUint64(24),
 	}
 
@@ -457,8 +457,8 @@ type ChainConfig struct {
 	// 4844 Overrides
 	Enable4844 bool `json:"enable4844,omitempty"`
 
-	TheogonyTime         *uint64 `json:"theogonyTime,omitempty"`         // Theogony switch time (nil = no fork, 0 = already on theogony)
-	EIP1559DenomTheogony *uint64 `json:"eip1559DenomTheogony,omitempty"` // EIP1559 Denominator for Theogony hardfork overrides
+	TheogonyHeight       *big.Int `json:"theogonyHeight,omitempty"`       // Theogony switch height (nil = no fork, 0 = already on theogony)
+	EIP1559DenomTheogony *uint64  `json:"eip1559DenomTheogony,omitempty"` // EIP1559 Denominator for Theogony hardfork overrides
 }
 
 // EthashConfig is the consensus engine configs for proof-of-work based sealing.
@@ -677,8 +677,8 @@ func (c *ChainConfig) IsEIP4762(num *big.Int, time uint64) bool {
 	return c.IsVerkle(num, time)
 }
 
-func (c *ChainConfig) IsTheogony(time uint64) bool {
-	return isTimestampForked(c.TheogonyTime, time)
+func (c *ChainConfig) IsTheogony(num *big.Int) bool {
+	return isBlockForked(c.TheogonyHeight, num)
 }
 
 // CheckCompatible checks whether scheduled fork transitions have been imported
@@ -846,8 +846,8 @@ func (c *ChainConfig) checkCompatible(newcfg *ChainConfig, headNumber *big.Int, 
 }
 
 // BaseFeeChangeDenominator bounds the amount the base fee can change between blocks.
-func (c *ChainConfig) BaseFeeChangeDenominator(time uint64) uint64 {
-	if c.IsTheogony(time) && c.EIP1559DenomTheogony != nil && *c.EIP1559DenomTheogony > 0 {
+func (c *ChainConfig) BaseFeeChangeDenominator(num *big.Int) uint64 {
+	if c.IsTheogony(num) && c.EIP1559DenomTheogony != nil && *c.EIP1559DenomTheogony > 0 {
 		return *c.EIP1559DenomTheogony
 	}
 

@@ -19,6 +19,7 @@ package ethconfig
 
 import (
 	"errors"
+	"math/big"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -170,8 +171,8 @@ type Config struct {
 	// Enables EIP-4844 blob transaction support
 	Enable4844 bool
 
-	// Override Theogony fork timestamp
-	OverrideStoryTheogony *uint64 `toml:",omitempty"`
+	// Override Theogony fork block height
+	OverrideStoryTheogony *big.Int `toml:",omitempty"`
 }
 
 // CreateConsensusEngine creates a consensus engine for the given chain config.

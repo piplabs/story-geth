@@ -20,6 +20,7 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"math/big"
 	"os"
 	"reflect"
 	"runtime"
@@ -185,8 +186,8 @@ func makeFullNode(ctx *cli.Context) *node.Node {
 	}
 
 	if ctx.IsSet(utils.OverrideStoryTheogony.Name) {
-		overrideTheogony := ctx.Uint64(utils.OverrideStoryTheogony.Name)
-		cfg.Eth.OverrideStoryTheogony = &overrideTheogony
+		overrideTheogony := big.NewInt(ctx.Int64(utils.OverrideStoryTheogony.Name))
+		cfg.Eth.OverrideStoryTheogony = overrideTheogony
 	}
 
 	backend, eth := utils.RegisterEthService(stack, &cfg.Eth)

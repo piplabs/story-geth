@@ -103,7 +103,7 @@ func (bc *testBlockChain) CurrentBlock() *types.Header {
 			GasLimit: gasLimit,
 			GasUsed:  0,
 			BaseFee:  mid,
-		}, blockTime).Cmp(bc.basefee.ToBig()) > 0 {
+		}, new(big.Int).Add(blockNumber, big.NewInt(1))).Cmp(bc.basefee.ToBig()) > 0 {
 			hi = mid
 		} else {
 			lo = mid

@@ -981,9 +981,9 @@ Please note that --` + MetricsHTTPFlag.Name + ` must be set to start the server.
 		Category: flags.EthCategory,
 	}
 
-	OverrideStoryTheogony = &cli.Uint64Flag{
+	OverrideStoryTheogony = &cli.IntFlag{
 		Name:     "override.theogony",
-		Usage:    "Manually specify the Theogony fork timestamp, overriding the bundled setting",
+		Usage:    "Manually specify the Theogony fork block height, overriding the bundled setting",
 		Category: flags.EthCategory,
 	}
 )
