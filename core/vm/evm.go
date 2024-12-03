@@ -44,6 +44,8 @@ type (
 func (evm *EVM) precompile(addr common.Address) (PrecompiledContract, bool) {
 	var precompiles map[common.Address]PrecompiledContract
 	switch {
+	case evm.chainRules.IsStoryTheogony:
+		precompiles = PrecompiledContractsTheogony
 	case evm.chainRules.IsVerkle:
 		precompiles = PrecompiledContractsVerkle
 	case evm.chainRules.IsPrague:
