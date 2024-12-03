@@ -249,10 +249,9 @@ type ChainOverrides struct {
 	OverrideCancun *uint64
 	OverrideVerkle *uint64
 
-	Override4844 bool
-
-	// Only for Story Odyssey
-	OverrideOdysseyForkTime *uint64
+	// For Story
+	Override4844          bool
+	OverrideStoryTheogony *uint64
 }
 
 // SetupGenesisBlock writes or updates the genesis block in db.
@@ -287,8 +286,8 @@ func SetupGenesisBlockWithOverride(db ethdb.Database, triedb *triedb.Database, g
 			if overrides != nil && overrides.Override4844 {
 				config.Enable4844 = overrides.Override4844
 			}
-			if overrides != nil && overrides.OverrideOdysseyForkTime != nil {
-				config.OdysseyForkTime = overrides.OverrideOdysseyForkTime
+			if overrides != nil && overrides.OverrideStoryTheogony != nil {
+				config.TheogonyTime = overrides.OverrideStoryTheogony
 			}
 		}
 	}

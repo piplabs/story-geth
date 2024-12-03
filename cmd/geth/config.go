@@ -184,9 +184,9 @@ func makeFullNode(ctx *cli.Context) *node.Node {
 		cfg.Eth.Enable4844 = override4844
 	}
 
-	if ctx.IsSet(utils.OverrideOdysseyForkTimeFlag.Name) {
-		overrideOdysseyForkTime := ctx.Uint64(utils.OverrideOdysseyForkTimeFlag.Name)
-		cfg.Eth.OverrideOdysseyForkTime = &overrideOdysseyForkTime
+	if ctx.IsSet(utils.OverrideStoryTheogony.Name) {
+		overrideTheogony := ctx.Uint64(utils.OverrideStoryTheogony.Name)
+		cfg.Eth.OverrideStoryTheogony = &overrideTheogony
 	}
 
 	backend, eth := utils.RegisterEthService(stack, &cfg.Eth)

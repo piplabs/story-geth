@@ -981,9 +981,9 @@ Please note that --` + MetricsHTTPFlag.Name + ` must be set to start the server.
 		Category: flags.EthCategory,
 	}
 
-	OverrideOdysseyForkTimeFlag = &cli.Uint64Flag{
-		Name:     "override.odysseyfork",
-		Usage:    "Manually specify the Odyssey fork timestamp, overriding the bundled setting",
+	OverrideStoryTheogony = &cli.Uint64Flag{
+		Name:     "override.theogony",
+		Usage:    "Manually specify the Theogony fork timestamp, overriding the bundled setting",
 		Category: flags.EthCategory,
 	}
 )
