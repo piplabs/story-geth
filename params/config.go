@@ -164,7 +164,7 @@ var (
 		ShanghaiTime:                  newUint64(0),
 		CancunTime:                    newUint64(0),
 		Enable4844:                    false,
-		TheogonyHeight:                big.NewInt(0),
+		TheogonyBlock:                 big.NewInt(0),
 		EIP1559DenomTheogony:          newUint64(24),
 	}
 
@@ -187,7 +187,7 @@ var (
 		ShanghaiTime:                  newUint64(0),
 		CancunTime:                    newUint64(0),
 		Enable4844:                    false,
-		TheogonyHeight:                big.NewInt(1243000),
+		TheogonyBlock:                 big.NewInt(1243000),
 		EIP1559DenomTheogony:          newUint64(24),
 	}
 
@@ -210,7 +210,7 @@ var (
 		ShanghaiTime:                  newUint64(0),
 		CancunTime:                    newUint64(0),
 		Enable4844:                    false,
-		TheogonyHeight:                big.NewInt(0),
+		TheogonyBlock:                 big.NewInt(0),
 		EIP1559DenomTheogony:          newUint64(24),
 	}
 
@@ -457,7 +457,7 @@ type ChainConfig struct {
 	// 4844 Overrides
 	Enable4844 bool `json:"enable4844,omitempty"`
 
-	TheogonyHeight       *big.Int `json:"theogonyHeight,omitempty"`       // Theogony switch height (nil = no fork, 0 = already on theogony)
+	TheogonyBlock        *big.Int `json:"theogonyBlock,omitempty"`        // Theogony switch height (nil = no fork, 0 = already on theogony)
 	EIP1559DenomTheogony *uint64  `json:"eip1559DenomTheogony,omitempty"` // EIP1559 Denominator for Theogony hardfork overrides
 }
 
@@ -569,6 +569,9 @@ func (c *ChainConfig) Description() string {
 	if c.VerkleTime != nil {
 		banner += fmt.Sprintf(" - Verkle:                      @%-10v\n", *c.VerkleTime)
 	}
+	if c.TheogonyBlock != nil {
+		banner += fmt.Sprintf(" - Theogony:                    @%-10v\n", *c.TheogonyBlock)
+	}
 	return banner
 }
 
@@ -677,8 +680,8 @@ func (c *ChainConfig) IsEIP4762(num *big.Int, time uint64) bool {
 	return c.IsVerkle(num, time)
 }
 
-func (c *ChainConfig) IsTheogony(num *big.Int) bool {
-	return isBlockForked(c.TheogonyHeight, num)
+func (c *ChainConfig) IsStoryTheogony(num *big.Int) bool {
+	return isBlockForked(c.TheogonyBlock, num)
 }
 
 // CheckCompatible checks whether scheduled fork transitions have been imported
@@ -842,12 +845,15 @@ func (c *ChainConfig) checkCompatible(newcfg *ChainConfig, headNumber *big.Int, 
 	if isForkTimestampIncompatible(c.VerkleTime, newcfg.VerkleTime, headTimestamp) {
 		return newTimestampCompatError("Verkle fork timestamp", c.VerkleTime, newcfg.VerkleTime)
 	}
+	if isForkBlockIncompatible(c.TheogonyBlock, newcfg.TheogonyBlock, headNumber) {
+		return newBlockCompatError("Story Theogony fork block", c.TheogonyBlock, newcfg.TheogonyBlock)
+	}
 	return nil
 }
 
 // BaseFeeChangeDenominator bounds the amount the base fee can change between blocks.
 func (c *ChainConfig) BaseFeeChangeDenominator(num *big.Int) uint64 {
-	if c.IsTheogony(num) && c.EIP1559DenomTheogony != nil && *c.EIP1559DenomTheogony > 0 {
+	if c.IsStoryTheogony(num) && c.EIP1559DenomTheogony != nil && *c.EIP1559DenomTheogony > 0 {
 		return *c.EIP1559DenomTheogony
 	}
 
@@ -1023,6 +1029,8 @@ type Rules struct {
 	IsBerlin, IsLondon                                      bool
 	IsMerge, IsShanghai, IsCancun, IsPrague                 bool
 	IsVerkle                                                bool
+	// Story hardforks
+	IsStoryTheogony bool
 }
 
 // Rules ensures c's ChainID is not nil.
@@ -1053,5 +1061,7 @@ func (c *ChainConfig) Rules(num *big.Int, isMerge bool, timestamp uint64) Rules 
 		IsPrague:         isMerge && c.IsPrague(num, timestamp),
 		IsVerkle:         isVerkle,
 		IsEIP4762:        isVerkle,
+		// Story hardforks
+		IsStoryTheogony: isMerge && c.IsStoryTheogony(num),
 	}
 }

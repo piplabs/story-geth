@@ -287,7 +287,7 @@ func SetupGenesisBlockWithOverride(db ethdb.Database, triedb *triedb.Database, g
 				config.Enable4844 = overrides.Override4844
 			}
 			if overrides != nil && overrides.OverrideStoryTheogony != nil {
-				config.TheogonyHeight = overrides.OverrideStoryTheogony
+				config.TheogonyBlock = overrides.OverrideStoryTheogony
 			}
 		}
 	}
