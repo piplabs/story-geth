@@ -190,6 +190,11 @@ func makeFullNode(ctx *cli.Context) *node.Node {
 		cfg.Eth.OverrideStoryTheogony = overrideTheogony
 	}
 
+	if ctx.IsSet(utils.OverrideStoryDenomTheogony.Name) {
+		overrideDenomTheogony := ctx.Uint64(utils.OverrideStoryDenomTheogony.Name)
+		cfg.Eth.OverrideStoryDenomTheogony = &overrideDenomTheogony
+	}
+
 	backend, eth := utils.RegisterEthService(stack, &cfg.Eth)
 
 	// Create gauge with geth system and build information
