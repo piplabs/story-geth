@@ -66,8 +66,9 @@ func CalcBaseFee(config *params.ChainConfig, parent *types.Header) *big.Int {
 	}
 
 	var (
-		num   = new(big.Int)
-		denom = new(big.Int)
+		num      = new(big.Int)
+		denom    = new(big.Int)
+		blockNum = new(big.Int).Add(parent.Number, common.Big1)
 	)
 
 	if parent.GasUsed > parentGasTarget {
@@ -76,20 +77,19 @@ func CalcBaseFee(config *params.ChainConfig, parent *types.Header) *big.Int {
 		num.SetUint64(parent.GasUsed - parentGasTarget)
 		num.Mul(num, parent.BaseFee)
 		num.Div(num, denom.SetUint64(parentGasTarget))
-		num.Div(num, denom.SetUint64(config.BaseFeeChangeDenominator()))
-		if num.Cmp(common.Big1) < 0 {
-			return num.Add(parent.BaseFee, common.Big1)
-		}
-		return num.Add(parent.BaseFee, num)
+		num.Div(num, denom.SetUint64(config.BaseFeeChangeDenominator(blockNum)))
+		baseFeeDelta := math.BigMax(num, common.Big1)
+
+		return num.Add(parent.BaseFee, baseFeeDelta)
 	} else {
 		// Otherwise if the parent block used less gas than its target, the baseFee should decrease.
 		// max(0, parentBaseFee * gasUsedDelta / parentGasTarget / baseFeeChangeDenominator)
 		num.SetUint64(parentGasTarget - parent.GasUsed)
 		num.Mul(num, parent.BaseFee)
 		num.Div(num, denom.SetUint64(parentGasTarget))
-		num.Div(num, denom.SetUint64(config.BaseFeeChangeDenominator()))
-
+		num.Div(num, denom.SetUint64(config.BaseFeeChangeDenominator(blockNum)))
 		baseFee := num.Sub(parent.BaseFee, num)
+
 		if baseFee.Cmp(common.Big0) < 0 {
 			baseFee = common.Big0
 		}

@@ -950,6 +950,12 @@ Please note that --` + MetricsHTTPFlag.Name + ` must be set to start the server.
 		Usage:    "Enable 4844 blob transactions",
 		Category: flags.EthCategory,
 	}
+
+	OverrideStoryTheogony = &cli.IntFlag{
+		Name:     "override.theogony",
+		Usage:    "Manually specify the Theogony fork block height, overriding the bundled setting",
+		Category: flags.EthCategory,
+	}
 )
 
 var (
