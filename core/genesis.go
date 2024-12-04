@@ -241,8 +241,9 @@ type ChainOverrides struct {
 	OverrideVerkle *uint64
 
 	// For Story
-	Override4844          bool
-	OverrideStoryTheogony *big.Int
+	Override4844               bool
+	OverrideStoryTheogony      *big.Int
+	OverrideStoryDenomTheogony *uint64
 }
 
 // SetupGenesisBlock writes or updates the genesis block in db.
@@ -279,6 +280,9 @@ func SetupGenesisBlockWithOverride(db ethdb.Database, triedb *triedb.Database, g
 			}
 			if overrides != nil && overrides.OverrideStoryTheogony != nil {
 				config.TheogonyBlock = overrides.OverrideStoryTheogony
+			}
+			if overrides != nil && overrides.OverrideStoryDenomTheogony != nil {
+				config.EIP1559DenomTheogony = overrides.OverrideStoryDenomTheogony
 			}
 		}
 	}
