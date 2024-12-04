@@ -512,6 +512,9 @@ type ChainConfig struct {
 
 	// 4844 Overrides
 	Enable4844 bool `json:"enable4844,omitempty"`
+
+	TheogonyBlock        *big.Int `json:"theogonyBlock,omitempty"`        // Theogony switch height (nil = no fork, 0 = already on theogony)
+	EIP1559DenomTheogony *uint64  `json:"eip1559DenomTheogony,omitempty"` // EIP1559 Denominator for Theogony hardfork overrides
 }
 
 // EthashConfig is the consensus engine configs for proof-of-work based sealing.
@@ -607,6 +610,9 @@ func (c *ChainConfig) Description() string {
 	}
 	if c.VerkleTime != nil {
 		banner += fmt.Sprintf(" - Verkle:                      @%-10v\n", *c.VerkleTime)
+	}
+	if c.TheogonyBlock != nil {
+		banner += fmt.Sprintf(" - Theogony:                    @%-10v\n", *c.TheogonyBlock)
 	}
 	return banner
 }
@@ -748,6 +754,10 @@ func (c *ChainConfig) IsVerkleGenesis() bool {
 // IsEIP4762 returns whether eip 4762 has been activated at given block.
 func (c *ChainConfig) IsEIP4762(num *big.Int, time uint64) bool {
 	return c.IsVerkle(num, time)
+}
+
+func (c *ChainConfig) IsStoryTheogony(num *big.Int) bool {
+	return isBlockForked(c.TheogonyBlock, num)
 }
 
 // CheckCompatible checks whether scheduled fork transitions have been imported
@@ -955,11 +965,22 @@ func (c *ChainConfig) checkCompatible(newcfg *ChainConfig, headNumber *big.Int, 
 	if isForkTimestampIncompatible(c.VerkleTime, newcfg.VerkleTime, headTimestamp) {
 		return newTimestampCompatError("Verkle fork timestamp", c.VerkleTime, newcfg.VerkleTime)
 	}
+	if isForkBlockIncompatible(c.TheogonyBlock, newcfg.TheogonyBlock, headNumber) {
+		return newBlockCompatError("Story Theogony fork block", c.TheogonyBlock, newcfg.TheogonyBlock)
+	}
 	return nil
 }
 
 // BaseFeeChangeDenominator bounds the amount the base fee can change between blocks.
 func (c *ChainConfig) BaseFeeChangeDenominator() uint64 {
+	if c.IsStory() {
+		// For Iliad and Aeneid, use the DefaultBaseFeeChangeDenominator.
+		if c.IsIliad() || c.IsAeneid() {
+			return DefaultBaseFeeChangeDenominator
+		}
+		return DefaultBaseFeeChangeDenomStory
+	}
+
 	return DefaultBaseFeeChangeDenominator
 }
 
@@ -1151,6 +1172,8 @@ type Rules struct {
 	IsBerlin, IsLondon                                      bool
 	IsMerge, IsShanghai, IsCancun, IsPrague, IsOsaka        bool
 	IsVerkle                                                bool
+	// Story hardforks
+	IsStoryTheogony bool
 }
 
 // Rules ensures c's ChainID is not nil.
@@ -1182,5 +1205,7 @@ func (c *ChainConfig) Rules(num *big.Int, isMerge bool, timestamp uint64) Rules 
 		IsOsaka:          isMerge && c.IsOsaka(num, timestamp),
 		IsVerkle:         isVerkle,
 		IsEIP4762:        isVerkle,
+		// Story hardforks
+		IsStoryTheogony: isMerge && c.IsStoryTheogony(num),
 	}
 }
