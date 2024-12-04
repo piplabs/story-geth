@@ -67,8 +67,9 @@ func CalcBaseFee(config *params.ChainConfig, parent *types.Header) *big.Int {
 	}
 
 	var (
-		num   = new(big.Int)
-		denom = new(big.Int)
+		num      = new(big.Int)
+		denom    = new(big.Int)
+		blockNum = new(big.Int).Add(parent.Number, common.Big1)
 	)
 
 	if parent.GasUsed > parentGasTarget {
@@ -77,7 +78,7 @@ func CalcBaseFee(config *params.ChainConfig, parent *types.Header) *big.Int {
 		num.SetUint64(parent.GasUsed - parentGasTarget)
 		num.Mul(num, parent.BaseFee)
 		num.Div(num, denom.SetUint64(parentGasTarget))
-		num.Div(num, denom.SetUint64(config.BaseFeeChangeDenominator()))
+		num.Div(num, denom.SetUint64(config.BaseFeeChangeDenominator(blockNum)))
 		baseFeeDelta := math.BigMax(num, common.Big1)
 
 		return num.Add(parent.BaseFee, baseFeeDelta)
@@ -87,7 +88,7 @@ func CalcBaseFee(config *params.ChainConfig, parent *types.Header) *big.Int {
 		num.SetUint64(parentGasTarget - parent.GasUsed)
 		num.Mul(num, parent.BaseFee)
 		num.Div(num, denom.SetUint64(parentGasTarget))
-		num.Div(num, denom.SetUint64(config.BaseFeeChangeDenominator()))
+		num.Div(num, denom.SetUint64(config.BaseFeeChangeDenominator(blockNum)))
 		baseFee := num.Sub(parent.BaseFee, num)
 
 		return math.BigMax(baseFee, common.Big0)

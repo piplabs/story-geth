@@ -220,6 +220,9 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 	if config.Enable4844 {
 		overrides.Override4844 = config.Enable4844
 	}
+	if config.OverrideStoryTheogony != nil {
+		overrides.OverrideStoryTheogony = config.OverrideStoryTheogony
+	}
 	// TODO (MariusVanDerWijden) get rid of shouldPreserve in a follow-up PR
 	shouldPreserve := func(header *types.Header) bool {
 		return false
