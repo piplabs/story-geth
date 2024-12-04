@@ -988,6 +988,12 @@ Please note that --` + MetricsHTTPFlag.Name + ` must be set to start the server.
 		Usage:    "Manually specify the Theogony fork block height, overriding the bundled setting",
 		Category: flags.EthCategory,
 	}
+
+	OverrideStoryDenomTheogony = &cli.IntFlag{
+		Name:     "override.denomtheogony",
+		Usage:    "Manually specify the Theogony EIP1559 Denominator, overriding the bundled setting",
+		Category: flags.EthCategory,
+	}
 )
 
 var (

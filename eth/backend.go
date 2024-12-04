@@ -232,6 +232,9 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 	if config.OverrideStoryTheogony != nil {
 		overrides.OverrideStoryTheogony = config.OverrideStoryTheogony
 	}
+	if config.OverrideStoryDenomTheogony != nil {
+		overrides.OverrideStoryDenomTheogony = config.OverrideStoryDenomTheogony
+	}
 	eth.blockchain, err = core.NewBlockChain(chainDb, cacheConfig, config.Genesis, &overrides, eth.engine, vmConfig, &config.TransactionHistory)
 	if err != nil {
 		return nil, err

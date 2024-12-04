@@ -169,6 +169,9 @@ type Config struct {
 
 	// Override Theogony fork block height
 	OverrideStoryTheogony *big.Int `toml:",omitempty"`
+
+	// Override EIP1559 Denominator for Theogony hardfork
+	OverrideStoryDenomTheogony *uint64 `toml:",omitempty"`
 }
 
 // CreateConsensusEngine creates a consensus engine for the given chain config.
