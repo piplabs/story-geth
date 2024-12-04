@@ -972,13 +972,9 @@ func (c *ChainConfig) checkCompatible(newcfg *ChainConfig, headNumber *big.Int, 
 }
 
 // BaseFeeChangeDenominator bounds the amount the base fee can change between blocks.
-func (c *ChainConfig) BaseFeeChangeDenominator() uint64 {
-	if c.IsStory() {
-		// For Iliad and Aeneid, use the DefaultBaseFeeChangeDenominator.
-		if c.IsIliad() || c.IsAeneid() {
-			return DefaultBaseFeeChangeDenominator
-		}
-		return DefaultBaseFeeChangeDenomStory
+func (c *ChainConfig) BaseFeeChangeDenominator(num *big.Int) uint64 {
+	if c.IsStoryTheogony(num) && c.EIP1559DenomTheogony != nil && *c.EIP1559DenomTheogony > 0 {
+		return *c.EIP1559DenomTheogony
 	}
 
 	return DefaultBaseFeeChangeDenominator
