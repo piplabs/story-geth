@@ -45,7 +45,7 @@ func VerifyEIP1559Header(config *params.ChainConfig, parent, header *types.Heade
 		return errors.New("header is missing baseFee")
 	}
 	// Verify the baseFee is correct based on the parent header.
-	expectedBaseFee := CalcBaseFee(config, parent, header.Number)
+	expectedBaseFee := CalcBaseFee(config, parent)
 	if header.BaseFee.Cmp(expectedBaseFee) != 0 {
 		return fmt.Errorf("invalid baseFee: have %s, want %s, parentBaseFee %s, parentGasUsed %d",
 			header.BaseFee, expectedBaseFee, parent.BaseFee, parent.GasUsed)
@@ -54,7 +54,7 @@ func VerifyEIP1559Header(config *params.ChainConfig, parent, header *types.Heade
 }
 
 // CalcBaseFee calculates the basefee of the header.
-func CalcBaseFee(config *params.ChainConfig, parent *types.Header, blockNum *big.Int) *big.Int {
+func CalcBaseFee(config *params.ChainConfig, parent *types.Header) *big.Int {
 	// If the current block is the first EIP-1559 block, return the InitialBaseFee.
 	if !config.IsLondon(parent.Number) {
 		return new(big.Int).SetUint64(params.InitialBaseFee)
@@ -67,8 +67,9 @@ func CalcBaseFee(config *params.ChainConfig, parent *types.Header, blockNum *big
 	}
 
 	var (
-		num   = new(big.Int)
-		denom = new(big.Int)
+		num      = new(big.Int)
+		denom    = new(big.Int)
+		blockNum = new(big.Int).Add(parent.Number, common.Big1)
 	)
 
 	if parent.GasUsed > parentGasTarget {

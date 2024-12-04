@@ -224,7 +224,7 @@ func applyLondonChecks(env *stEnv, chainConfig *params.ChainConfig) error {
 		BaseFee:  env.ParentBaseFee,
 		GasUsed:  env.ParentGasUsed,
 		GasLimit: env.ParentGasLimit,
-	}, new(big.Int).SetUint64(env.Number))
+	})
 	return nil
 }
 
