@@ -150,6 +150,11 @@ func (c *ipGraph) addParentIp(input []byte, evm *EVM, ipGraphAddress common.Addr
 	}
 
 	log.Info("addParentIp", "input", input)
+
+	if evm.currentPrecompileCallType != CALL {
+		return nil, fmt.Errorf("addParentIp can only be called with CALL, not %v", evm.currentPrecompileCallType)
+	}
+
 	if len(input) < 96 {
 		return nil, fmt.Errorf("input too short for addParentIp")
 	}
@@ -328,6 +333,10 @@ func (c *ipGraph) setRoyalty(input []byte, evm *EVM, ipGraphAddress common.Addre
 	}
 
 	log.Info("setRoyalty", "ipGraphAddress", ipGraphAddress, "input", input)
+	if evm.currentPrecompileCallType != CALL {
+		return nil, fmt.Errorf("setRoyalty can only be called with CALL, not %v", evm.currentPrecompileCallType)
+	}
+
 	if len(input) < 96 {
 		return nil, fmt.Errorf("input too short for setRoyalty")
 	}
