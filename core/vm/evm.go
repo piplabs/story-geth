@@ -134,6 +134,9 @@ type EVM struct {
 	callGasTemp uint64
 	// precompiles holds the precompiled contracts for the current epoch
 	precompiles map[common.Address]PrecompiledContract
+	// currentPrecompileCallType identifies the current type of the precompile call
+	// (CALL, CALLCODE, DELEGATECALL, STATICCALL)
+	currentPrecompileCallType OpCode
 }
 
 // NewEVM returns a new EVM. The returned EVM is not thread safe and should
@@ -228,6 +231,7 @@ func (evm *EVM) Call(caller ContractRef, addr common.Address, input []byte, gas 
 	evm.Context.Transfer(evm.StateDB, caller.Address(), addr, value)
 
 	if isPrecompile {
+		evm.currentPrecompileCallType = CALL
 		ret, gas, err = RunPrecompiledContract(evm, p, input, gas, evm.Config.Tracer)
 		log.Info("Call", "precompile", true, "ret", ret, "gas", gas, "err", err)
 	} else {
@@ -295,6 +299,7 @@ func (evm *EVM) CallCode(caller ContractRef, addr common.Address, input []byte, 
 
 	// It is allowed to call precompiles, even via delegatecall
 	if p, isPrecompile := evm.precompile(addr); isPrecompile {
+		evm.currentPrecompileCallType = CALLCODE
 		ret, gas, err = RunPrecompiledContract(evm, p, input, gas, evm.Config.Tracer)
 	} else {
 		addrCopy := addr
@@ -343,6 +348,7 @@ func (evm *EVM) DelegateCall(caller ContractRef, addr common.Address, input []by
 
 	// It is allowed to call precompiles, even via delegatecall
 	if p, isPrecompile := evm.precompile(addr); isPrecompile {
+		evm.currentPrecompileCallType = DELEGATECALL
 		ret, gas, err = RunPrecompiledContract(evm, p, input, gas, evm.Config.Tracer)
 	} else {
 		addrCopy := addr
@@ -394,6 +400,7 @@ func (evm *EVM) StaticCall(caller ContractRef, addr common.Address, input []byte
 	evm.StateDB.AddBalance(addr, new(uint256.Int), tracing.BalanceChangeTouchAccount)
 
 	if p, isPrecompile := evm.precompile(addr); isPrecompile {
+		evm.currentPrecompileCallType = STATICCALL
 		ret, gas, err = RunPrecompiledContract(evm, p, input, gas, evm.Config.Tracer)
 	} else {
 		// At this point, we use a copy of address. If we don't, the go compiler will
