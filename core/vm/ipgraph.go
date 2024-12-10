@@ -35,6 +35,7 @@ var (
 	setRoyaltySelector          = crypto.Keccak256Hash([]byte("setRoyalty(address,address,uint256,uint256)")).Bytes()[:4]
 	getRoyaltySelector          = crypto.Keccak256Hash([]byte("getRoyalty(address,address,uint256)")).Bytes()[:4]
 	getRoyaltyStackSelector     = crypto.Keccak256Hash([]byte("getRoyaltyStack(address,uint256)")).Bytes()[:4]
+	MaxUint32                   = new(big.Int).SetUint64(uint64(^uint32(0)))
 )
 
 type ipGraph struct{}
@@ -344,6 +345,11 @@ func (c *ipGraph) setRoyalty(input []byte, evm *EVM, ipGraphAddress common.Addre
 	parentIpId := common.BytesToAddress(input[32:64])
 	royaltyPolicyKind := new(big.Int).SetBytes(getData(input, 64, 32))
 	royalty := new(big.Int).SetBytes(getData(input, 96, 32))
+	// Check if royalty value fits in uint32
+	if royalty.Cmp(MaxUint32) > 0 {
+		return nil, fmt.Errorf("royalty value exceeds uint32 range")
+	}
+
 	slot := crypto.Keccak256Hash(ipId.Bytes(), parentIpId.Bytes(), royaltyPolicyKind.Bytes()).Big()
 	log.Info("setRoyalty", "ipId", ipId, "ipGraphAddress", ipGraphAddress, "parentIpId", parentIpId,
 		"royaltyPolicyKind", royaltyPolicyKind, "royalty", royalty, "slot", slot)
@@ -370,6 +376,10 @@ func (c *ipGraph) getRoyalty(input []byte, evm *EVM, ipGraphAddress common.Addre
 	}
 
 	log.Info("getRoyalty", "ipId", ipId, "ancestorIpId", ancestorIpId, "ipGraphAddress", ipGraphAddress, "royaltyPolicyKind", royaltyPolicyKind, "totalRoyalty", totalRoyalty)
+	// Check if royalty value fits in uint32
+	if totalRoyalty.Cmp(MaxUint32) > 0 {
+		return nil, fmt.Errorf("royalty value exceeds uint32 range")
+	}
 	return common.BigToHash(totalRoyalty).Bytes(), nil
 }
 
