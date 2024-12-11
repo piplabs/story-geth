@@ -193,6 +193,9 @@ func (c *ipGraph) hasParentIp(input []byte, evm *EVM, ipGraphAddress common.Addr
 	currentLengthHash := evm.StateDB.GetState(ipGraphAddress, common.BytesToHash(ipId.Bytes()))
 	currentLength := currentLengthHash.Big()
 	log.Info("hasParentIp", "ipId", ipId, "parentIpId", parentIpId, "currentLength", currentLength)
+	if evm.currentPrecompileCallType == DELEGATECALL {
+		return nil, fmt.Errorf("hasParentIp cannot be called with DELEGATECALL")
+	}
 	for i := uint64(0); i < currentLength.Uint64(); i++ {
 		slot := crypto.Keccak256Hash(ipId.Bytes()).Big()
 		slot.Add(slot, new(big.Int).SetUint64(i))
@@ -209,6 +212,9 @@ func (c *ipGraph) hasParentIp(input []byte, evm *EVM, ipGraphAddress common.Addr
 
 func (c *ipGraph) getParentIps(input []byte, evm *EVM, ipGraphAddress common.Address) ([]byte, error) {
 	log.Info("getParentIps", "input", input)
+	if evm.currentPrecompileCallType == DELEGATECALL {
+		return nil, fmt.Errorf("getParentIps cannot be called with DELEGATECALL")
+	}
 	if len(input) != 32 {
 		return nil, fmt.Errorf("inputs too short for getParentIps")
 	}
@@ -233,6 +239,9 @@ func (c *ipGraph) getParentIps(input []byte, evm *EVM, ipGraphAddress common.Add
 
 func (c *ipGraph) getParentIpsCount(input []byte, evm *EVM, ipGraphAddress common.Address) ([]byte, error) {
 	log.Info("getParentIpsCount", "input", input)
+	if evm.currentPrecompileCallType == DELEGATECALL {
+		return nil, fmt.Errorf("getParentIpsCount cannot be called with DELEGATECALL")
+	}
 	if len(input) != 32 {
 		return nil, fmt.Errorf("input too short for getParentIpsCount")
 	}
@@ -247,6 +256,9 @@ func (c *ipGraph) getParentIpsCount(input []byte, evm *EVM, ipGraphAddress commo
 
 func (c *ipGraph) getAncestorIps(input []byte, evm *EVM, ipGraphAddress common.Address) ([]byte, error) {
 	log.Info("getAncestorIps", "input", input)
+	if evm.currentPrecompileCallType == DELEGATECALL {
+		return nil, fmt.Errorf("getAncestorIps cannot be called with DELEGATECALL")
+	}
 	if len(input) != 32 {
 		return nil, fmt.Errorf("input too short for getAncestorIps")
 	}
@@ -269,6 +281,9 @@ func (c *ipGraph) getAncestorIps(input []byte, evm *EVM, ipGraphAddress common.A
 
 func (c *ipGraph) getAncestorIpsCount(input []byte, evm *EVM, ipGraphAddress common.Address) ([]byte, error) {
 	log.Info("getAncestorIpsCount", "input", input)
+	if evm.currentPrecompileCallType == DELEGATECALL {
+		return nil, fmt.Errorf("getAncestorIpsCount cannot be called with DELEGATECALL")
+	}
 	if len(input) != 32 {
 		return nil, fmt.Errorf("input too short for getAncestorIpsCount")
 	}
@@ -281,6 +296,9 @@ func (c *ipGraph) getAncestorIpsCount(input []byte, evm *EVM, ipGraphAddress com
 }
 
 func (c *ipGraph) hasAncestorIp(input []byte, evm *EVM, ipGraphAddress common.Address) ([]byte, error) {
+	if evm.currentPrecompileCallType == DELEGATECALL {
+		return nil, fmt.Errorf("hasAncestorIp cannot be called with DELEGATECALL")
+	}
 	if len(input) != 64 {
 		return nil, fmt.Errorf("input too short for hasAncestorIp")
 	}
@@ -360,6 +378,9 @@ func (c *ipGraph) setRoyalty(input []byte, evm *EVM, ipGraphAddress common.Addre
 
 func (c *ipGraph) getRoyalty(input []byte, evm *EVM, ipGraphAddress common.Address) ([]byte, error) {
 	log.Info("getRoyalty", "ipGraphAddress", ipGraphAddress, "input", input)
+	if evm.currentPrecompileCallType == DELEGATECALL {
+		return nil, fmt.Errorf("getRoyalty cannot be called with DELEGATECALL")
+	}
 	if len(input) != 96 {
 		return nil, fmt.Errorf("input too short for getRoyalty")
 	}
@@ -518,6 +539,9 @@ func (c *ipGraph) topologicalSort(ipId, ancestorIpId common.Address, evm *EVM, i
 
 func (c *ipGraph) getRoyaltyStack(input []byte, evm *EVM, ipGraphAddress common.Address) ([]byte, error) {
 	log.Info("getRoyaltyStack", "ipGraphAddress", ipGraphAddress, "input", input)
+	if evm.currentPrecompileCallType == DELEGATECALL {
+		return nil, fmt.Errorf("getRoyaltyStack cannot be called with DELEGATECALL")
+	}
 	totalRoyalty := big.NewInt(0)
 	if len(input) != 64 {
 		return nil, fmt.Errorf("input too short for getRoyaltyStack")
