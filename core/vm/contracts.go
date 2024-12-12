@@ -21,8 +21,9 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"github.com/ethereum/go-ethereum/crypto"
 	"math/big"
+
+	"github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/consensys/gnark-crypto/ecc"
 	bls12381 "github.com/consensys/gnark-crypto/ecc/bls12-381"
@@ -1279,11 +1280,12 @@ func (c *p256Verify) Run(evm *EVM, input []byte) ([]byte, error) {
 	x, y := new(big.Int).SetBytes(input[96:128]), new(big.Int).SetBytes(input[128:160])
 
 	// Verify the secp256r1 signature
-	if secp256r1.Verify(hash, r, s, x, y) {
-		// Signature is valid
-		return common.LeftPadBytes([]byte{1}, 32), nil
-	} else {
-		// Signature is invalid
+	ret, err := secp256r1.Verify(hash, r, s, x, y)
+	// Signature is invalid
+	if err != nil {
+		log.Info("secp256r1 signature verification failed", "error", err)
 		return nil, nil
 	}
+	// Signature is valid
+	return ret, nil
 }

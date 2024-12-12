@@ -2,21 +2,36 @@ package secp256r1
 
 import (
 	"crypto/ecdsa"
+	"crypto/elliptic"
+	"errors"
 	"math/big"
+
+	"github.com/ethereum/go-ethereum/common"
 )
 
+var secp256k1halfN = new(big.Int).Div(elliptic.P256().Params().N, common.Big2)
+
+// Check the malleability issue, return false if malleable
+func checkMalleability(s *big.Int) bool {
+	return s.Cmp(secp256k1halfN) <= 0
+}
+
 // Verify verifies the given signature (r, s) for the given hash and public key (x, y).
-// It returns true if the signature is valid, false otherwise.
-func Verify(hash []byte, r, s, x, y *big.Int) bool {
+func Verify(hash []byte, r, s, x, y *big.Int) ([]byte, error) {
 	// Create the public key format
 	publicKey := newPublicKey(x, y)
-
-	// Check if they are invalid public key coordinates
 	if publicKey == nil {
-		return false
+		return nil, errors.New("invalid public key coordinates")
 	}
 
-	// Verify the signature with the public key,
-	// then return true if it's valid, false otherwise
-	return ecdsa.Verify(publicKey, hash, r, s)
+	if !checkMalleability(s) {
+		return nil, errors.New("malleability issue")
+	}
+
+	// Verify the signature with the public key and return 1 if it's valid, 0 otherwise
+	if ok := ecdsa.Verify(publicKey, hash, r, s); ok {
+		return common.LeftPadBytes(common.Big1.Bytes(), 32), nil
+	}
+
+	return nil, errors.New("invalid signature")
 }
