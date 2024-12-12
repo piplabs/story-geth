@@ -608,6 +608,18 @@ func DefaultOdysseyGenesisBlock() *Genesis {
 	}
 }
 
+// DefaultStoryGenesisBlock returns the story mainnet genesis block.
+func DefaultStoryGenesisBlock() *Genesis {
+	return &Genesis{
+		Config:     params.StoryChainConfig,
+		Difficulty: big.NewInt(0x20000),
+		GasLimit:   0x7A1200,
+		Nonce:      0x42,
+		Timestamp:  0,
+		Alloc:      decodePrealloc(odysseyAllocData), // TODO: change to Story mainnet alloc data
+	}
+}
+
 // DefaultLocalGenesisBlock returns the network genesis block for local testing.
 func DefaultLocalGenesisBlock() *Genesis {
 	return &Genesis{
