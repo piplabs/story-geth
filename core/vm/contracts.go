@@ -1283,7 +1283,7 @@ func (c *p256Verify) Run(evm *EVM, input []byte) ([]byte, error) {
 	ret, err := secp256r1.Verify(hash, r, s, x, y)
 	// Signature is invalid
 	if err != nil {
-		log.Info("secp256r1 signature verification failed", "error", err)
+		log.Warn("secp256r1 signature verification failed", "error", err)
 		return nil, nil
 	}
 	// Signature is valid
