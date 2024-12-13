@@ -75,6 +75,15 @@ var OdysseyBootnodes = []string{
 	"enode://298bc05889e120e50e7a344e31adb72901caaff9e747b3e8f57c5786e6167452857cbd0ff7d5e0f849a8dfd26efcc3da1795e28d7cb05d120e97a89e79ec4b18@b2.odyssey-testnet.storyrpc.io:30303",
 }
 
+// StoryBootnodes are the enode URLs of the P2P bootstrap nodes running on the
+// Story main network.
+var StoryBootnodes = []string{
+	// Upstream bootnodes
+	// TODO: update bootnodes for mainnet
+	"enode://077aa94a5bf388adda35e0d5a7bd8cb5e9741ea5c18381fd14b16018e112497b7c0a400f50677deb4271af3bc0a1b74f093067a398257b76e3a0d7387a432110@b1.odyssey-testnet.storyrpc.io:30303",
+	"enode://298bc05889e120e50e7a344e31adb72901caaff9e747b3e8f57c5786e6167452857cbd0ff7d5e0f849a8dfd26efcc3da1795e28d7cb05d120e97a89e79ec4b18@b2.odyssey-testnet.storyrpc.io:30303",
+}
+
 var V5Bootnodes = []string{
 	// Teku team's bootnode
 	"enr:-KG4QMOEswP62yzDjSwWS4YEjtTZ5PO6r65CPqYBkgTTkrpaedQ8uEUo1uMALtJIvb2w_WWEVmg5yt1UAuK1ftxUU7QDhGV0aDKQu6TalgMAAAD__________4JpZIJ2NIJpcIQEnfA2iXNlY3AyNTZrMaEDfol8oLr6XJ7FsdAYE7lpJhKMls4G_v6qQOGKJUWGb_uDdGNwgiMog3VkcIIjKA", // # 4.157.240.54 | azure-us-east-virginia
