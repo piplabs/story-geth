@@ -158,8 +158,6 @@ var (
 		utils.BeaconCheckpointFlag,
 		utils.CollectWitnessFlag,
 		utils.Override4844Flag,
-		utils.OverrideStoryTheogony,
-		utils.OverrideStoryDenomTheogony,
 	}, utils.NetworkFlags, utils.DatabaseFlags)
 
 	rpcFlags = []cli.Flag{
