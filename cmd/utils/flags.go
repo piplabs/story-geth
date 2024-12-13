@@ -981,15 +981,9 @@ Please note that --` + MetricsHTTPFlag.Name + ` must be set to start the server.
 		Category: flags.EthCategory,
 	}
 
-	OverrideStoryTheogony = &cli.IntFlag{
-		Name:     "override.theogony",
-		Usage:    "Manually specify the Theogony fork block height, overriding the bundled setting",
-		Category: flags.EthCategory,
-	}
-
-	OverrideStoryDenomTheogony = &cli.IntFlag{
-		Name:     "override.denomtheogony",
-		Usage:    "Manually specify the Theogony EIP1559 Denominator, overriding the bundled setting",
+	OverrideStoryDenom = &cli.IntFlag{
+		Name:     "override.storydenom",
+		Usage:    "Manually specify the EIP1559 Denominator for Story, overriding the bundled setting",
 		Category: flags.EthCategory,
 	}
 )

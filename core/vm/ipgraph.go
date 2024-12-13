@@ -50,7 +50,9 @@ func (c *ipGraph) RequiredGas(input []byte) uint64 {
 
 	switch {
 	case bytes.Equal(selector, addParentIpSelector):
-		return ipGraphWriteGas
+		args := input[4:]
+		parentCount := new(big.Int).SetBytes(getData(args, 64, 32))
+		return ipGraphWriteGas * parentCount.Uint64()
 	case bytes.Equal(selector, hasParentIpSelector):
 		return ipGraphReadGas * averageParentIpCount
 	case bytes.Equal(selector, getParentIpsSelector):
@@ -607,62 +609,4 @@ func (c *ipGraph) getRoyaltyStackLrp(ipId common.Address, evm *EVM, ipGraphAddre
 		totalRoyalty.Add(totalRoyalty, royalty)
 	}
 	return totalRoyalty
-}
-
-type ipGraphTheogony struct {
-	ipGraph
-}
-
-func (c *ipGraphTheogony) RequiredGas(input []byte) uint64 {
-	// Smart contract function's selector is the first 4 bytes of the input
-	if len(input) < 4 {
-		return intrinsicGas
-	}
-
-	selector := input[:4]
-
-	switch {
-	case bytes.Equal(selector, addParentIpSelector):
-		args := input[4:]
-		parentCount := new(big.Int).SetBytes(getData(args, 64, 32))
-		return ipGraphWriteGas * parentCount.Uint64()
-	case bytes.Equal(selector, hasParentIpSelector):
-		return ipGraphReadGas * averageParentIpCount
-	case bytes.Equal(selector, getParentIpsSelector):
-		return ipGraphReadGas * averageParentIpCount
-	case bytes.Equal(selector, getParentIpsCountSelector):
-		return ipGraphReadGas
-	case bytes.Equal(selector, getAncestorIpsSelector):
-		return ipGraphReadGas * averageAncestorIpCount * 2
-	case bytes.Equal(selector, getAncestorIpsCountSelector):
-		return ipGraphReadGas * averageParentIpCount * 2
-	case bytes.Equal(selector, hasAncestorIpsSelector):
-		return ipGraphReadGas * averageAncestorIpCount * 2
-	case bytes.Equal(selector, setRoyaltySelector):
-		return ipGraphWriteGas
-	case bytes.Equal(selector, getRoyaltySelector):
-		royaltyPolicyKind := new(big.Int).SetBytes(getData(input, 64+4, 32))
-		if royaltyPolicyKind.Cmp(royaltyPolicyKindLAP) == 0 {
-			return ipGraphReadGas * (averageAncestorIpCount * 3)
-		} else if royaltyPolicyKind.Cmp(royaltyPolicyKindLRP) == 0 {
-			return ipGraphReadGas * (averageAncestorIpCount*2 + 2)
-		} else {
-			return intrinsicGas
-		}
-	case bytes.Equal(selector, getRoyaltyStackSelector):
-		royaltyPolicyKind := new(big.Int).SetBytes(getData(input, 32+4, 32))
-		if royaltyPolicyKind.Cmp(royaltyPolicyKindLAP) == 0 {
-			return ipGraphReadGas * (averageParentIpCount + 1)
-		} else if royaltyPolicyKind.Cmp(royaltyPolicyKindLRP) == 0 {
-			return ipGraphReadGas * (averageAncestorIpCount * 2)
-		} else {
-			return intrinsicGas
-		}
-	default:
-		return intrinsicGas
-	}
-}
-
-func (c *ipGraphTheogony) Run(evm *EVM, input []byte) ([]byte, error) {
-	return c.ipGraph.Run(evm, input)
 }
