@@ -608,10 +608,10 @@ func DefaultOdysseyGenesisBlock() *Genesis {
 	}
 }
 
-// DefaultStoryGenesisBlock returns the story mainnet genesis block.
-func DefaultStoryGenesisBlock() *Genesis {
+// DefaultHomerGenesisBlock returns the homer network genesis block.
+func DefaultHomerGenesisBlock() *Genesis {
 	return &Genesis{
-		Config:     params.StoryChainConfig,
+		Config:     params.HomerChainConfig,
 		Difficulty: big.NewInt(0x20000),
 		GasLimit:   0x7A1200,
 		Nonce:      0x42,

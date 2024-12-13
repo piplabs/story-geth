@@ -627,9 +627,9 @@ var (
 		Usage:    "odyssey test network: pre-configured proof-of-stake test network",
 		Category: flags.MiscCategory,
 	}
-	StoryMainnetFlag = &cli.BoolFlag{
-		Name:     "story",
-		Usage:    "story mainnet: pre-configured proof of stake network",
+	HomerFlag = &cli.BoolFlag{
+		Name:     "homer",
+		Usage:    "homer main network: pre-configured proof of stake main network",
 		Category: flags.MiscCategory,
 	}
 	LocalFlag = &cli.BoolFlag{
@@ -998,7 +998,7 @@ var (
 		LocalFlag,
 	}
 	// NetworkFlags is the flag group of all built-in supported networks.
-	NetworkFlags = append([]cli.Flag{MainnetFlag, StoryMainnetFlag}, TestnetFlags...)
+	NetworkFlags = append([]cli.Flag{MainnetFlag, HomerFlag}, TestnetFlags...)
 
 	// DatabaseFlags is the flag group of all database flags.
 	DatabaseFlags = []cli.Flag{
@@ -1031,8 +1031,8 @@ func MakeDataDir(ctx *cli.Context) string {
 		if ctx.Bool(OdysseyFlag.Name) {
 			return filepath.Join(path, "odyssey")
 		}
-		if ctx.Bool(StoryMainnetFlag.Name) {
-			return filepath.Join(path, "story")
+		if ctx.Bool(HomerFlag.Name) {
+			return filepath.Join(path, "homer")
 		}
 		if ctx.Bool(LocalFlag.Name) {
 			return filepath.Join(path, "local")
@@ -1103,8 +1103,8 @@ func setBootstrapNodes(ctx *cli.Context, cfg *p2p.Config) {
 			urls = params.IliadBootnodes
 		case ctx.Bool(OdysseyFlag.Name):
 			urls = params.OdysseyBootnodes
-		case ctx.Bool(StoryMainnetFlag.Name):
-			urls = params.StoryMainnetBootnodes
+		case ctx.Bool(HomerFlag.Name):
+			urls = params.HomerBootnodes
 		case ctx.Bool(LocalFlag.Name):
 			urls = params.LocalBootnodes
 		}
@@ -1542,8 +1542,8 @@ func SetDataDir(ctx *cli.Context, cfg *node.Config) {
 		cfg.DataDir = filepath.Join(node.DefaultDataDir(), "iliad")
 	case ctx.Bool(OdysseyFlag.Name) && cfg.DataDir == node.DefaultDataDir():
 		cfg.DataDir = filepath.Join(node.DefaultDataDir(), "odyssey")
-	case ctx.Bool(StoryMainnetFlag.Name) && cfg.DataDir == node.DefaultDataDir():
-		cfg.DataDir = filepath.Join(node.DefaultDataDir(), "story")
+	case ctx.Bool(HomerFlag.Name) && cfg.DataDir == node.DefaultDataDir():
+		cfg.DataDir = filepath.Join(node.DefaultDataDir(), "homer")
 	case ctx.Bool(LocalFlag.Name) && cfg.DataDir == node.DefaultDataDir():
 		cfg.DataDir = filepath.Join(node.DefaultDataDir(), "local")
 	}
@@ -1701,7 +1701,7 @@ func CheckExclusive(ctx *cli.Context, args ...interface{}) {
 // SetEthConfig applies eth-related command line flags to the config.
 func SetEthConfig(ctx *cli.Context, stack *node.Node, cfg *ethconfig.Config) {
 	// Avoid conflicting network flags
-	CheckExclusive(ctx, MainnetFlag, DeveloperFlag, GoerliFlag, SepoliaFlag, HoleskyFlag, IliadFlag, OdysseyFlag, StoryMainnetFlag, LocalFlag)
+	CheckExclusive(ctx, MainnetFlag, DeveloperFlag, GoerliFlag, SepoliaFlag, HoleskyFlag, IliadFlag, OdysseyFlag, HomerFlag, LocalFlag)
 	CheckExclusive(ctx, DeveloperFlag, ExternalSignerFlag) // Can't use both ephemeral unlocked and external signer
 
 	// Set configurations from CLI flags
@@ -1889,12 +1889,12 @@ func SetEthConfig(ctx *cli.Context, stack *node.Node, cfg *ethconfig.Config) {
 		cfg.Genesis = core.DefaultOdysseyGenesisBlock()
 		SetDNSDiscoveryDefaults(cfg, params.OdysseyGenesisHash)
 		cfg.Miner.GasPrice = big.NewInt(params.GWei * 16)
-	case ctx.Bool(StoryMainnetFlag.Name):
+	case ctx.Bool(HomerFlag.Name):
 		if !ctx.IsSet(NetworkIdFlag.Name) {
 			cfg.NetworkId = 1415
 		}
-		cfg.Genesis = core.DefaultStoryGenesisBlock()
-		SetDNSDiscoveryDefaults(cfg, params.StoryGenesisHash)
+		cfg.Genesis = core.DefaultHomerGenesisBlock()
+		SetDNSDiscoveryDefaults(cfg, params.HomerGenesisHash)
 		cfg.Miner.GasPrice = big.NewInt(params.GWei * 16)
 	case ctx.Bool(LocalFlag.Name):
 		if !ctx.IsSet(NetworkIdFlag.Name) {
@@ -2228,8 +2228,8 @@ func MakeGenesis(ctx *cli.Context) *core.Genesis {
 		genesis = core.DefaultIliadGenesisBlock()
 	case ctx.Bool(OdysseyFlag.Name):
 		genesis = core.DefaultOdysseyGenesisBlock()
-	case ctx.Bool(StoryMainnetFlag.Name):
-		genesis = core.DefaultStoryGenesisBlock()
+	case ctx.Bool(HomerFlag.Name):
+		genesis = core.DefaultHomerGenesisBlock()
 	case ctx.Bool(LocalFlag.Name):
 		genesis = core.DefaultLocalGenesisBlock()
 	case ctx.Bool(DeveloperFlag.Name):
