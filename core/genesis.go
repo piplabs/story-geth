@@ -608,15 +608,15 @@ func DefaultOdysseyGenesisBlock() *Genesis {
 	}
 }
 
-// DefaultHomerGenesisBlock returns the homer network genesis block.
-func DefaultHomerGenesisBlock() *Genesis {
+// DefaultStoryGenesisBlock returns the Story main network genesis block.
+func DefaultStoryGenesisBlock() *Genesis {
 	return &Genesis{
-		Config:     params.HomerChainConfig,
+		Config:     params.StoryChainConfig,
 		Difficulty: big.NewInt(0x20000),
 		GasLimit:   0x7A1200,
 		Nonce:      0x42,
 		Timestamp:  0,
-		Alloc:      decodePrealloc(homerAllocData), // TODO: change to Story mainnet alloc data
+		Alloc:      decodePrealloc(storyAllocData), // TODO: change to Story mainnet alloc data
 	}
 }
 
