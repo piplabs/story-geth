@@ -616,7 +616,7 @@ func DefaultStoryGenesisBlock() *Genesis {
 		GasLimit:   0x7A1200,
 		Nonce:      0x42,
 		Timestamp:  0,
-		Alloc:      decodePrealloc(odysseyAllocData), // TODO: change to Story mainnet alloc data
+		Alloc:      decodePrealloc(homerAllocData), // TODO: change to Story mainnet alloc data
 	}
 }
 
