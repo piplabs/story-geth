@@ -14,5 +14,5 @@ const (
 	IDStoryLocal uint64 = 1511
 
 	// Story protocol params
-	DefaultBaseFeeChangeDenomStoryHomer = 24 // EIP1559 denominator for Story Homer =
+	DefaultBaseFeeChangeDenomStoryHomer = 24 // EIP1559 denominator for Story Homer
 )
