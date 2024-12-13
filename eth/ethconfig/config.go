@@ -19,7 +19,6 @@ package ethconfig
 
 import (
 	"fmt"
-	"math/big"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -166,12 +165,6 @@ type Config struct {
 
 	// Enables EIP-4844 blob transaction support
 	Enable4844 bool
-
-	// Override Theogony fork block height
-	OverrideStoryTheogony *big.Int `toml:",omitempty"`
-
-	// Override EIP1559 Denominator for Theogony hardfork
-	OverrideStoryDenomTheogony *uint64 `toml:",omitempty"`
 }
 
 // CreateConsensusEngine creates a consensus engine for the given chain config.

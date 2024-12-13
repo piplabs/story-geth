@@ -264,9 +264,7 @@ type ChainOverrides struct {
 	OverrideVerkle *uint64
 
 	// For Story
-	Override4844               bool
-	OverrideStoryTheogony      *big.Int
-	OverrideStoryDenomTheogony *uint64
+	Override4844 bool
 }
 
 // apply applies the chain overrides on the supplied chain config.

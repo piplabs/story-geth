@@ -144,30 +144,14 @@ var PrecompiledContractsPrague = PrecompiledContracts{
 	common.BytesToAddress([]byte{0x10}):       &bls12381MapG1{},
 	common.BytesToAddress([]byte{0x11}):       &bls12381MapG2{},
 	common.BytesToAddress([]byte{0x01, 0x00}): &p256Verify{},
-	common.BytesToAddress([]byte{0x01, 0x01}): &ipGraphTheogony{},
+	common.BytesToAddress([]byte{0x01, 0x01}): &ipGraph{},
 }
 
 var PrecompiledContractsBLS = PrecompiledContractsPrague
 
 var PrecompiledContractsVerkle = PrecompiledContractsPrague
 
-var PrecompiledContractsTheogony = map[common.Address]PrecompiledContract{
-	common.BytesToAddress([]byte{0x1}):        &ecrecover{},
-	common.BytesToAddress([]byte{0x2}):        &sha256hash{},
-	common.BytesToAddress([]byte{0x3}):        &ripemd160hash{},
-	common.BytesToAddress([]byte{0x4}):        &dataCopy{},
-	common.BytesToAddress([]byte{0x5}):        &bigModExp{eip2565: true},
-	common.BytesToAddress([]byte{0x6}):        &bn256AddIstanbul{},
-	common.BytesToAddress([]byte{0x7}):        &bn256ScalarMulIstanbul{},
-	common.BytesToAddress([]byte{0x8}):        &bn256PairingIstanbul{},
-	common.BytesToAddress([]byte{0x9}):        &blake2F{},
-	common.BytesToAddress([]byte{0xa}):        &kzgPointEvaluation{},
-	common.BytesToAddress([]byte{0x01, 0x00}): &p256Verify{},
-	common.BytesToAddress([]byte{0x01, 0x01}): &ipGraphTheogony{},
-}
-
 var (
-	PrecompiledAddressesTheogony  []common.Address
 	PrecompiledAddressesPrague    []common.Address
 	PrecompiledAddressesCancun    []common.Address
 	PrecompiledAddressesBerlin    []common.Address
@@ -194,9 +178,6 @@ func init() {
 	}
 	for k := range PrecompiledContractsPrague {
 		PrecompiledAddressesPrague = append(PrecompiledAddressesPrague, k)
-	}
-	for k := range PrecompiledContractsTheogony {
-		PrecompiledAddressesTheogony = append(PrecompiledAddressesTheogony, k)
 	}
 }
 
@@ -227,8 +208,6 @@ func ActivePrecompiledContracts(rules params.Rules) PrecompiledContracts {
 // ActivePrecompiles returns the precompile addresses enabled with the current configuration.
 func ActivePrecompiles(rules params.Rules) []common.Address {
 	switch {
-	case rules.IsStoryTheogony:
-		return PrecompiledAddressesTheogony
 	case rules.IsPrague:
 		return PrecompiledAddressesPrague
 	case rules.IsCancun:
