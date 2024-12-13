@@ -980,12 +980,6 @@ Please note that --` + MetricsHTTPFlag.Name + ` must be set to start the server.
 		Usage:    "Enable 4844 blob transactions",
 		Category: flags.EthCategory,
 	}
-
-	OverrideStoryDenom = &cli.IntFlag{
-		Name:     "override.storydenom",
-		Usage:    "Manually specify the EIP1559 Denominator for Story, overriding the bundled setting",
-		Category: flags.EthCategory,
-	}
 )
 
 var (

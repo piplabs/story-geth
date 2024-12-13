@@ -164,7 +164,6 @@ var (
 		ShanghaiTime:                  newUint64(0),
 		CancunTime:                    newUint64(0),
 		Enable4844:                    false,
-		StoryEIP1559Denom:             newUint64(24),
 	}
 
 	OdysseyChainConfig = &ChainConfig{
@@ -186,7 +185,6 @@ var (
 		ShanghaiTime:                  newUint64(0),
 		CancunTime:                    newUint64(0),
 		Enable4844:                    false,
-		StoryEIP1559Denom:             newUint64(24),
 	}
 
 	LocalChainConfig = &ChainConfig{
@@ -208,7 +206,6 @@ var (
 		ShanghaiTime:                  newUint64(0),
 		CancunTime:                    newUint64(0),
 		Enable4844:                    false,
-		StoryEIP1559Denom:             newUint64(24),
 	}
 
 	// AllEthashProtocolChanges contains every protocol change (EIPs) introduced
@@ -453,8 +450,6 @@ type ChainConfig struct {
 
 	// 4844 Overrides
 	Enable4844 bool `json:"enable4844,omitempty"`
-
-	StoryEIP1559Denom *uint64 `json:"storyEIP1559Denom,omitempty"` // EIP1559 Denominator for Story
 }
 
 // EthashConfig is the consensus engine configs for proof-of-work based sealing.
@@ -839,11 +834,7 @@ func (c *ChainConfig) checkCompatible(newcfg *ChainConfig, headNumber *big.Int, 
 
 // BaseFeeChangeDenominator bounds the amount the base fee can change between blocks.
 func (c *ChainConfig) BaseFeeChangeDenominator() uint64 {
-	if c.StoryEIP1559Denom != nil && *c.StoryEIP1559Denom > 0 {
-		return *c.StoryEIP1559Denom
-	}
-
-	return DefaultBaseFeeChangeDenominator
+	return DefaultBaseFeeChangeDenomStoryHomer
 }
 
 // ElasticityMultiplier bounds the maximum gas limit an EIP-1559 block may have.
