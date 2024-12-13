@@ -834,7 +834,11 @@ func (c *ChainConfig) checkCompatible(newcfg *ChainConfig, headNumber *big.Int, 
 
 // BaseFeeChangeDenominator bounds the amount the base fee can change between blocks.
 func (c *ChainConfig) BaseFeeChangeDenominator() uint64 {
-	return DefaultBaseFeeChangeDenomStoryHomer
+	if c.IsStory() {
+		return DefaultBaseFeeChangeDenomStoryHomer
+	}
+
+	return DefaultBaseFeeChangeDenominator
 }
 
 // ElasticityMultiplier bounds the maximum gas limit an EIP-1559 block may have.
@@ -845,6 +849,14 @@ func (c *ChainConfig) ElasticityMultiplier() uint64 {
 // Is4844Enabled checks whether blob transactions are supported.
 func (c *ChainConfig) Is4844Enabled() bool {
 	return c.Enable4844
+}
+
+func (c *ChainConfig) IsStory() bool {
+	chainId := c.ChainID.Uint64()
+	return chainId == IDStoryMainnet ||
+		chainId == IDStoryIliad ||
+		chainId == IDStoryOdyssey ||
+		chainId == IDStoryLocal
 }
 
 // LatestFork returns the latest time-based fork that would be active for the given time.
