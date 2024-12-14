@@ -88,9 +88,7 @@ included in our repository in the `COPYING` file.
 
 ## Local Development with Story-Localnet
 
-To simplify local development and testing, developers can use the
-**Story-Localnet** project, which allows multiple Story nodes to run locally
-using Docker. This setup facilitates easy testing and experimentation.
+To simplify local development and testing, developers can use the **Story-Localnet** project, which allows multiple Story nodes to run locally using Docker. This setup facilitates easy testing and experimentation.
 
 Find more information and setup instructions here:
 [Story-Localnet GitHub Repository](https://github.com/piplabs/story-localnet).
