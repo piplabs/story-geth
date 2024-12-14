@@ -85,3 +85,12 @@ also included in our repository in the `COPYING.LESSER` file.
 The story-geth binaries (i.e. all code inside of the `cmd` directory) are licensed under the
 [GNU General Public License v3.0](https://www.gnu.org/licenses/gpl-3.0.en.html), also
 included in our repository in the `COPYING` file.
+
+## Local Development with Story-Localnet
+
+To simplify local development and testing, developers can use the
+**Story-Localnet** project, which allows multiple Story nodes to run locally
+using Docker. This setup facilitates easy testing and experimentation.
+
+Find more information and setup instructions here:
+[Story-Localnet GitHub Repository](https://github.com/piplabs/story-localnet).
