@@ -71,8 +71,8 @@ var OdysseyBootnodes = []string{
 var StoryBootnodes = []string{
 	// Upstream bootnodes
 	// TODO: update bootnodes for mainnet
-	"enode://077aa94a5bf388adda35e0d5a7bd8cb5e9741ea5c18381fd14b16018e112497b7c0a400f50677deb4271af3bc0a1b74f093067a398257b76e3a0d7387a432110@b1.odyssey-testnet.storyrpc.io:30303",
-	"enode://298bc05889e120e50e7a344e31adb72901caaff9e747b3e8f57c5786e6167452857cbd0ff7d5e0f849a8dfd26efcc3da1795e28d7cb05d120e97a89e79ec4b18@b2.odyssey-testnet.storyrpc.io:30303",
+	"enode://f42110982b6ddaa4de8031f9fecb619d181902db5529a43bc9b1187debbc67771bf937b2210cbfd33babd2acbe138506596e23d0d1792ab3cb5229c5bb051544@b1.storyrpc.io:30303",
+	"enode://2ae459a7cc28b59822377deec266e24e5ed00374d7a83e2e8d0d67dd89dc2b80366c1353c7909fe81b840f6081188850677fa20dd5d262c9e3f67eb23d0be0b5@b2.storyrpc.io:30303",
 }
 
 var V5Bootnodes = []string{
