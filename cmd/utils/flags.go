@@ -1895,7 +1895,9 @@ func SetEthConfig(ctx *cli.Context, stack *node.Node, cfg *ethconfig.Config) {
 		}
 		cfg.Genesis = core.DefaultStoryGenesisBlock()
 		SetDNSDiscoveryDefaults(cfg, params.StoryGenesisHash)
-		cfg.Miner.GasPrice = big.NewInt(params.GWei * 16)
+		cfg.Miner.GasPrice = big.NewInt(params.GWei * 4)
+		cfg.Miner.GasCeil = 45_000_000
+		cfg.TxPool.NoLocals = true
 	case ctx.Bool(LocalFlag.Name):
 		if !ctx.IsSet(NetworkIdFlag.Name) {
 			cfg.NetworkId = 1511
