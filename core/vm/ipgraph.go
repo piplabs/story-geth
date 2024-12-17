@@ -23,7 +23,7 @@ var (
 	royaltyPolicyKindLRP        = big.NewInt(1)         // Liquid Relative Percentage (LRP) Royalty Policy
 	hundredPercent              = big.NewInt(100000000) // 100% in the integer format
 	ipGraphAddress              = common.HexToAddress("0x0000000000000000000000000000000000000101")
-	aclAddress                  = common.HexToAddress("0x680E66e4c7Df9133a7AFC1ed091089B32b89C4ae")
+	aclAddress                  = common.HexToAddress("0x1640A22a8A086747cD377b73954545e2Dfcc9Cad")
 	aclSlot                     = "af99b37fdaacca72ee7240cb1435cc9e498aee6ef4edc19c8cc0cd787f4e6800"
 	addParentIpSelector         = crypto.Keccak256Hash([]byte("addParentIp(address,address[])")).Bytes()[:4]
 	hasParentIpSelector         = crypto.Keccak256Hash([]byte("hasParentIp(address,address)")).Bytes()[:4]
