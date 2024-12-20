@@ -60,4 +60,7 @@ var (
 	// input transaction of non-blob type when a blob transaction from this sender
 	// remains pending (and vice-versa).
 	ErrAlreadyReserved = errors.New("address already reserved")
+
+	// ErrFilteredByGuardian is returned if the transaction is filtered by the guardian
+	ErrFilteredByGuardian = errors.New("filtered by guardian")
 )
