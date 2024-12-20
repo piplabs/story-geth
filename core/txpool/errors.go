@@ -67,4 +67,7 @@ var (
 	// ErrInflightTxLimitReached is returned when the maximum number of in-flight
 	// transactions is reached for specific accounts.
 	ErrInflightTxLimitReached = errors.New("in-flight transaction limit reached for delegated accounts")
+
+	// ErrFilteredByGuardian is returned if the transaction is filtered by the guardian
+	ErrFilteredByGuardian = errors.New("filtered by guardian")
 )

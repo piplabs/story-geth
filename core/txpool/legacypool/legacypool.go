@@ -37,6 +37,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto/kzg4844"
 	"github.com/ethereum/go-ethereum/event"
+	"github.com/ethereum/go-ethereum/guardian"
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/metrics"
 	"github.com/ethereum/go-ethereum/params"
@@ -102,6 +103,7 @@ var (
 	invalidTxMeter     = metrics.NewRegisteredMeter("txpool/invalid", nil)
 	underpricedTxMeter = metrics.NewRegisteredMeter("txpool/underpriced", nil)
 	overflowedTxMeter  = metrics.NewRegisteredMeter("txpool/overflowed", nil)
+	filteredTxMeter    = metrics.NewRegisteredMeter("txpool/filtered", nil)
 
 	// throttleTxMeter counts how many transactions are rejected due to too-many-changes between
 	// txpool reorgs.
@@ -682,6 +684,14 @@ func (pool *LegacyPool) add(tx *types.Transaction) (replaced bool, err error) {
 		return false, txpool.ErrAlreadyKnown
 	}
 
+	// When the guardian module is enabled, check if the sender or recipient in the
+	// transaction is in the filter file
+	if instance := guardian.GetInstance(); instance != nil {
+		if instance.CheckTransaction(pool.signer, tx) {
+			filteredTxMeter.Mark(1)
+			return false, txpool.ErrFilteredByGuardian
+		}
+	}
 	// If the transaction fails basic validation, discard it
 	if err := pool.validateTx(tx); err != nil {
 		log.Trace("Discarding invalid transaction", "hash", hash, "err", err)
