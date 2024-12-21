@@ -2,7 +2,7 @@ package params
 
 const (
 	// Story Chain IDs
-	IDStoryMainnet uint64 = 1415
+	IDStoryMainnet uint64 = 1514
 
 	// Testnet.
 	IDStoryIliad uint64 = 1513
