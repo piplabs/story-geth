@@ -35,7 +35,7 @@ var (
 	IliadGenesisHash   = common.HexToHash("0xf5ebc6f0982e8bf7fd532b3f959f84d12b3dedd2827af8d31f5389447bedafc6")
 	OdysseyGenesisHash = common.HexToHash("0xf5ebc6f0982e8bf7fd532b3f959f84d12b3dedd2827af8d31f5389447bedafc6")
 	StoryGenesisHash   = common.HexToHash("0xdf5284f83cc659c2731a3e47dc207f5dbc21cd8247ebebd8e19337f7a0798e3f")
-	LocalGenesisHash   = common.HexToHash("0x16152175edd8931dbf10912ea3e09c8bb2ffe8ce60e4ff5d3c4a973276e614e9")
+	LocalGenesisHash   = common.HexToHash("0xeeb146844fdd1f8e4fe1af3f12c6169a3a08912633d7873ab59ccaefbd8f426e")
 )
 
 func newUint64(val uint64) *uint64 { return &val }
