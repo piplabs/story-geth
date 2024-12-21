@@ -32,7 +32,7 @@ var (
 	GoerliGenesisHash  = common.HexToHash("0xbf7e331f7f7c1dd2e05159666b3bf8bc7a8a3a9eb1d518969eab529dd9b88c1a")
 	IliadGenesisHash   = common.HexToHash("0xf5ebc6f0982e8bf7fd532b3f959f84d12b3dedd2827af8d31f5389447bedafc6")
 	OdysseyGenesisHash = common.HexToHash("0xf5ebc6f0982e8bf7fd532b3f959f84d12b3dedd2827af8d31f5389447bedafc6")
-	StoryGenesisHash   = common.HexToHash("0xfb60e5f22e99af3c83d227f7b8b62552b854175659008765d1bf827deed3d6d7")
+	StoryGenesisHash   = common.HexToHash("0xdf5284f83cc659c2731a3e47dc207f5dbc21cd8247ebebd8e19337f7a0798e3f")
 	LocalGenesisHash   = common.HexToHash("0x16152175edd8931dbf10912ea3e09c8bb2ffe8ce60e4ff5d3c4a973276e614e9")
 )
 
@@ -189,7 +189,7 @@ var (
 	}
 
 	StoryChainConfig = &ChainConfig{
-		ChainID:                       big.NewInt(1415),
+		ChainID:                       big.NewInt(1514),
 		HomesteadBlock:                big.NewInt(0),
 		EIP150Block:                   big.NewInt(0),
 		EIP155Block:                   big.NewInt(0),
