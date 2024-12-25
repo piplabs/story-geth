@@ -34,7 +34,7 @@ var (
 	HoodiGenesisHash   = common.HexToHash("0xbbe312868b376a3001692a646dd2d7d1e4406380dfd86b98aa8a34d1557c971b")
 	IliadGenesisHash   = common.HexToHash("0xf5ebc6f0982e8bf7fd532b3f959f84d12b3dedd2827af8d31f5389447bedafc6")
 	OdysseyGenesisHash = common.HexToHash("0xf5ebc6f0982e8bf7fd532b3f959f84d12b3dedd2827af8d31f5389447bedafc6")
-	StoryGenesisHash   = common.HexToHash("0x6c231fccb2b82478faff9976843a77f7246b9cef9861ef6f2d8dfffe37a7cfd6")
+	StoryGenesisHash   = common.HexToHash("0x94db6651613484eb5ff3dfaf52cacd6a454cde56d21214b22f102f2e502dc9cf")
 	LocalGenesisHash   = common.HexToHash("0xeeb146844fdd1f8e4fe1af3f12c6169a3a08912633d7873ab59ccaefbd8f426e")
 )
 
