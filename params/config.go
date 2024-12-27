@@ -32,7 +32,7 @@ var (
 	SepoliaGenesisHash = common.HexToHash("0x25a5cc106eea7138acab33231d7160d69cb777ee0c2c553fcddf5138993e6dd9")
 	IliadGenesisHash   = common.HexToHash("0xf5ebc6f0982e8bf7fd532b3f959f84d12b3dedd2827af8d31f5389447bedafc6")
 	OdysseyGenesisHash = common.HexToHash("0xf5ebc6f0982e8bf7fd532b3f959f84d12b3dedd2827af8d31f5389447bedafc6")
-	StoryGenesisHash   = common.HexToHash("0x94db6651613484eb5ff3dfaf52cacd6a454cde56d21214b22f102f2e502dc9cf")
+	StoryGenesisHash   = common.HexToHash("0x7fe635a6bcfadcd23aa7377fd496ca176b571b05733758e46e32bdffb9ed2d33")
 	LocalGenesisHash   = common.HexToHash("0xeeb146844fdd1f8e4fe1af3f12c6169a3a08912633d7873ab59ccaefbd8f426e")
 )
 
