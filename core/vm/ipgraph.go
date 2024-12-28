@@ -470,6 +470,7 @@ func (c *ipGraph) topologicalSort(ipId, ancestorIpId common.Address, evm *EVM, i
 
 	allParents := make(map[common.Address][]common.Address)
 	visited := make(map[common.Address]bool)
+	inTopoOrder := make(map[common.Address]bool)
 	topoOrder := []common.Address{}
 	stack := []common.Address{ipId}
 
@@ -478,7 +479,10 @@ func (c *ipGraph) topologicalSort(ipId, ancestorIpId common.Address, evm *EVM, i
 		stack = stack[:len(stack)-1] // pop from stack
 
 		if visited[current] {
-			topoOrder = append(topoOrder, current)
+			if !inTopoOrder[current] {
+				topoOrder = append(topoOrder, current)
+				inTopoOrder[current] = true
+			}
 			continue
 		}
 		visited[current] = true
