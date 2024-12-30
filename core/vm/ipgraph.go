@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"math/big"
+	"sort"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -245,16 +246,23 @@ func (c *ipGraph) getAncestorIps(input []byte, evm *EVM, ipGraphAddress common.A
 		return nil, fmt.Errorf("input too short for getAncestorIps")
 	}
 	ipId := common.BytesToAddress(input[0:32])
-	ancestors := c.findAncestors(ipId, evm, ipGraphAddress)
+	ancestorsMap := c.findAncestors(ipId, evm, ipGraphAddress)
+
+	// Convert map keys to a sorted slice for stable ordering results
+	ancestors := make([]common.Address, 0, len(ancestorsMap))
+	for ancestor := range ancestorsMap {
+		ancestors = append(ancestors, ancestor)
+	}
+	sort.Slice(ancestors, func(i, j int) bool {
+		return bytes.Compare(ancestors[i].Bytes(), ancestors[j].Bytes()) < 0
+	})
 
 	output := make([]byte, 64+len(ancestors)*32)
 	copy(output[0:32], common.BigToHash(new(big.Int).SetUint64(32)).Bytes())
 	copy(output[32:64], common.BigToHash(new(big.Int).SetUint64(uint64(len(ancestors)))).Bytes())
 
-	i := 0
-	for ancestor := range ancestors {
+	for i, ancestor := range ancestors {
 		copy(output[64+i*32:], common.LeftPadBytes(ancestor.Bytes(), 32))
-		i++
 	}
 
 	return output, nil
