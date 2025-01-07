@@ -383,27 +383,50 @@ func TestIPGraphGasCalculation(t *testing.T) {
 			name: "AddParentIP with single parent",
 			input: append(addParentIpSelector,
 				append(
-					make([]byte, 64), // childIpId + offset
+					make([]byte, 64),
 					append(
-						common.BigToHash(big.NewInt(1)).Bytes(), // array length = 1
-						make([]byte, 32)...,                     // one parent address
+						common.BigToHash(big.NewInt(1)).Bytes(),
+						make([]byte, 32)...,
 					)...,
 				)...,
 			),
 			wantGas: ipGraphWriteGas * 1,
 		},
 		{
-			name: "AddParentIP with multiple parents",
+			name: "AddParentIP with three parents",
 			input: append(addParentIpSelector,
 				append(
-					make([]byte, 64), // childIpId + offset
+					make([]byte, 64),
 					append(
-						common.BigToHash(big.NewInt(3)).Bytes(), // array length = 3
-						make([]byte, 96)...,                     // three parent addresses
+						common.BigToHash(big.NewInt(3)).Bytes(),
+						make([]byte, 96)...,
 					)...,
 				)...,
 			),
 			wantGas: ipGraphWriteGas * 3,
+		},
+		{
+			name: "AddParentIP with zero parents",
+			input: append(addParentIpSelector,
+				append(
+					make([]byte, 64),
+					common.BigToHash(big.NewInt(0)).Bytes()...,
+				)...,
+			),
+			wantGas: ipGraphWriteGas * 0,
+		},
+		{
+			name: "AddParentIP with large number of parents",
+			input: append(addParentIpSelector,
+				append(
+					make([]byte, 64),
+					append(
+						common.BigToHash(big.NewInt(100)).Bytes(),
+						make([]byte, 3200)...,
+					)...,
+				)...,
+			),
+			wantGas: ipGraphWriteGas * 100,
 		},
 	}
 
