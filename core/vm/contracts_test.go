@@ -20,6 +20,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"math/big"
 	"os"
 	"testing"
 	"time"
@@ -371,39 +372,48 @@ func TestPrecompiledBLS12381MapG1Fail(t *testing.T)      { testJsonFail("blsMapG
 func TestPrecompiledBLS12381MapG2Fail(t *testing.T)      { testJsonFail("blsMapG2", "f12", t) }
 
 func TestIPGraphGasCalculation(t *testing.T) {
-	tests := []precompiledTest{
+	ipGraph := &ipGraph{}
+
+	tests := []struct {
+		name    string
+		input   []byte
+		wantGas uint64
+	}{
 		{
-			Name: "AddParentIP with single parent",
-			Input: "7c916325" + // function selector for addParentIp
-				"0000000000000000000000000000000000000000000000000000000000000001" + // childIpId
-				"0000000000000000000000000000000000000000000000000000000000000020" + // offset
-				"0000000000000000000000000000000000000000000000000000000000000001" + // array length = 1
-				"0000000000000000000000000000000000000000000000000000000000000002", // one parent address
-			Gas:      ipGraphWriteGas * 1,
-			Expected: "0000000000000000000000000000000000000000000000000000000000000000", // Should return empty bytes in hex
+			name: "AddParentIP with single parent",
+			input: append(addParentIpSelector,
+				append(
+					make([]byte, 64), // childIpId + offset
+					append(
+						common.BigToHash(big.NewInt(1)).Bytes(), // array length = 1
+						make([]byte, 32)...,                     // one parent address
+					)...,
+				)...,
+			),
+			wantGas: ipGraphWriteGas * 1,
 		},
 		{
-			Name: "AddParentIP with multiple parents",
-			Input: "7c916325" +
-				"0000000000000000000000000000000000000000000000000000000000000001" +
-				"0000000000000000000000000000000000000000000000000000000000000020" +
-				"0000000000000000000000000000000000000000000000000000000000000003" + // array length = 3
-				"0000000000000000000000000000000000000000000000000000000000000002" +
-				"0000000000000000000000000000000000000000000000000000000000000003" +
-				"0000000000000000000000000000000000000000000000000000000000000004",
-			Gas:      ipGraphWriteGas * 3,
-			Expected: "0000000000000000000000000000000000000000000000000000000000000000",
+			name: "AddParentIP with multiple parents",
+			input: append(addParentIpSelector,
+				append(
+					make([]byte, 64), // childIpId + offset
+					append(
+						common.BigToHash(big.NewInt(3)).Bytes(), // array length = 3
+						make([]byte, 96)...,                     // three parent addresses
+					)...,
+				)...,
+			),
+			wantGas: ipGraphWriteGas * 3,
 		},
 	}
 
-	addr := "0101"
-	p := allPrecompiles[common.HexToAddress(addr)]
-	if p == nil {
-		allPrecompiles[common.HexToAddress(addr)] = &ipGraph{}
-	}
-
-	for _, test := range tests {
-		testPrecompiled(addr, test, t)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotGas := ipGraph.RequiredGas(tt.input)
+			if gotGas != tt.wantGas {
+				t.Errorf("RequiredGas() = %v, want %v", gotGas, tt.wantGas)
+			}
+		})
 	}
 }
 
