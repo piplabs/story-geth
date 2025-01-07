@@ -293,6 +293,7 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 
 	// Initialize the guardian module
 	guardian.InitInstance(config.Guardian)
+	guardian.InitFilteredReport(config.Guardian)
 
 	// Start the RPC service
 	eth.netRPCService = ethapi.NewNetAPI(eth.p2pServer, networkID)

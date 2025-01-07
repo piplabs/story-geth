@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sync"
 	"time"
 
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/log"
 )
 
 const (
@@ -15,15 +17,61 @@ const (
 	filteredReportFileName = "filtered_report.log"
 )
 
+var (
+	// filteredCache is a concurrent map to store filtered addresses.
+	filteredCache = sync.Map{}
+
+	// txLogChan is a channel for sending filtered transaction logs.
+	txLogChan chan filteredTxLog
+)
+
+// InitFilteredReport initializes the filtered report functionality based on the provided configuration.
+func InitFilteredReport(config Config) {
+	if !config.Enabled {
+		log.Info("Guardian is disabled, filtered report will not be generated.")
+		return
+	}
+	txLogChan = make(chan filteredTxLog, 100)
+
+	// Start a goroutine to handle logging of filtered transactions.
+	// Avoid triggering I/O performance issues and potential file lock
+	// contention under high concurrency conditions.
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				log.Error("Recovered from panic in logFilteredEntry goroutine", "error", r)
+			}
+		}()
+
+		for txLog := range txLogChan {
+			// Append the log entry to the file
+			if err := appendToFile(txLog); err != nil {
+				log.Error("Failed to log filtered transaction", "err", err)
+			}
+		}
+	}()
+}
+
 // filteredTxLog represents the details of a filtered transaction entry.
 type filteredTxLog struct {
-	filteredAddress string             // Address that is being filtered
-	from            string             // Address that sent the transaction
+	filteredAddress string             // Target address that triggered the filter
+	from            string             // Sender address of the transaction
 	transaction     *types.Transaction // Transaction details
 }
 
 // logFilteredEntry appends a transaction's log data to the log file, if it contains the filtered address.
-func logFilteredEntry(txLog filteredTxLog) error {
+func logFilteredEntry(txLog filteredTxLog) {
+	if _, loaded := filteredCache.LoadOrStore(txLog.filteredAddress, struct{}{}); loaded {
+		// If the address is already in the cache, do not log it again.
+		return
+	}
+
+	// Send the log entry to the channel for processing.
+	txLogChan <- txLog
+}
+
+// appendToFile appends a transaction's log data to the log file.
+func appendToFile(txLog filteredTxLog) error {
 	// Prepare log filename by appending FilteredReportFileName to the path.
 	filename := filepath.Join(getDefaultPath(), filteredReportFileName)
 
