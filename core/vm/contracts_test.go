@@ -20,14 +20,15 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"os"
+	"testing"
+	"time"
+
 	"github.com/ethereum/go-ethereum/core/rawdb"
 	"github.com/ethereum/go-ethereum/core/state"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/params"
 	"github.com/holiman/uint256"
-	"os"
-	"testing"
-	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 )
@@ -368,6 +369,43 @@ func TestPrecompiledBLS12381G2MultiExpFail(t *testing.T) { testJsonFail("blsG2Mu
 func TestPrecompiledBLS12381PairingFail(t *testing.T)    { testJsonFail("blsPairing", "f10", t) }
 func TestPrecompiledBLS12381MapG1Fail(t *testing.T)      { testJsonFail("blsMapG1", "f11", t) }
 func TestPrecompiledBLS12381MapG2Fail(t *testing.T)      { testJsonFail("blsMapG2", "f12", t) }
+
+func TestIPGraphGasCalculation(t *testing.T) {
+	tests := []precompiledTest{
+		{
+			Name: "AddParentIP with single parent",
+			Input: "7c916325" + // function selector for addParentIp
+				"0000000000000000000000000000000000000000000000000000000000000001" + // childIpId
+				"0000000000000000000000000000000000000000000000000000000000000020" + // offset
+				"0000000000000000000000000000000000000000000000000000000000000001" + // array length = 1
+				"0000000000000000000000000000000000000000000000000000000000000002", // one parent address
+			Gas:      ipGraphWriteGas * 1,
+			Expected: "0000000000000000000000000000000000000000000000000000000000000000", // Should return empty bytes in hex
+		},
+		{
+			Name: "AddParentIP with multiple parents",
+			Input: "7c916325" +
+				"0000000000000000000000000000000000000000000000000000000000000001" +
+				"0000000000000000000000000000000000000000000000000000000000000020" +
+				"0000000000000000000000000000000000000000000000000000000000000003" + // array length = 3
+				"0000000000000000000000000000000000000000000000000000000000000002" +
+				"0000000000000000000000000000000000000000000000000000000000000003" +
+				"0000000000000000000000000000000000000000000000000000000000000004",
+			Gas:      ipGraphWriteGas * 3,
+			Expected: "0000000000000000000000000000000000000000000000000000000000000000",
+		},
+	}
+
+	addr := "0101"
+	p := allPrecompiles[common.HexToAddress(addr)]
+	if p == nil {
+		allPrecompiles[common.HexToAddress(addr)] = &ipGraph{}
+	}
+
+	for _, test := range tests {
+		testPrecompiled(addr, test, t)
+	}
+}
 
 func loadJson(name string) ([]precompiledTest, error) {
 	data, err := os.ReadFile(fmt.Sprintf("testdata/precompiles/%v.json", name))
