@@ -145,10 +145,7 @@ func (p *Guardian) checkAddress(tx *types.Transaction, from, addr string) (bool,
 		return false, err
 	}
 	if ok {
-		if err := logFilteredEntry(filteredTxLog{filteredAddress: addr, from: from, transaction: tx}); err != nil {
-			log.Error("Failed to log filtered transaction", "err", err)
-		}
-		log.Warn("Filtered address found in transaction", "tx", tx.Hash().Hex(), "address", addr)
+		log.Trace("Filtered address found in transaction", "tx", tx.Hash().Hex(), "from", from, "address", addr)
 		return true, nil
 	}
 
