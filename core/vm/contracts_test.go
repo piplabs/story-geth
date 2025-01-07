@@ -20,14 +20,16 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"math/big"
+	"os"
+	"testing"
+	"time"
+
 	"github.com/ethereum/go-ethereum/core/rawdb"
 	"github.com/ethereum/go-ethereum/core/state"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/params"
 	"github.com/holiman/uint256"
-	"os"
-	"testing"
-	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 )
@@ -368,6 +370,75 @@ func TestPrecompiledBLS12381G2MultiExpFail(t *testing.T) { testJsonFail("blsG2Mu
 func TestPrecompiledBLS12381PairingFail(t *testing.T)    { testJsonFail("blsPairing", "f10", t) }
 func TestPrecompiledBLS12381MapG1Fail(t *testing.T)      { testJsonFail("blsMapG1", "f11", t) }
 func TestPrecompiledBLS12381MapG2Fail(t *testing.T)      { testJsonFail("blsMapG2", "f12", t) }
+
+func TestIPGraphGasCalculation(t *testing.T) {
+	ipGraph := &ipGraph{}
+
+	tests := []struct {
+		name    string
+		input   []byte
+		wantGas uint64
+	}{
+		{
+			name: "AddParentIP with single parent",
+			input: append(addParentIpSelector,
+				append(
+					make([]byte, 64),
+					append(
+						common.BigToHash(big.NewInt(1)).Bytes(),
+						make([]byte, 32)...,
+					)...,
+				)...,
+			),
+			wantGas: ipGraphWriteGas * 1,
+		},
+		{
+			name: "AddParentIP with three parents",
+			input: append(addParentIpSelector,
+				append(
+					make([]byte, 64),
+					append(
+						common.BigToHash(big.NewInt(3)).Bytes(),
+						make([]byte, 96)...,
+					)...,
+				)...,
+			),
+			wantGas: ipGraphWriteGas * 3,
+		},
+		{
+			name: "AddParentIP with zero parents",
+			input: append(addParentIpSelector,
+				append(
+					make([]byte, 64),
+					common.BigToHash(big.NewInt(0)).Bytes()...,
+				)...,
+			),
+			wantGas: ipGraphWriteGas * 0,
+		},
+		{
+			name: "AddParentIP with large number of parents",
+			input: append(addParentIpSelector,
+				append(
+					make([]byte, 64),
+					append(
+						common.BigToHash(big.NewInt(100)).Bytes(),
+						make([]byte, 3200)...,
+					)...,
+				)...,
+			),
+			wantGas: ipGraphWriteGas * 100,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotGas := ipGraph.RequiredGas(tt.input)
+			if gotGas != tt.wantGas {
+				t.Errorf("RequiredGas() = %v, want %v", gotGas, tt.wantGas)
+			}
+		})
+	}
+}
 
 func loadJson(name string) ([]precompiledTest, error) {
 	data, err := os.ReadFile(fmt.Sprintf("testdata/precompiles/%v.json", name))
