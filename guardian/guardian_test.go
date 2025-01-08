@@ -162,10 +162,12 @@ func testInitInstance(t *testing.T, enabled bool, testFromAddress string) {
 	filterFilePath := testSaveBloomFilterToFile(t, bf)
 	defer os.Remove(filterFilePath)
 
-	InitInstance(Config{
+	conf := Config{
 		Enabled:        enabled,
 		FilterFilePath: filterFilePath,
-	})
+	}
+	InitInstance(conf)
+	InitFilteredReport(conf)
 }
 
 func testSaveBloomFilterToFile(t *testing.T, bf *store.BloomFilterStore) string {
