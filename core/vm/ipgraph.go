@@ -176,6 +176,16 @@ func (c *ipGraph) addParentIp(input []byte, evm *EVM, ipGraphAddress common.Addr
 }
 
 func (c *ipGraph) hasParentIp(input []byte, evm *EVM, ipGraphAddress common.Address) ([]byte, error) {
+	allowed, err := c.isAllowed(evm)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if !allowed {
+		return nil, fmt.Errorf("caller not allowed to query hasParentIp")
+	}
+
 	if len(input) != 64 {
 		return nil, fmt.Errorf("input too short for hasParentIp")
 	}
@@ -199,6 +209,16 @@ func (c *ipGraph) hasParentIp(input []byte, evm *EVM, ipGraphAddress common.Addr
 }
 
 func (c *ipGraph) getParentIps(input []byte, evm *EVM, ipGraphAddress common.Address) ([]byte, error) {
+	allowed, err := c.isAllowed(evm)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if !allowed {
+		return nil, fmt.Errorf("caller not allowed to query getParentIps")
+	}
+
 	if evm.currentPrecompileCallType == DELEGATECALL {
 		return nil, fmt.Errorf("getParentIps cannot be called with DELEGATECALL")
 	}
@@ -224,6 +244,16 @@ func (c *ipGraph) getParentIps(input []byte, evm *EVM, ipGraphAddress common.Add
 }
 
 func (c *ipGraph) getParentIpsCount(input []byte, evm *EVM, ipGraphAddress common.Address) ([]byte, error) {
+	allowed, err := c.isAllowed(evm)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if !allowed {
+		return nil, fmt.Errorf("caller not allowed to query parent Ips count")
+	}
+
 	if evm.currentPrecompileCallType == DELEGATECALL {
 		return nil, fmt.Errorf("getParentIpsCount cannot be called with DELEGATECALL")
 	}
@@ -239,6 +269,16 @@ func (c *ipGraph) getParentIpsCount(input []byte, evm *EVM, ipGraphAddress commo
 }
 
 func (c *ipGraph) getAncestorIps(input []byte, evm *EVM, ipGraphAddress common.Address) ([]byte, error) {
+	allowed, err := c.isAllowed(evm)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if !allowed {
+		return nil, fmt.Errorf("caller not allowed to query getAncestorIps")
+	}
+
 	if evm.currentPrecompileCallType == DELEGATECALL {
 		return nil, fmt.Errorf("getAncestorIps cannot be called with DELEGATECALL")
 	}
@@ -269,6 +309,16 @@ func (c *ipGraph) getAncestorIps(input []byte, evm *EVM, ipGraphAddress common.A
 }
 
 func (c *ipGraph) getAncestorIpsCount(input []byte, evm *EVM, ipGraphAddress common.Address) ([]byte, error) {
+	allowed, err := c.isAllowed(evm)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if !allowed {
+		return nil, fmt.Errorf("caller not allowed to query getAncestorIpsCount")
+	}
+
 	if evm.currentPrecompileCallType == DELEGATECALL {
 		return nil, fmt.Errorf("getAncestorIpsCount cannot be called with DELEGATECALL")
 	}
@@ -359,6 +409,16 @@ func (c *ipGraph) setRoyalty(input []byte, evm *EVM, ipGraphAddress common.Addre
 }
 
 func (c *ipGraph) getRoyalty(input []byte, evm *EVM, ipGraphAddress common.Address) ([]byte, error) {
+	allowed, err := c.isAllowed(evm)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if !allowed {
+		return nil, fmt.Errorf("caller not allowed to query getRoyalty")
+	}
+
 	if evm.currentPrecompileCallType == DELEGATECALL {
 		return nil, fmt.Errorf("getRoyalty cannot be called with DELEGATECALL")
 	}
@@ -517,6 +577,16 @@ func (c *ipGraph) topologicalSort(ipId, ancestorIpId common.Address, evm *EVM, i
 }
 
 func (c *ipGraph) getRoyaltyStack(input []byte, evm *EVM, ipGraphAddress common.Address) ([]byte, error) {
+	allowed, err := c.isAllowed(evm)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if !allowed {
+		return nil, fmt.Errorf("caller not allowed to query getRoyaltyStack")
+	}
+
 	if evm.currentPrecompileCallType == DELEGATECALL {
 		return nil, fmt.Errorf("getRoyaltyStack cannot be called with DELEGATECALL")
 	}
