@@ -70,4 +70,7 @@ var (
 
 	// ErrFilteredByGuardian is returned if the transaction is filtered by the guardian
 	ErrFilteredByGuardian = errors.New("filtered by guardian")
+
+	// ErrNotInWhitelist is returned if the transaction sender is not in the whitelist
+	ErrNotInWhitelist = errors.New("not in whitelist")
 )
