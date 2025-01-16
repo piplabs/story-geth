@@ -68,6 +68,7 @@ var Defaults = Config{
 	GPO:                FullNodeGPO,
 	RPCTxFeeCap:        1, // 1 ether
 	Guardian:           guardian.DefaultConfig,
+	WhiteList:          guardian.DefaultWhiteListConfig,
 }
 
 //go:generate go run github.com/fjl/gencodec -type Config -formats toml -out gen_config.go
@@ -159,7 +160,8 @@ type Config struct {
 	// Enables EIP-4844 blob transaction support
 	Enable4844 bool
 
-	Guardian guardian.Config
+	Guardian  guardian.Config
+	WhiteList guardian.WhiteListConfig
 }
 
 // CreateConsensusEngine creates a consensus engine for the given chain config.

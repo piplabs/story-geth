@@ -158,6 +158,8 @@ var (
 		utils.Override4844Flag,
 		utils.GuardianEnabledFlag,
 		utils.GuardianFilterFilePathFlag,
+		utils.WhiteListEnabledFlag,
+		utils.WhiteListFilePathFlag,
 	}, utils.NetworkFlags, utils.DatabaseFlags)
 
 	rpcFlags = []cli.Flag{
