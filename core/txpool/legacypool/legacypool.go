@@ -677,6 +677,14 @@ func (pool *LegacyPool) add(tx *types.Transaction, local bool) (replaced bool, e
 		knownTxMeter.Mark(1)
 		return false, txpool.ErrAlreadyKnown
 	}
+
+	// If whitelist is enabled, check if the transaction is whitelisted
+	if whitelistInstance := guardian.GetWhitelistInstance(); whitelistInstance != nil {
+		if !whitelistInstance.IsWhitelisted(pool.signer, tx) {
+			return false, txpool.ErrNotInWhitelist
+		}
+	}
+
 	// Make the local flag. If it's from local source or it's from the network but
 	// the sender is marked as local previously, treat it as the local transaction.
 	isLocal := local || pool.locals.containsTx(tx)

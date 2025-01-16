@@ -998,6 +998,19 @@ Please note that --` + MetricsHTTPFlag.Name + ` must be set to start the server.
 		Value:    "",
 		Category: flags.GuardianCategory,
 	}
+	WhiteListEnabledFlag = &cli.BoolFlag{
+		Name:     "whitelist.enable",
+		Usage:    "Enable whitelist module. Whitelist should only be used in singularity stage",
+		Category: flags.GuardianCategory,
+	}
+	WhiteListFilePathFlag = &cli.StringFlag{
+		Name: "whitelist.filepath",
+		Usage: `Path to whitelist JSON file. The file should have the following structure:
+	{
+	  "whitelistedAddresses": ["addr1", "addr2"]
+	}`,
+		Category: flags.GuardianCategory,
+	}
 )
 
 var (
@@ -1725,6 +1738,7 @@ func SetEthConfig(ctx *cli.Context, stack *node.Node, cfg *ethconfig.Config) {
 	setRequiredBlocks(ctx, cfg)
 	setLes(ctx, cfg)
 	setGuardian(ctx, &cfg.Guardian)
+	setWhiteList(ctx, &cfg.WhiteList)
 
 	// Cap the cache allowance and tune the garbage collector
 	mem, err := gopsutil.VirtualMemory()
@@ -2028,6 +2042,15 @@ func setGuardian(ctx *cli.Context, c *guardian.Config) {
 	}
 	if ctx.IsSet(GuardianFilterFilePathFlag.Name) {
 		c.FilterFilePath = ctx.String(GuardianFilterFilePathFlag.Name)
+	}
+}
+
+func setWhiteList(ctx *cli.Context, c *guardian.WhiteListConfig) {
+	if ctx.IsSet(WhiteListFilePathFlag.Name) {
+		c.FilePath = ctx.String(WhiteListFilePathFlag.Name)
+	}
+	if ctx.IsSet(WhiteListEnabledFlag.Name) {
+		c.Enabled = ctx.Bool(WhiteListEnabledFlag.Name)
 	}
 }
 
