@@ -405,6 +405,16 @@ func (c *ipGraph) setRoyalty(input []byte, evm *EVM, ipGraphAddress common.Addre
 	slot := crypto.Keccak256Hash(ipId.Bytes(), parentIpId.Bytes(), royaltyPolicyKind.Bytes()).Big()
 	evm.StateDB.SetState(ipGraphAddress, common.BigToHash(slot), common.BigToHash(royalty))
 
+	if royaltyPolicyKind.Cmp(royaltyPolicyKindLAP) == 0 {
+		slot = crypto.Keccak256Hash(parentIpId.Bytes(), royaltyPolicyKind.Bytes(), []byte("royaltyStack")).Big()
+		parentRoyaltyStack := evm.StateDB.GetState(ipGraphAddress, common.BigToHash(slot)).Big()
+		slot = crypto.Keccak256Hash(ipId.Bytes(), royaltyPolicyKind.Bytes(), []byte("royaltyStack")).Big()
+		royaltyStack := evm.StateDB.GetState(ipGraphAddress, common.BigToHash(slot)).Big()
+		royaltyStack.Add(royaltyStack, parentRoyaltyStack)
+		royaltyStack.Add(royaltyStack, royalty)
+		slot = crypto.Keccak256Hash(ipId.Bytes(), royaltyPolicyKind.Bytes(), []byte("royaltyStack")).Big()
+		evm.StateDB.SetState(ipGraphAddress, common.BigToHash(slot), common.BigToHash(royaltyStack))
+	}
 	return nil, nil
 }
 
@@ -445,48 +455,50 @@ func (c *ipGraph) getRoyalty(input []byte, evm *EVM, ipGraphAddress common.Addre
 }
 
 func (c *ipGraph) getRoyaltyLap(ipId, ancestorIpId common.Address, evm *EVM, ipGraphAddress common.Address) *big.Int {
-	ancestors := c.findAncestors(ipId, evm, ipGraphAddress)
-	totalRoyalty := big.NewInt(0)
-	for ancestor := range ancestors {
-		if ancestor == ancestorIpId {
-			// Traverse the graph to accumulate royalties
-			totalRoyalty.Add(totalRoyalty, c.getRoyaltyLapForAncestor(ipId, ancestorIpId, evm, ipGraphAddress))
-		}
+	royalty := make(map[common.Address]*big.Int)
+	pathCount := make(map[common.Address]*big.Int)
+	royalty[ipId] = hundredPercent
+	pathCount[ipId] = big.NewInt(1)
+
+	topoOrder, allParents, err := c.topologicalSort(ipId, ancestorIpId, evm, ipGraphAddress)
+	if err != nil {
+		log.Error("Failed to perform topological sort", "error", err)
+		return big.NewInt(0) // Return 0 if any error occurs
 	}
-	return totalRoyalty
-}
 
-func (c *ipGraph) getRoyaltyLapForAncestor(ipId, ancestorIpId common.Address, evm *EVM, ipGraphAddress common.Address) *big.Int {
-	ancestors := make(map[common.Address]struct{})
-	totalRoyalty := big.NewInt(0)
-	var stack []common.Address
-	stack = append(stack, ipId)
-	for len(stack) > 0 {
-		node := stack[len(stack)-1]
-		stack = stack[:len(stack)-1]
+	for i := len(topoOrder) - 1; i >= 0; i-- {
+		node := topoOrder[i]
+		// If we reached the ancestor IP, we can stop the calculation
+		if node == ancestorIpId {
+			break
+		}
 
-		currentLengthHash := evm.StateDB.GetState(ipGraphAddress, common.BytesToHash(node.Bytes()))
-		currentLength := currentLengthHash.Big()
+		parents := allParents[node]
+		for _, parentIpId := range parents {
+			royaltySlot := crypto.Keccak256Hash(node.Bytes(), parentIpId.Bytes(), royaltyPolicyKindLAP.Bytes()).Big()
+			royaltyHash := common.BigToHash(royaltySlot)
+			parentRoyalty := evm.StateDB.GetState(ipGraphAddress, royaltyHash).Big()
 
-		for i := uint64(0); i < currentLength.Uint64(); i++ {
-			slot := crypto.Keccak256Hash(node.Bytes()).Big()
-			slot.Add(slot, new(big.Int).SetUint64(i))
-			storedParent := evm.StateDB.GetState(ipGraphAddress, common.BigToHash(slot))
-			parentIpId := common.BytesToAddress(storedParent.Bytes())
+			contribution := pathCount[node]
 
-			if _, found := ancestors[parentIpId]; !found {
-				ancestors[parentIpId] = struct{}{}
-				stack = append(stack, parentIpId)
+			if existingPathCount, exists := pathCount[parentIpId]; exists {
+				pathCount[parentIpId] = new(big.Int).Add(existingPathCount, contribution)
+			} else {
+				pathCount[parentIpId] = contribution
 			}
 
-			if parentIpId == ancestorIpId {
-				royaltySlot := crypto.Keccak256Hash(node.Bytes(), ancestorIpId.Bytes(), royaltyPolicyKindLAP.Bytes()).Big()
-				royalty := evm.StateDB.GetState(ipGraphAddress, common.BigToHash(royaltySlot)).Big()
-				totalRoyalty.Add(totalRoyalty, royalty)
+			if existingRoyalty, exists := royalty[parentIpId]; exists {
+				royalty[parentIpId] = new(big.Int).Add(existingRoyalty, new(big.Int).Mul(contribution, parentRoyalty))
+			} else {
+				royalty[parentIpId] = new(big.Int).Mul(contribution, parentRoyalty)
 			}
 		}
 	}
-	return totalRoyalty
+
+	if result, exists := royalty[ancestorIpId]; exists {
+		return result
+	}
+	return big.NewInt(0)
 }
 
 func (c *ipGraph) getRoyaltyLrp(ipId, ancestorIpId common.Address, evm *EVM, ipGraphAddress common.Address) *big.Int {
@@ -607,34 +619,9 @@ func (c *ipGraph) getRoyaltyStack(input []byte, evm *EVM, ipGraphAddress common.
 }
 
 func (c *ipGraph) getRoyaltyStackLap(ipId common.Address, evm *EVM, ipGraphAddress common.Address) *big.Int {
-	ancestors := make(map[common.Address]struct{})
-	totalRoyalty := big.NewInt(0)
-	var stack []common.Address
-	stack = append(stack, ipId)
-	for len(stack) > 0 {
-		node := stack[len(stack)-1]
-		stack = stack[:len(stack)-1]
-
-		currentLengthHash := evm.StateDB.GetState(ipGraphAddress, common.BytesToHash(node.Bytes()))
-		currentLength := currentLengthHash.Big()
-
-		for i := uint64(0); i < currentLength.Uint64(); i++ {
-			slot := crypto.Keccak256Hash(node.Bytes()).Big()
-			slot.Add(slot, new(big.Int).SetUint64(i))
-			storedParent := evm.StateDB.GetState(ipGraphAddress, common.BigToHash(slot))
-			parentIpId := common.BytesToAddress(storedParent.Bytes())
-
-			if _, found := ancestors[parentIpId]; !found {
-				ancestors[parentIpId] = struct{}{}
-				stack = append(stack, parentIpId)
-			}
-
-			royaltySlot := crypto.Keccak256Hash(node.Bytes(), parentIpId.Bytes(), royaltyPolicyKindLAP.Bytes()).Big()
-			royalty := evm.StateDB.GetState(ipGraphAddress, common.BigToHash(royaltySlot)).Big()
-			totalRoyalty.Add(totalRoyalty, royalty)
-		}
-	}
-	return totalRoyalty
+	slot := crypto.Keccak256Hash(ipId.Bytes(), royaltyPolicyKindLAP.Bytes(), []byte("royaltyStack")).Big()
+	royaltyStack := evm.StateDB.GetState(ipGraphAddress, common.BigToHash(slot)).Big()
+	return royaltyStack
 }
 
 func (c *ipGraph) getRoyaltyStackLrp(ipId common.Address, evm *EVM, ipGraphAddress common.Address) *big.Int {
