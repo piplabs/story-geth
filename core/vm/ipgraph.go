@@ -16,7 +16,7 @@ const (
 	ipGraphReadGas         = 10
 	averageAncestorIpCount = 30
 	averageParentIpCount   = 4
-	intrinsicGas           = 100
+	intrinsicGas           = 1000
 )
 
 var (
@@ -53,7 +53,7 @@ func (c *ipGraph) RequiredGas(input []byte) uint64 {
 	case bytes.Equal(selector, addParentIpSelector):
 		args := input[4:]
 		parentCount := new(big.Int).SetBytes(getData(args, 64, 32))
-		return ipGraphWriteGas * parentCount.Uint64()
+		return intrinsicGas + (ipGraphWriteGas * parentCount.Uint64())
 	case bytes.Equal(selector, hasParentIpSelector):
 		return ipGraphReadGas * averageParentIpCount
 	case bytes.Equal(selector, getParentIpsSelector):
