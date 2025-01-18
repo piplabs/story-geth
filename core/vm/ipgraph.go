@@ -17,26 +17,35 @@ const (
 	averageAncestorIpCount = 30
 	averageParentIpCount   = 4
 	intrinsicGas           = 1000
+	ipGraphExternalReadGas = 2100
 )
 
 var (
-	royaltyPolicyKindLAP        = big.NewInt(0)         // Liquid Absolute Percentage (LAP) Royalty Policy
-	royaltyPolicyKindLRP        = big.NewInt(1)         // Liquid Relative Percentage (LRP) Royalty Policy
-	hundredPercent              = big.NewInt(100000000) // 100% in the integer format
-	ipGraphAddress              = common.HexToAddress("0x0000000000000000000000000000000000000101")
-	aclAddress                  = common.HexToAddress("0x1640A22a8A086747cD377b73954545e2Dfcc9Cad")
-	aclSlot                     = "af99b37fdaacca72ee7240cb1435cc9e498aee6ef4edc19c8cc0cd787f4e6800"
-	addParentIpSelector         = crypto.Keccak256Hash([]byte("addParentIp(address,address[])")).Bytes()[:4]
-	hasParentIpSelector         = crypto.Keccak256Hash([]byte("hasParentIp(address,address)")).Bytes()[:4]
-	getParentIpsSelector        = crypto.Keccak256Hash([]byte("getParentIps(address)")).Bytes()[:4]
-	getParentIpsCountSelector   = crypto.Keccak256Hash([]byte("getParentIpsCount(address)")).Bytes()[:4]
-	getAncestorIpsSelector      = crypto.Keccak256Hash([]byte("getAncestorIps(address)")).Bytes()[:4]
-	getAncestorIpsCountSelector = crypto.Keccak256Hash([]byte("getAncestorIpsCount(address)")).Bytes()[:4]
-	hasAncestorIpsSelector      = crypto.Keccak256Hash([]byte("hasAncestorIp(address,address)")).Bytes()[:4]
-	setRoyaltySelector          = crypto.Keccak256Hash([]byte("setRoyalty(address,address,uint256,uint256)")).Bytes()[:4]
-	getRoyaltySelector          = crypto.Keccak256Hash([]byte("getRoyalty(address,address,uint256)")).Bytes()[:4]
-	getRoyaltyStackSelector     = crypto.Keccak256Hash([]byte("getRoyaltyStack(address,uint256)")).Bytes()[:4]
-	MaxUint32                   = new(big.Int).SetUint64(uint64(^uint32(0)))
+	royaltyPolicyKindLAP           = big.NewInt(0)         // Liquid Absolute Percentage (LAP) Royalty Policy
+	royaltyPolicyKindLRP           = big.NewInt(1)         // Liquid Relative Percentage (LRP) Royalty Policy
+	hundredPercent                 = big.NewInt(100000000) // 100% in the integer format
+	ipGraphAddress                 = common.HexToAddress("0x0000000000000000000000000000000000000101")
+	aclAddress                     = common.HexToAddress("0x1640A22a8A086747cD377b73954545e2Dfcc9Cad")
+	aclSlot                        = "af99b37fdaacca72ee7240cb1435cc9e498aee6ef4edc19c8cc0cd787f4e6800"
+	addParentIpSelector            = crypto.Keccak256Hash([]byte("addParentIp(address,address[])")).Bytes()[:4]
+	hasParentIpSelector            = crypto.Keccak256Hash([]byte("hasParentIp(address,address)")).Bytes()[:4]
+	getParentIpsSelector           = crypto.Keccak256Hash([]byte("getParentIps(address)")).Bytes()[:4]
+	getParentIpsCountSelector      = crypto.Keccak256Hash([]byte("getParentIpsCount(address)")).Bytes()[:4]
+	getAncestorIpsSelector         = crypto.Keccak256Hash([]byte("getAncestorIps(address)")).Bytes()[:4]
+	getAncestorIpsCountSelector    = crypto.Keccak256Hash([]byte("getAncestorIpsCount(address)")).Bytes()[:4]
+	hasAncestorIpsSelector         = crypto.Keccak256Hash([]byte("hasAncestorIp(address,address)")).Bytes()[:4]
+	setRoyaltySelector             = crypto.Keccak256Hash([]byte("setRoyalty(address,address,uint256,uint256)")).Bytes()[:4]
+	getRoyaltySelector             = crypto.Keccak256Hash([]byte("getRoyalty(address,address,uint256)")).Bytes()[:4]
+	getRoyaltyStackSelector        = crypto.Keccak256Hash([]byte("getRoyaltyStack(address,uint256)")).Bytes()[:4]
+	hasParentIpExtSelector         = crypto.Keccak256Hash([]byte("hasParentIpExt(address,address)")).Bytes()[:4]
+	getParentIpsExtSelector        = crypto.Keccak256Hash([]byte("getParentIpsExt(address)")).Bytes()[:4]
+	getParentIpsCountExtSelector   = crypto.Keccak256Hash([]byte("getParentIpsCountExt(address)")).Bytes()[:4]
+	getAncestorIpsExtSelector      = crypto.Keccak256Hash([]byte("getAncestorIpsExt(address)")).Bytes()[:4]
+	getAncestorIpsCountExtSelector = crypto.Keccak256Hash([]byte("getAncestorIpsCountExt(address)")).Bytes()[:4]
+	hasAncestorIpsExtSelector      = crypto.Keccak256Hash([]byte("hasAncestorIpExt(address,address)")).Bytes()[:4]
+	getRoyaltyExtSelector          = crypto.Keccak256Hash([]byte("getRoyaltyExt(address,address,uint256)")).Bytes()[:4]
+	getRoyaltyStackExtSelector     = crypto.Keccak256Hash([]byte("getRoyaltyStackExt(address,uint256)")).Bytes()[:4]
+	MaxUint32                      = new(big.Int).SetUint64(uint64(^uint32(0)))
 )
 
 type ipGraph struct{}
@@ -86,6 +95,36 @@ func (c *ipGraph) RequiredGas(input []byte) uint64 {
 		} else {
 			return intrinsicGas
 		}
+	case bytes.Equal(selector, hasParentIpExtSelector):
+		return ipGraphExternalReadGas * averageParentIpCount
+	case bytes.Equal(selector, getParentIpsExtSelector):
+		return ipGraphExternalReadGas * averageParentIpCount
+	case bytes.Equal(selector, getParentIpsCountExtSelector):
+		return ipGraphExternalReadGas
+	case bytes.Equal(selector, getAncestorIpsExtSelector):
+		return ipGraphExternalReadGas * averageAncestorIpCount * 2
+	case bytes.Equal(selector, getAncestorIpsCountExtSelector):
+		return ipGraphExternalReadGas * averageParentIpCount * 2
+	case bytes.Equal(selector, hasAncestorIpsExtSelector):
+		return ipGraphExternalReadGas * averageAncestorIpCount * 2
+	case bytes.Equal(selector, getRoyaltyExtSelector):
+		royaltyPolicyKind := new(big.Int).SetBytes(getData(input, 64+4, 32))
+		if royaltyPolicyKind.Cmp(royaltyPolicyKindLAP) == 0 {
+			return ipGraphExternalReadGas * (averageAncestorIpCount * 3)
+		} else if royaltyPolicyKind.Cmp(royaltyPolicyKindLRP) == 0 {
+			return ipGraphExternalReadGas * (averageAncestorIpCount*2 + 2)
+		} else {
+			return intrinsicGas
+		}
+	case bytes.Equal(selector, getRoyaltyStackExtSelector):
+		royaltyPolicyKind := new(big.Int).SetBytes(getData(input, 32+4, 32))
+		if royaltyPolicyKind.Cmp(royaltyPolicyKindLAP) == 0 {
+			return ipGraphExternalReadGas * (averageParentIpCount + 1)
+		} else if royaltyPolicyKind.Cmp(royaltyPolicyKindLRP) == 0 {
+			return ipGraphExternalReadGas * (averageAncestorIpCount * 2)
+		} else {
+			return intrinsicGas
+		}
 	default:
 		return intrinsicGas
 	}
@@ -119,6 +158,22 @@ func (c *ipGraph) Run(evm *EVM, input []byte) ([]byte, error) {
 	case bytes.Equal(selector, getRoyaltySelector):
 		return c.getRoyalty(args, evm, ipGraphAddress)
 	case bytes.Equal(selector, getRoyaltyStackSelector):
+		return c.getRoyaltyStack(args, evm, ipGraphAddress)
+	case bytes.Equal(selector, hasParentIpExtSelector):
+		return c.hasParentIp(args, evm, ipGraphAddress)
+	case bytes.Equal(selector, getParentIpsExtSelector):
+		return c.getParentIps(args, evm, ipGraphAddress)
+	case bytes.Equal(selector, getParentIpsCountExtSelector):
+		return c.getParentIpsCount(args, evm, ipGraphAddress)
+	case bytes.Equal(selector, getAncestorIpsExtSelector):
+		return c.getAncestorIps(args, evm, ipGraphAddress)
+	case bytes.Equal(selector, getAncestorIpsCountExtSelector):
+		return c.getAncestorIpsCount(args, evm, ipGraphAddress)
+	case bytes.Equal(selector, hasAncestorIpsExtSelector):
+		return c.hasAncestorIp(args, evm, ipGraphAddress)
+	case bytes.Equal(selector, getRoyaltyExtSelector):
+		return c.getRoyalty(args, evm, ipGraphAddress)
+	case bytes.Equal(selector, getRoyaltyStackExtSelector):
 		return c.getRoyaltyStack(args, evm, ipGraphAddress)
 	default:
 		return nil, fmt.Errorf("unknown selector")
