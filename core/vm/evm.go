@@ -146,6 +146,8 @@ type EVM struct {
 	// currentPrecompileCallType identifies the current type of the precompile call
 	// (CALL, CALLCODE, DELEGATECALL, STATICCALL)
 	currentPrecompileCallType OpCode
+	// current caller address
+	caller common.Address
 }
 
 // NewEVM constructs an EVM instance with the supplied block context, state
@@ -246,6 +248,7 @@ func (evm *EVM) Call(caller common.Address, addr common.Address, input []byte, g
 
 	if isPrecompile {
 		evm.currentPrecompileCallType = CALL
+		evm.caller = caller.Address()
 		ret, gas, err = RunPrecompiledContract(evm, p, input, gas, evm.Config.Tracer)
 		log.Info("Call", "precompile", true, "ret", ret, "gas", gas, "err", err)
 	} else {
@@ -312,6 +315,7 @@ func (evm *EVM) CallCode(caller common.Address, addr common.Address, input []byt
 	// It is allowed to call precompiles, even via delegatecall
 	if p, isPrecompile := evm.precompile(addr); isPrecompile {
 		evm.currentPrecompileCallType = CALLCODE
+		evm.caller = caller.Address()
 		ret, gas, err = RunPrecompiledContract(evm, p, input, gas, evm.Config.Tracer)
 	} else {
 		// Initialise a new contract and set the code that is to be used by the EVM.
@@ -356,6 +360,7 @@ func (evm *EVM) DelegateCall(originCaller common.Address, caller common.Address,
 	// It is allowed to call precompiles, even via delegatecall
 	if p, isPrecompile := evm.precompile(addr); isPrecompile {
 		evm.currentPrecompileCallType = DELEGATECALL
+		evm.caller = caller.Address()
 		ret, gas, err = RunPrecompiledContract(evm, p, input, gas, evm.Config.Tracer)
 	} else {
 		// Initialise a new contract and make initialise the delegate values
@@ -409,6 +414,7 @@ func (evm *EVM) StaticCall(caller common.Address, addr common.Address, input []b
 
 	if p, isPrecompile := evm.precompile(addr); isPrecompile {
 		evm.currentPrecompileCallType = STATICCALL
+		evm.caller = caller.Address()
 		ret, gas, err = RunPrecompiledContract(evm, p, input, gas, evm.Config.Tracer)
 	} else {
 		// Initialise a new contract and set the code that is to be used by the EVM.
