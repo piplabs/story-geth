@@ -18,7 +18,6 @@ package core
 
 import (
 	"bytes"
-	_ "embed"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -42,9 +41,6 @@ import (
 	"github.com/ethereum/go-ethereum/triedb/pathdb"
 	"github.com/holiman/uint256"
 )
-
-//go:embed gendata/story/genesis-extra-data.hex
-var genesisExtraData string
 
 //go:generate go run github.com/fjl/gencodec -type Genesis -field-override genesisSpecMarshaling -out gen_genesis.go
 
@@ -687,7 +683,7 @@ func DefaultStoryGenesisBlock() *Genesis {
 		Nonce:      0x42,
 		Timestamp:  0,
 		Alloc:      decodePrealloc(storyAllocData), // TODO: change to Story mainnet alloc data
-		ExtraData:  hexutil.MustDecode(genesisExtraData),
+		ExtraData:  hexutil.MustDecode("0x544845204e455720594f524b2054494d455320434f4d50414e590a506c61696e746966662c0a762e0a4d4943524f534f465420434f52504f524154494f4e2c204f50454e41492c20494e432e2c0a4f50454e4149204c502c204f50454e41492047502c204c4c432c204f50454e41492c204c4c432c0a4f50454e4149204f50434f204c4c432c204f50454e414920474c4f42414c204c4c432c0a4f414920434f52504f524154494f4e2c204c4c432c20616e64204f50454e41490a484f4c44494e47532c204c4c43"),
 	}
 }
 
