@@ -183,7 +183,8 @@ func (c *ipGraph) Run(evm *EVM, input []byte) ([]byte, error) {
 func (c *ipGraph) isAllowed(evm *EVM) (bool, error) {
 	slot := new(big.Int)
 	slot.SetString(aclSlot, 16)
-	isAllowedHash := evm.StateDB.GetTransientState(aclAddress, common.BigToHash(slot))
+	slot = crypto.Keccak256Hash(evm.caller.Bytes(), slot.Bytes()).Big()
+	isAllowedHash := evm.StateDB.GetState(aclAddress, common.BigToHash(slot))
 	isAllowedBig := isAllowedHash.Big()
 
 	if isAllowedBig.Cmp(big.NewInt(1)) == 0 {
