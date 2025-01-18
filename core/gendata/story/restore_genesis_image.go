@@ -24,6 +24,12 @@ func hexDataToImage(hexData, outputFilePath string) error {
 //go:embed genesis-extra-data.hex
 var genesisExtraData string
 
+// Using the genesis block data of the Story mainnet, you can reconstruct the genesis image.
+//
+// 1. Change the package name from `story` to `main`.
+// 2. Run `go run core/gendata/story/restore_genesis_image.go` from the root.
+// 3. The genesis image named `genesis-image.png` will be generated under `core/gendata/story`.
+
 func main() {
 	outputFilePath := "./core/gendata/story/genesis-image.png"
 
