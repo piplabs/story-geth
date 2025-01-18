@@ -135,6 +135,8 @@ type EVM struct {
 	// currentPrecompileCallType identifies the current type of the precompile call
 	// (CALL, CALLCODE, DELEGATECALL, STATICCALL)
 	currentPrecompileCallType OpCode
+	// current caller address
+	caller common.Address
 }
 
 // NewEVM returns a new EVM. The returned EVM is not thread safe and should
@@ -230,6 +232,7 @@ func (evm *EVM) Call(caller ContractRef, addr common.Address, input []byte, gas 
 
 	if isPrecompile {
 		evm.currentPrecompileCallType = CALL
+		evm.caller = caller.Address()
 		ret, gas, err = RunPrecompiledContract(evm, p, input, gas, evm.Config.Tracer)
 		log.Info("Call", "precompile", true, "ret", ret, "gas", gas, "err", err)
 	} else {
@@ -298,6 +301,7 @@ func (evm *EVM) CallCode(caller ContractRef, addr common.Address, input []byte, 
 	// It is allowed to call precompiles, even via delegatecall
 	if p, isPrecompile := evm.precompile(addr); isPrecompile {
 		evm.currentPrecompileCallType = CALLCODE
+		evm.caller = caller.Address()
 		ret, gas, err = RunPrecompiledContract(evm, p, input, gas, evm.Config.Tracer)
 	} else {
 		addrCopy := addr
@@ -347,6 +351,7 @@ func (evm *EVM) DelegateCall(caller ContractRef, addr common.Address, input []by
 	// It is allowed to call precompiles, even via delegatecall
 	if p, isPrecompile := evm.precompile(addr); isPrecompile {
 		evm.currentPrecompileCallType = DELEGATECALL
+		evm.caller = caller.Address()
 		ret, gas, err = RunPrecompiledContract(evm, p, input, gas, evm.Config.Tracer)
 	} else {
 		addrCopy := addr
@@ -399,6 +404,7 @@ func (evm *EVM) StaticCall(caller ContractRef, addr common.Address, input []byte
 
 	if p, isPrecompile := evm.precompile(addr); isPrecompile {
 		evm.currentPrecompileCallType = STATICCALL
+		evm.caller = caller.Address()
 		ret, gas, err = RunPrecompiledContract(evm, p, input, gas, evm.Config.Tracer)
 	} else {
 		// At this point, we use a copy of address. If we don't, the go compiler will
