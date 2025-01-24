@@ -75,6 +75,13 @@ var OdysseyBootnodes = []string{
 	"enode://298bc05889e120e50e7a344e31adb72901caaff9e747b3e8f57c5786e6167452857cbd0ff7d5e0f849a8dfd26efcc3da1795e28d7cb05d120e97a89e79ec4b18@b2.odyssey-testnet.storyrpc.io:30303",
 }
 
+// HomerBootnodes are the enode URLs of the P2P bootstrap nodes running on the
+// Homer dev network.
+var HomerBootnodes = []string{
+	// Upstream bootnodes
+	"enode://a7e893eb4b07bd9b0c0659730c066564dff0f5fa98c08a7df9f380b84e64fbea16165ee5cce6c3414d64bea8cacc1ac200540c50607a7bf170b9d5504f81bbf8@b1-b.odyssey-devnet.storyrpc.io:30303",
+}
+
 // StoryBootnodes are the enode URLs of the P2P bootstrap nodes running on the
 // Story main network.
 var StoryBootnodes = []string{
