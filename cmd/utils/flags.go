@@ -603,7 +603,7 @@ var (
 	}
 	HomerFlag = &cli.BoolFlag{
 		Name:     "homer",
-		Usage:    "homer dev network: pre-configured proof-of-stake dev network",
+		Usage:    "homer network: pre-configured proof-of-stake network",
 		Category: flags.MiscCategory,
 	}
 	StoryFlag = &cli.BoolFlag{
