@@ -75,6 +75,9 @@ and merge procedures quick and simple.
 
 Please see the [Story Network Guide](https://docs.story.foundation/docs/story-network#/) for more details on configuring your environment, managing project dependencies, and testing procedures.
 
+## Security
+
+We welcome responsible disclosure of vulnerabilities. Please see our [security policy](SECURITY.md) for more information.
 
 ## License
 
@@ -92,3 +95,4 @@ To simplify local development and testing, developers can use the **Story-Localn
 
 Find more information and setup instructions here:
 [Story-Localnet GitHub Repository](https://github.com/piplabs/story-localnet).
+

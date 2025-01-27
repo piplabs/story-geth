@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"math/big"
+	"sort"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -15,27 +16,36 @@ const (
 	ipGraphReadGas         = 10
 	averageAncestorIpCount = 30
 	averageParentIpCount   = 4
-	intrinsicGas           = 100
+	intrinsicGas           = 1000
+	ipGraphExternalReadGas = 2100
 )
 
 var (
-	royaltyPolicyKindLAP        = big.NewInt(0)         // Liquid Absolute Percentage (LAP) Royalty Policy
-	royaltyPolicyKindLRP        = big.NewInt(1)         // Liquid Relative Percentage (LRP) Royalty Policy
-	hundredPercent              = big.NewInt(100000000) // 100% in the integer format
-	ipGraphAddress              = common.HexToAddress("0x0000000000000000000000000000000000000101")
-	aclAddress                  = common.HexToAddress("0x1640A22a8A086747cD377b73954545e2Dfcc9Cad")
-	aclSlot                     = "af99b37fdaacca72ee7240cb1435cc9e498aee6ef4edc19c8cc0cd787f4e6800"
-	addParentIpSelector         = crypto.Keccak256Hash([]byte("addParentIp(address,address[])")).Bytes()[:4]
-	hasParentIpSelector         = crypto.Keccak256Hash([]byte("hasParentIp(address,address)")).Bytes()[:4]
-	getParentIpsSelector        = crypto.Keccak256Hash([]byte("getParentIps(address)")).Bytes()[:4]
-	getParentIpsCountSelector   = crypto.Keccak256Hash([]byte("getParentIpsCount(address)")).Bytes()[:4]
-	getAncestorIpsSelector      = crypto.Keccak256Hash([]byte("getAncestorIps(address)")).Bytes()[:4]
-	getAncestorIpsCountSelector = crypto.Keccak256Hash([]byte("getAncestorIpsCount(address)")).Bytes()[:4]
-	hasAncestorIpsSelector      = crypto.Keccak256Hash([]byte("hasAncestorIp(address,address)")).Bytes()[:4]
-	setRoyaltySelector          = crypto.Keccak256Hash([]byte("setRoyalty(address,address,uint256,uint256)")).Bytes()[:4]
-	getRoyaltySelector          = crypto.Keccak256Hash([]byte("getRoyalty(address,address,uint256)")).Bytes()[:4]
-	getRoyaltyStackSelector     = crypto.Keccak256Hash([]byte("getRoyaltyStack(address,uint256)")).Bytes()[:4]
-	MaxUint32                   = new(big.Int).SetUint64(uint64(^uint32(0)))
+	royaltyPolicyKindLAP           = big.NewInt(0)         // Liquid Absolute Percentage (LAP) Royalty Policy
+	royaltyPolicyKindLRP           = big.NewInt(1)         // Liquid Relative Percentage (LRP) Royalty Policy
+	hundredPercent                 = big.NewInt(100000000) // 100% in the integer format
+	ipGraphAddress                 = common.HexToAddress("0x0000000000000000000000000000000000000101")
+	aclAddress                     = common.HexToAddress("0x1640A22a8A086747cD377b73954545e2Dfcc9Cad")
+	aclSlot                        = "af99b37fdaacca72ee7240cb1435cc9e498aee6ef4edc19c8cc0cd787f4e6800"
+	addParentIpSelector            = crypto.Keccak256Hash([]byte("addParentIp(address,address[])")).Bytes()[:4]
+	hasParentIpSelector            = crypto.Keccak256Hash([]byte("hasParentIp(address,address)")).Bytes()[:4]
+	getParentIpsSelector           = crypto.Keccak256Hash([]byte("getParentIps(address)")).Bytes()[:4]
+	getParentIpsCountSelector      = crypto.Keccak256Hash([]byte("getParentIpsCount(address)")).Bytes()[:4]
+	getAncestorIpsSelector         = crypto.Keccak256Hash([]byte("getAncestorIps(address)")).Bytes()[:4]
+	getAncestorIpsCountSelector    = crypto.Keccak256Hash([]byte("getAncestorIpsCount(address)")).Bytes()[:4]
+	hasAncestorIpsSelector         = crypto.Keccak256Hash([]byte("hasAncestorIp(address,address)")).Bytes()[:4]
+	setRoyaltySelector             = crypto.Keccak256Hash([]byte("setRoyalty(address,address,uint256,uint256)")).Bytes()[:4]
+	getRoyaltySelector             = crypto.Keccak256Hash([]byte("getRoyalty(address,address,uint256)")).Bytes()[:4]
+	getRoyaltyStackSelector        = crypto.Keccak256Hash([]byte("getRoyaltyStack(address,uint256)")).Bytes()[:4]
+	hasParentIpExtSelector         = crypto.Keccak256Hash([]byte("hasParentIpExt(address,address)")).Bytes()[:4]
+	getParentIpsExtSelector        = crypto.Keccak256Hash([]byte("getParentIpsExt(address)")).Bytes()[:4]
+	getParentIpsCountExtSelector   = crypto.Keccak256Hash([]byte("getParentIpsCountExt(address)")).Bytes()[:4]
+	getAncestorIpsExtSelector      = crypto.Keccak256Hash([]byte("getAncestorIpsExt(address)")).Bytes()[:4]
+	getAncestorIpsCountExtSelector = crypto.Keccak256Hash([]byte("getAncestorIpsCountExt(address)")).Bytes()[:4]
+	hasAncestorIpsExtSelector      = crypto.Keccak256Hash([]byte("hasAncestorIpExt(address,address)")).Bytes()[:4]
+	getRoyaltyExtSelector          = crypto.Keccak256Hash([]byte("getRoyaltyExt(address,address,uint256)")).Bytes()[:4]
+	getRoyaltyStackExtSelector     = crypto.Keccak256Hash([]byte("getRoyaltyStackExt(address,uint256)")).Bytes()[:4]
+	MaxUint32                      = new(big.Int).SetUint64(uint64(^uint32(0)))
 )
 
 type ipGraph struct{}
@@ -52,7 +62,7 @@ func (c *ipGraph) RequiredGas(input []byte) uint64 {
 	case bytes.Equal(selector, addParentIpSelector):
 		args := input[4:]
 		parentCount := new(big.Int).SetBytes(getData(args, 64, 32))
-		return ipGraphWriteGas * parentCount.Uint64()
+		return intrinsicGas + (ipGraphWriteGas * parentCount.Uint64())
 	case bytes.Equal(selector, hasParentIpSelector):
 		return ipGraphReadGas * averageParentIpCount
 	case bytes.Equal(selector, getParentIpsSelector):
@@ -85,14 +95,42 @@ func (c *ipGraph) RequiredGas(input []byte) uint64 {
 		} else {
 			return intrinsicGas
 		}
+	case bytes.Equal(selector, hasParentIpExtSelector):
+		return ipGraphExternalReadGas * averageParentIpCount
+	case bytes.Equal(selector, getParentIpsExtSelector):
+		return ipGraphExternalReadGas * averageParentIpCount
+	case bytes.Equal(selector, getParentIpsCountExtSelector):
+		return ipGraphExternalReadGas
+	case bytes.Equal(selector, getAncestorIpsExtSelector):
+		return ipGraphExternalReadGas * averageAncestorIpCount * 2
+	case bytes.Equal(selector, getAncestorIpsCountExtSelector):
+		return ipGraphExternalReadGas * averageParentIpCount * 2
+	case bytes.Equal(selector, hasAncestorIpsExtSelector):
+		return ipGraphExternalReadGas * averageAncestorIpCount * 2
+	case bytes.Equal(selector, getRoyaltyExtSelector):
+		royaltyPolicyKind := new(big.Int).SetBytes(getData(input, 64+4, 32))
+		if royaltyPolicyKind.Cmp(royaltyPolicyKindLAP) == 0 {
+			return ipGraphExternalReadGas * (averageAncestorIpCount * 3)
+		} else if royaltyPolicyKind.Cmp(royaltyPolicyKindLRP) == 0 {
+			return ipGraphExternalReadGas * (averageAncestorIpCount*2 + 2)
+		} else {
+			return intrinsicGas
+		}
+	case bytes.Equal(selector, getRoyaltyStackExtSelector):
+		royaltyPolicyKind := new(big.Int).SetBytes(getData(input, 32+4, 32))
+		if royaltyPolicyKind.Cmp(royaltyPolicyKindLAP) == 0 {
+			return ipGraphExternalReadGas * (averageParentIpCount + 1)
+		} else if royaltyPolicyKind.Cmp(royaltyPolicyKindLRP) == 0 {
+			return ipGraphExternalReadGas * (averageAncestorIpCount * 2)
+		} else {
+			return intrinsicGas
+		}
 	default:
 		return intrinsicGas
 	}
 }
 
 func (c *ipGraph) Run(evm *EVM, input []byte) ([]byte, error) {
-	log.Info("ipGraph.Run", "ipGraphAddress", ipGraphAddress, "input", input)
-
 	if len(input) < 4 {
 		return nil, fmt.Errorf("input too short")
 	}
@@ -121,6 +159,22 @@ func (c *ipGraph) Run(evm *EVM, input []byte) ([]byte, error) {
 		return c.getRoyalty(args, evm, ipGraphAddress)
 	case bytes.Equal(selector, getRoyaltyStackSelector):
 		return c.getRoyaltyStack(args, evm, ipGraphAddress)
+	case bytes.Equal(selector, hasParentIpExtSelector):
+		return c.hasParentIp(args, evm, ipGraphAddress)
+	case bytes.Equal(selector, getParentIpsExtSelector):
+		return c.getParentIps(args, evm, ipGraphAddress)
+	case bytes.Equal(selector, getParentIpsCountExtSelector):
+		return c.getParentIpsCount(args, evm, ipGraphAddress)
+	case bytes.Equal(selector, getAncestorIpsExtSelector):
+		return c.getAncestorIps(args, evm, ipGraphAddress)
+	case bytes.Equal(selector, getAncestorIpsCountExtSelector):
+		return c.getAncestorIpsCount(args, evm, ipGraphAddress)
+	case bytes.Equal(selector, hasAncestorIpsExtSelector):
+		return c.hasAncestorIp(args, evm, ipGraphAddress)
+	case bytes.Equal(selector, getRoyaltyExtSelector):
+		return c.getRoyalty(args, evm, ipGraphAddress)
+	case bytes.Equal(selector, getRoyaltyStackExtSelector):
+		return c.getRoyaltyStack(args, evm, ipGraphAddress)
 	default:
 		return nil, fmt.Errorf("unknown selector")
 	}
@@ -129,15 +183,13 @@ func (c *ipGraph) Run(evm *EVM, input []byte) ([]byte, error) {
 func (c *ipGraph) isAllowed(evm *EVM) (bool, error) {
 	slot := new(big.Int)
 	slot.SetString(aclSlot, 16)
+	slot = crypto.Keccak256Hash(evm.caller.Bytes(), slot.Bytes()).Big()
 	isAllowedHash := evm.StateDB.GetState(aclAddress, common.BigToHash(slot))
 	isAllowedBig := isAllowedHash.Big()
 
-	log.Info("isAllowed", "aclAddress", aclAddress, "slot", slot, "isAllowedBig", isAllowedBig)
 	if isAllowedBig.Cmp(big.NewInt(1)) == 0 {
-		log.Info("isAllowed", "allowed", true)
 		return true, nil
 	}
-	log.Info("isAllowed", "allowed", false)
 	return false, nil
 }
 
@@ -152,8 +204,6 @@ func (c *ipGraph) addParentIp(input []byte, evm *EVM, ipGraphAddress common.Addr
 		return nil, fmt.Errorf("caller not allowed to add parent IP")
 	}
 
-	log.Info("addParentIp", "input", input)
-
 	if evm.currentPrecompileCallType != CALL {
 		return nil, fmt.Errorf("addParentIp can only be called with CALL, not %v", evm.currentPrecompileCallType)
 	}
@@ -162,9 +212,7 @@ func (c *ipGraph) addParentIp(input []byte, evm *EVM, ipGraphAddress common.Addr
 		return nil, fmt.Errorf("input too short for addParentIp")
 	}
 	ipId := common.BytesToAddress(input[0:32])
-	log.Info("addParentIp", "ipId", ipId)
 	parentCount := new(big.Int).SetBytes(getData(input, 64, 32))
-	log.Info("addParentIp", "parentCount", parentCount)
 
 	if len(input) != int(96+parentCount.Uint64()*32) {
 		return nil, fmt.Errorf("input length does not match parent count")
@@ -175,17 +223,25 @@ func (c *ipGraph) addParentIp(input []byte, evm *EVM, ipGraphAddress common.Addr
 		index := uint64(i)
 		slot := crypto.Keccak256Hash(ipId.Bytes()).Big()
 		slot.Add(slot, new(big.Int).SetUint64(index))
-		log.Info("addParentIp", "ipId", ipId, "parentIpId", parentIpId, "slot", slot)
 		evm.StateDB.SetState(ipGraphAddress, common.BigToHash(slot), common.BytesToHash(parentIpId.Bytes()))
 	}
 
-	log.Info("addParentIp", "ipId", ipId, "parentCount", parentCount)
 	evm.StateDB.SetState(ipGraphAddress, common.BytesToHash(ipId.Bytes()), common.BigToHash(parentCount))
 
 	return nil, nil
 }
 
 func (c *ipGraph) hasParentIp(input []byte, evm *EVM, ipGraphAddress common.Address) ([]byte, error) {
+	allowed, err := c.isAllowed(evm)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if !allowed {
+		return nil, fmt.Errorf("caller not allowed to query hasParentIp")
+	}
+
 	if len(input) != 64 {
 		return nil, fmt.Errorf("input too short for hasParentIp")
 	}
@@ -194,7 +250,6 @@ func (c *ipGraph) hasParentIp(input []byte, evm *EVM, ipGraphAddress common.Addr
 
 	currentLengthHash := evm.StateDB.GetState(ipGraphAddress, common.BytesToHash(ipId.Bytes()))
 	currentLength := currentLengthHash.Big()
-	log.Info("hasParentIp", "ipId", ipId, "parentIpId", parentIpId, "currentLength", currentLength)
 	if evm.currentPrecompileCallType == DELEGATECALL {
 		return nil, fmt.Errorf("hasParentIp cannot be called with DELEGATECALL")
 	}
@@ -202,18 +257,24 @@ func (c *ipGraph) hasParentIp(input []byte, evm *EVM, ipGraphAddress common.Addr
 		slot := crypto.Keccak256Hash(ipId.Bytes()).Big()
 		slot.Add(slot, new(big.Int).SetUint64(i))
 		storedParent := evm.StateDB.GetState(ipGraphAddress, common.BigToHash(slot))
-		log.Info("hasParentIp", "storedParent", storedParent, "parentIpId", parentIpId)
 		if common.BytesToAddress(storedParent.Bytes()) == parentIpId {
-			log.Info("hasParentIp", "found", true)
 			return common.LeftPadBytes([]byte{1}, 32), nil
 		}
 	}
-	log.Info("hasParentIp", "found", false)
 	return common.LeftPadBytes([]byte{0}, 32), nil
 }
 
 func (c *ipGraph) getParentIps(input []byte, evm *EVM, ipGraphAddress common.Address) ([]byte, error) {
-	log.Info("getParentIps", "input", input)
+	allowed, err := c.isAllowed(evm)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if !allowed {
+		return nil, fmt.Errorf("caller not allowed to query getParentIps")
+	}
+
 	if evm.currentPrecompileCallType == DELEGATECALL {
 		return nil, fmt.Errorf("getParentIps cannot be called with DELEGATECALL")
 	}
@@ -235,12 +296,20 @@ func (c *ipGraph) getParentIps(input []byte, evm *EVM, ipGraphAddress common.Add
 		storedParent := evm.StateDB.GetState(ipGraphAddress, common.BigToHash(slot))
 		copy(output[64+i*32:], storedParent.Bytes())
 	}
-	log.Info("getParentIps", "output", output)
 	return output, nil
 }
 
 func (c *ipGraph) getParentIpsCount(input []byte, evm *EVM, ipGraphAddress common.Address) ([]byte, error) {
-	log.Info("getParentIpsCount", "input", input)
+	allowed, err := c.isAllowed(evm)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if !allowed {
+		return nil, fmt.Errorf("caller not allowed to query parent Ips count")
+	}
+
 	if evm.currentPrecompileCallType == DELEGATECALL {
 		return nil, fmt.Errorf("getParentIpsCount cannot be called with DELEGATECALL")
 	}
@@ -252,12 +321,20 @@ func (c *ipGraph) getParentIpsCount(input []byte, evm *EVM, ipGraphAddress commo
 	currentLengthHash := evm.StateDB.GetState(ipGraphAddress, common.BytesToHash(ipId.Bytes()))
 	currentLength := currentLengthHash.Big()
 
-	log.Info("getParentIpsCount", "ipId", ipId, "currentLength", currentLength)
 	return common.BigToHash(currentLength).Bytes(), nil
 }
 
 func (c *ipGraph) getAncestorIps(input []byte, evm *EVM, ipGraphAddress common.Address) ([]byte, error) {
-	log.Info("getAncestorIps", "input", input)
+	allowed, err := c.isAllowed(evm)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if !allowed {
+		return nil, fmt.Errorf("caller not allowed to query getAncestorIps")
+	}
+
 	if evm.currentPrecompileCallType == DELEGATECALL {
 		return nil, fmt.Errorf("getAncestorIps cannot be called with DELEGATECALL")
 	}
@@ -265,24 +342,39 @@ func (c *ipGraph) getAncestorIps(input []byte, evm *EVM, ipGraphAddress common.A
 		return nil, fmt.Errorf("input too short for getAncestorIps")
 	}
 	ipId := common.BytesToAddress(input[0:32])
-	ancestors := c.findAncestors(ipId, evm, ipGraphAddress)
+	ancestorsMap := c.findAncestors(ipId, evm, ipGraphAddress)
+
+	// Convert map keys to a sorted slice for stable ordering results
+	ancestors := make([]common.Address, 0, len(ancestorsMap))
+	for ancestor := range ancestorsMap {
+		ancestors = append(ancestors, ancestor)
+	}
+	sort.Slice(ancestors, func(i, j int) bool {
+		return bytes.Compare(ancestors[i].Bytes(), ancestors[j].Bytes()) < 0
+	})
 
 	output := make([]byte, 64+len(ancestors)*32)
 	copy(output[0:32], common.BigToHash(new(big.Int).SetUint64(32)).Bytes())
 	copy(output[32:64], common.BigToHash(new(big.Int).SetUint64(uint64(len(ancestors)))).Bytes())
 
-	i := 0
-	for ancestor := range ancestors {
+	for i, ancestor := range ancestors {
 		copy(output[64+i*32:], common.LeftPadBytes(ancestor.Bytes(), 32))
-		i++
 	}
 
-	log.Info("getAncestorIps", "output", output)
 	return output, nil
 }
 
 func (c *ipGraph) getAncestorIpsCount(input []byte, evm *EVM, ipGraphAddress common.Address) ([]byte, error) {
-	log.Info("getAncestorIpsCount", "input", input)
+	allowed, err := c.isAllowed(evm)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if !allowed {
+		return nil, fmt.Errorf("caller not allowed to query getAncestorIpsCount")
+	}
+
 	if evm.currentPrecompileCallType == DELEGATECALL {
 		return nil, fmt.Errorf("getAncestorIpsCount cannot be called with DELEGATECALL")
 	}
@@ -293,7 +385,6 @@ func (c *ipGraph) getAncestorIpsCount(input []byte, evm *EVM, ipGraphAddress com
 	ancestors := c.findAncestors(ipId, evm, ipGraphAddress)
 
 	count := new(big.Int).SetUint64(uint64(len(ancestors)))
-	log.Info("getAncestorIpsCount", "ipId", ipId, "count", count)
 	return common.BigToHash(count).Bytes(), nil
 }
 
@@ -309,10 +400,8 @@ func (c *ipGraph) hasAncestorIp(input []byte, evm *EVM, ipGraphAddress common.Ad
 	ancestors := c.findAncestors(ipId, evm, ipGraphAddress)
 
 	if _, found := ancestors[parentIpId]; found {
-		log.Info("hasAncestorIp", "found", true)
 		return common.LeftPadBytes([]byte{1}, 32), nil
 	}
-	log.Info("hasAncestorIp", "found", false)
 	return common.LeftPadBytes([]byte{0}, 32), nil
 }
 
@@ -353,7 +442,6 @@ func (c *ipGraph) setRoyalty(input []byte, evm *EVM, ipGraphAddress common.Addre
 		return nil, fmt.Errorf("caller not allowed to set Royalty")
 	}
 
-	log.Info("setRoyalty", "ipGraphAddress", ipGraphAddress, "input", input)
 	if evm.currentPrecompileCallType != CALL {
 		return nil, fmt.Errorf("setRoyalty can only be called with CALL, not %v", evm.currentPrecompileCallType)
 	}
@@ -371,15 +459,32 @@ func (c *ipGraph) setRoyalty(input []byte, evm *EVM, ipGraphAddress common.Addre
 	}
 
 	slot := crypto.Keccak256Hash(ipId.Bytes(), parentIpId.Bytes(), royaltyPolicyKind.Bytes()).Big()
-	log.Info("setRoyalty", "ipId", ipId, "ipGraphAddress", ipGraphAddress, "parentIpId", parentIpId,
-		"royaltyPolicyKind", royaltyPolicyKind, "royalty", royalty, "slot", slot)
 	evm.StateDB.SetState(ipGraphAddress, common.BigToHash(slot), common.BigToHash(royalty))
 
+	if royaltyPolicyKind.Cmp(royaltyPolicyKindLAP) == 0 {
+		slot = crypto.Keccak256Hash(parentIpId.Bytes(), royaltyPolicyKind.Bytes(), []byte("royaltyStack")).Big()
+		parentRoyaltyStack := evm.StateDB.GetState(ipGraphAddress, common.BigToHash(slot)).Big()
+		slot = crypto.Keccak256Hash(ipId.Bytes(), royaltyPolicyKind.Bytes(), []byte("royaltyStack")).Big()
+		royaltyStack := evm.StateDB.GetState(ipGraphAddress, common.BigToHash(slot)).Big()
+		royaltyStack.Add(royaltyStack, parentRoyaltyStack)
+		royaltyStack.Add(royaltyStack, royalty)
+		slot = crypto.Keccak256Hash(ipId.Bytes(), royaltyPolicyKind.Bytes(), []byte("royaltyStack")).Big()
+		evm.StateDB.SetState(ipGraphAddress, common.BigToHash(slot), common.BigToHash(royaltyStack))
+	}
 	return nil, nil
 }
 
 func (c *ipGraph) getRoyalty(input []byte, evm *EVM, ipGraphAddress common.Address) ([]byte, error) {
-	log.Info("getRoyalty", "ipGraphAddress", ipGraphAddress, "input", input)
+	allowed, err := c.isAllowed(evm)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if !allowed {
+		return nil, fmt.Errorf("caller not allowed to query getRoyalty")
+	}
+
 	if evm.currentPrecompileCallType == DELEGATECALL {
 		return nil, fmt.Errorf("getRoyalty cannot be called with DELEGATECALL")
 	}
@@ -398,7 +503,6 @@ func (c *ipGraph) getRoyalty(input []byte, evm *EVM, ipGraphAddress common.Addre
 		return nil, fmt.Errorf("unknown royalty policy kind")
 	}
 
-	log.Info("getRoyalty", "ipId", ipId, "ancestorIpId", ancestorIpId, "ipGraphAddress", ipGraphAddress, "royaltyPolicyKind", royaltyPolicyKind, "totalRoyalty", totalRoyalty)
 	// Check if royalty value fits in uint32
 	if totalRoyalty.Cmp(MaxUint32) > 0 {
 		return nil, fmt.Errorf("royalty value exceeds uint32 range")
@@ -407,50 +511,50 @@ func (c *ipGraph) getRoyalty(input []byte, evm *EVM, ipGraphAddress common.Addre
 }
 
 func (c *ipGraph) getRoyaltyLap(ipId, ancestorIpId common.Address, evm *EVM, ipGraphAddress common.Address) *big.Int {
-	log.Info("getRoyaltyLap", "ipId", ipId, "ancestorIpId", ancestorIpId, "ipGraphAddress", ipGraphAddress)
-	ancestors := c.findAncestors(ipId, evm, ipGraphAddress)
-	totalRoyalty := big.NewInt(0)
-	for ancestor := range ancestors {
-		log.Info("getRoyaltyLap", "found_ancestor", ancestor)
-		if ancestor == ancestorIpId {
-			// Traverse the graph to accumulate royalties
-			totalRoyalty.Add(totalRoyalty, c.getRoyaltyLapForAncestor(ipId, ancestorIpId, evm, ipGraphAddress))
-		}
+	royalty := make(map[common.Address]*big.Int)
+	pathCount := make(map[common.Address]*big.Int)
+	royalty[ipId] = hundredPercent
+	pathCount[ipId] = big.NewInt(1)
+
+	topoOrder, allParents, err := c.topologicalSort(ipId, ancestorIpId, evm, ipGraphAddress)
+	if err != nil {
+		log.Error("Failed to perform topological sort", "error", err)
+		return big.NewInt(0) // Return 0 if any error occurs
 	}
-	return totalRoyalty
-}
 
-func (c *ipGraph) getRoyaltyLapForAncestor(ipId, ancestorIpId common.Address, evm *EVM, ipGraphAddress common.Address) *big.Int {
-	ancestors := make(map[common.Address]struct{})
-	totalRoyalty := big.NewInt(0)
-	var stack []common.Address
-	stack = append(stack, ipId)
-	for len(stack) > 0 {
-		node := stack[len(stack)-1]
-		stack = stack[:len(stack)-1]
+	for i := len(topoOrder) - 1; i >= 0; i-- {
+		node := topoOrder[i]
+		// If we reached the ancestor IP, we can stop the calculation
+		if node == ancestorIpId {
+			break
+		}
 
-		currentLengthHash := evm.StateDB.GetState(ipGraphAddress, common.BytesToHash(node.Bytes()))
-		currentLength := currentLengthHash.Big()
+		parents := allParents[node]
+		for _, parentIpId := range parents {
+			royaltySlot := crypto.Keccak256Hash(node.Bytes(), parentIpId.Bytes(), royaltyPolicyKindLAP.Bytes()).Big()
+			royaltyHash := common.BigToHash(royaltySlot)
+			parentRoyalty := evm.StateDB.GetState(ipGraphAddress, royaltyHash).Big()
 
-		for i := uint64(0); i < currentLength.Uint64(); i++ {
-			slot := crypto.Keccak256Hash(node.Bytes()).Big()
-			slot.Add(slot, new(big.Int).SetUint64(i))
-			storedParent := evm.StateDB.GetState(ipGraphAddress, common.BigToHash(slot))
-			parentIpId := common.BytesToAddress(storedParent.Bytes())
+			contribution := pathCount[node]
 
-			if _, found := ancestors[parentIpId]; !found {
-				ancestors[parentIpId] = struct{}{}
-				stack = append(stack, parentIpId)
+			if existingPathCount, exists := pathCount[parentIpId]; exists {
+				pathCount[parentIpId] = new(big.Int).Add(existingPathCount, contribution)
+			} else {
+				pathCount[parentIpId] = contribution
 			}
 
-			if parentIpId == ancestorIpId {
-				royaltySlot := crypto.Keccak256Hash(node.Bytes(), ancestorIpId.Bytes(), royaltyPolicyKindLAP.Bytes()).Big()
-				royalty := evm.StateDB.GetState(ipGraphAddress, common.BigToHash(royaltySlot)).Big()
-				totalRoyalty.Add(totalRoyalty, royalty)
+			if existingRoyalty, exists := royalty[parentIpId]; exists {
+				royalty[parentIpId] = new(big.Int).Add(existingRoyalty, new(big.Int).Mul(contribution, parentRoyalty))
+			} else {
+				royalty[parentIpId] = new(big.Int).Mul(contribution, parentRoyalty)
 			}
 		}
 	}
-	return totalRoyalty
+
+	if result, exists := royalty[ancestorIpId]; exists {
+		return result
+	}
+	return big.NewInt(0)
 }
 
 func (c *ipGraph) getRoyaltyLrp(ipId, ancestorIpId common.Address, evm *EVM, ipGraphAddress common.Address) *big.Int {
@@ -462,7 +566,6 @@ func (c *ipGraph) getRoyaltyLrp(ipId, ancestorIpId common.Address, evm *EVM, ipG
 		log.Error("Failed to perform topological sort", "error", err)
 		return big.NewInt(0) // Return 0 if any error occurs
 	}
-	log.Info("getRoyaltyLrp", "topoOrder", topoOrder, "allParents", allParents)
 
 	for i := len(topoOrder) - 1; i >= 0; i-- {
 		node := topoOrder[i]
@@ -493,10 +596,8 @@ func (c *ipGraph) getRoyaltyLrp(ipId, ancestorIpId common.Address, evm *EVM, ipG
 	}
 
 	if result, exists := royalty[ancestorIpId]; exists {
-		log.Info("getRoyaltyLrp", "msg", "Royalty for ancestor IP", "ancestorIpId", ancestorIpId, "royalty", result)
 		return result
 	}
-	log.Info("getRoyaltyLrp", "msg", "Royalty for ancestor IP not found", "ancestorIpId", ancestorIpId)
 	return big.NewInt(0)
 }
 
@@ -505,6 +606,7 @@ func (c *ipGraph) topologicalSort(ipId, ancestorIpId common.Address, evm *EVM, i
 
 	allParents := make(map[common.Address][]common.Address)
 	visited := make(map[common.Address]bool)
+	inTopoOrder := make(map[common.Address]bool)
 	topoOrder := []common.Address{}
 	stack := []common.Address{ipId}
 
@@ -513,7 +615,10 @@ func (c *ipGraph) topologicalSort(ipId, ancestorIpId common.Address, evm *EVM, i
 		stack = stack[:len(stack)-1] // pop from stack
 
 		if visited[current] {
-			topoOrder = append(topoOrder, current)
+			if !inTopoOrder[current] {
+				topoOrder = append(topoOrder, current)
+				inTopoOrder[current] = true
+			}
 			continue
 		}
 		visited[current] = true
@@ -540,7 +645,16 @@ func (c *ipGraph) topologicalSort(ipId, ancestorIpId common.Address, evm *EVM, i
 }
 
 func (c *ipGraph) getRoyaltyStack(input []byte, evm *EVM, ipGraphAddress common.Address) ([]byte, error) {
-	log.Info("getRoyaltyStack", "ipGraphAddress", ipGraphAddress, "input", input)
+	allowed, err := c.isAllowed(evm)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if !allowed {
+		return nil, fmt.Errorf("caller not allowed to query getRoyaltyStack")
+	}
+
 	if evm.currentPrecompileCallType == DELEGATECALL {
 		return nil, fmt.Errorf("getRoyaltyStack cannot be called with DELEGATECALL")
 	}
@@ -557,44 +671,16 @@ func (c *ipGraph) getRoyaltyStack(input []byte, evm *EVM, ipGraphAddress common.
 	} else {
 		return nil, fmt.Errorf("unknown royalty policy kind")
 	}
-	log.Info("getRoyaltyStack", "ipId", ipId, "ipGraphAddress", ipGraphAddress, "royaltyPolicyKind", royaltyPolicyKind, "totalRoyalty", totalRoyalty)
 	return common.BigToHash(totalRoyalty).Bytes(), nil
 }
 
 func (c *ipGraph) getRoyaltyStackLap(ipId common.Address, evm *EVM, ipGraphAddress common.Address) *big.Int {
-	log.Info("getRoyaltyStackLap", "ipGraphAddress", ipGraphAddress, "IP ID", ipId)
-	ancestors := make(map[common.Address]struct{})
-	totalRoyalty := big.NewInt(0)
-	var stack []common.Address
-	stack = append(stack, ipId)
-	for len(stack) > 0 {
-		node := stack[len(stack)-1]
-		stack = stack[:len(stack)-1]
-
-		currentLengthHash := evm.StateDB.GetState(ipGraphAddress, common.BytesToHash(node.Bytes()))
-		currentLength := currentLengthHash.Big()
-
-		for i := uint64(0); i < currentLength.Uint64(); i++ {
-			slot := crypto.Keccak256Hash(node.Bytes()).Big()
-			slot.Add(slot, new(big.Int).SetUint64(i))
-			storedParent := evm.StateDB.GetState(ipGraphAddress, common.BigToHash(slot))
-			parentIpId := common.BytesToAddress(storedParent.Bytes())
-
-			if _, found := ancestors[parentIpId]; !found {
-				ancestors[parentIpId] = struct{}{}
-				stack = append(stack, parentIpId)
-			}
-
-			royaltySlot := crypto.Keccak256Hash(node.Bytes(), parentIpId.Bytes(), royaltyPolicyKindLAP.Bytes()).Big()
-			royalty := evm.StateDB.GetState(ipGraphAddress, common.BigToHash(royaltySlot)).Big()
-			totalRoyalty.Add(totalRoyalty, royalty)
-		}
-	}
-	return totalRoyalty
+	slot := crypto.Keccak256Hash(ipId.Bytes(), royaltyPolicyKindLAP.Bytes(), []byte("royaltyStack")).Big()
+	royaltyStack := evm.StateDB.GetState(ipGraphAddress, common.BigToHash(slot)).Big()
+	return royaltyStack
 }
 
 func (c *ipGraph) getRoyaltyStackLrp(ipId common.Address, evm *EVM, ipGraphAddress common.Address) *big.Int {
-	log.Info("getRoyaltyStackLrp", "ipGraphAddress", ipGraphAddress, "IP ID", ipId)
 	totalRoyalty := big.NewInt(0)
 	currentLengthHash := evm.StateDB.GetState(ipGraphAddress, common.BytesToHash(ipId.Bytes()))
 	currentLength := currentLengthHash.Big()
