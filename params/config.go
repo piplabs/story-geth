@@ -32,8 +32,9 @@ var (
 	GoerliGenesisHash  = common.HexToHash("0xbf7e331f7f7c1dd2e05159666b3bf8bc7a8a3a9eb1d518969eab529dd9b88c1a")
 	IliadGenesisHash   = common.HexToHash("0xf5ebc6f0982e8bf7fd532b3f959f84d12b3dedd2827af8d31f5389447bedafc6")
 	OdysseyGenesisHash = common.HexToHash("0xf5ebc6f0982e8bf7fd532b3f959f84d12b3dedd2827af8d31f5389447bedafc6")
-	StoryGenesisHash   = common.HexToHash("0xfb60e5f22e99af3c83d227f7b8b62552b854175659008765d1bf827deed3d6d7")
-	LocalGenesisHash   = common.HexToHash("0x16152175edd8931dbf10912ea3e09c8bb2ffe8ce60e4ff5d3c4a973276e614e9")
+	HomerGenesisHash   = common.HexToHash("0xc8e87a91599b58c05b8f2925a7e8ef6ba0fa3c22f1496f635a0e81517f26106c")
+	StoryGenesisHash   = common.HexToHash("0x29b83a77e1705524a60557a9494150635360ccd9d1f68278883d2d9e6d4cc6b2")
+	LocalGenesisHash   = common.HexToHash("0x012f42d887b0d126ad3ce1b43069c24d5ba9af51ce0d8a2873b0bdbf8a07b312")
 )
 
 func newUint64(val uint64) *uint64 { return &val }
@@ -188,8 +189,29 @@ var (
 		Enable4844:                    false,
 	}
 
+	HomerChainConfig = &ChainConfig{
+		ChainID:                       big.NewInt(1315),
+		HomesteadBlock:                big.NewInt(0),
+		EIP150Block:                   big.NewInt(0),
+		EIP155Block:                   big.NewInt(0),
+		EIP158Block:                   big.NewInt(0),
+		ByzantiumBlock:                big.NewInt(0),
+		ConstantinopleBlock:           big.NewInt(0),
+		PetersburgBlock:               big.NewInt(0),
+		IstanbulBlock:                 big.NewInt(0),
+		BerlinBlock:                   big.NewInt(0),
+		LondonBlock:                   big.NewInt(0),
+		ArrowGlacierBlock:             big.NewInt(0),
+		GrayGlacierBlock:              big.NewInt(0),
+		TerminalTotalDifficulty:       big.NewInt(0),
+		TerminalTotalDifficultyPassed: true,
+		ShanghaiTime:                  newUint64(0),
+		CancunTime:                    newUint64(0),
+		Enable4844:                    false,
+	}
+
 	StoryChainConfig = &ChainConfig{
-		ChainID:                       big.NewInt(1415),
+		ChainID:                       big.NewInt(1514),
 		HomesteadBlock:                big.NewInt(0),
 		EIP150Block:                   big.NewInt(0),
 		EIP155Block:                   big.NewInt(0),
