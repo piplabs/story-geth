@@ -390,7 +390,7 @@ func TestIPGraphGasCalculation(t *testing.T) {
 					)...,
 				)...,
 			),
-			wantGas: ipGraphWriteGas * 1,
+			wantGas: intrinsicGas + ipGraphWriteGas*1,
 		},
 		{
 			name: "AddParentIP with three parents",
@@ -403,7 +403,7 @@ func TestIPGraphGasCalculation(t *testing.T) {
 					)...,
 				)...,
 			),
-			wantGas: ipGraphWriteGas * 3,
+			wantGas: intrinsicGas + ipGraphWriteGas*3,
 		},
 		{
 			name: "AddParentIP with zero parents",
@@ -413,7 +413,7 @@ func TestIPGraphGasCalculation(t *testing.T) {
 					common.BigToHash(big.NewInt(0)).Bytes()...,
 				)...,
 			),
-			wantGas: ipGraphWriteGas * 0,
+			wantGas: intrinsicGas + ipGraphWriteGas*0,
 		},
 		{
 			name: "AddParentIP with large number of parents",
@@ -426,7 +426,7 @@ func TestIPGraphGasCalculation(t *testing.T) {
 					)...,
 				)...,
 			),
-			wantGas: ipGraphWriteGas * 100,
+			wantGas: intrinsicGas + ipGraphWriteGas*100,
 		},
 	}
 
