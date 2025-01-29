@@ -603,15 +603,15 @@ func DefaultOdysseyGenesisBlock() *Genesis {
 	}
 }
 
-// DefaultHomerGenesisBlock returns the homer network genesis block.
-func DefaultHomerGenesisBlock() *Genesis {
+// DefaultAeneidGenesisBlock returns the aeneid network genesis block.
+func DefaultAeneidGenesisBlock() *Genesis {
 	return &Genesis{
-		Config:     params.HomerChainConfig,
+		Config:     params.AeneidChainConfig,
 		Difficulty: big.NewInt(0x20000),
 		GasLimit:   0x7A1200,
 		Nonce:      0x42,
 		Timestamp:  0,
-		Alloc:      decodePrealloc(homerAllocData),
+		Alloc:      decodePrealloc(aeneidAllocData),
 		ExtraData:  hexutil.MustDecode("0x5468652054696d65732032372f4465632f32303233205468652054696d65732053756573204f70656e414920616e64204d6963726f736f6674204f76657220412e492e20557365206f6620436f70797269676874656420576f726b"),
 	}
 }
