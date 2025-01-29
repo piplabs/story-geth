@@ -818,6 +818,10 @@ func (c *ChainConfig) checkCompatible(newcfg *ChainConfig, headNumber *big.Int, 
 // BaseFeeChangeDenominator bounds the amount the base fee can change between blocks.
 func (c *ChainConfig) BaseFeeChangeDenominator() uint64 {
 	if c.IsStory() {
+		// For Iliad and Aeneid, use the DefaultBaseFeeChangeDenominator.
+		if c.IsIliad() || c.IsAeneid() {
+			return DefaultBaseFeeChangeDenominator
+		}
 		return DefaultBaseFeeChangeDenomStory
 	}
 
@@ -841,6 +845,14 @@ func (c *ChainConfig) IsStory() bool {
 		chainId == IDStoryOdyssey ||
 		chainId == IDStoryIliad ||
 		chainId == IDStoryLocal
+}
+
+func (c *ChainConfig) IsIliad() bool {
+	return c.ChainID.Uint64() == IDStoryIliad
+}
+
+func (c *ChainConfig) IsAeneid() bool {
+	return c.ChainID.Uint64() == IDStoryAeneid
 }
 
 // LatestFork returns the latest time-based fork that would be active for the given time.
