@@ -34,7 +34,7 @@ var (
 	HoodiGenesisHash   = common.HexToHash("0xbbe312868b376a3001692a646dd2d7d1e4406380dfd86b98aa8a34d1557c971b")
 	IliadGenesisHash   = common.HexToHash("0xf5ebc6f0982e8bf7fd532b3f959f84d12b3dedd2827af8d31f5389447bedafc6")
 	OdysseyGenesisHash = common.HexToHash("0xf5ebc6f0982e8bf7fd532b3f959f84d12b3dedd2827af8d31f5389447bedafc6")
-	HomerGenesisHash   = common.HexToHash("0xc8e87a91599b58c05b8f2925a7e8ef6ba0fa3c22f1496f635a0e81517f26106c")
+	AeneidGenesisHash  = common.HexToHash("0xc8e87a91599b58c05b8f2925a7e8ef6ba0fa3c22f1496f635a0e81517f26106c")
 	StoryGenesisHash   = common.HexToHash("0x29b83a77e1705524a60557a9494150635360ccd9d1f68278883d2d9e6d4cc6b2")
 	LocalGenesisHash   = common.HexToHash("0x012f42d887b0d126ad3ce1b43069c24d5ba9af51ce0d8a2873b0bdbf8a07b312")
 )
@@ -207,7 +207,7 @@ var (
 		Enable4844:              false,
 	}
 
-	HomerChainConfig = &ChainConfig{
+	AeneidChainConfig = &ChainConfig{
 		ChainID:                       big.NewInt(1315),
 		HomesteadBlock:                big.NewInt(0),
 		EIP150Block:                   big.NewInt(0),
@@ -1004,7 +1004,7 @@ func (c *ChainConfig) checkCompatible(newcfg *ChainConfig, headNumber *big.Int, 
 // BaseFeeChangeDenominator bounds the amount the base fee can change between blocks.
 func (c *ChainConfig) BaseFeeChangeDenominator() uint64 {
 	if c.IsStory() {
-		return DefaultBaseFeeChangeDenomStoryHomer
+		return DefaultBaseFeeChangeDenomStory
 	}
 
 	return DefaultBaseFeeChangeDenominator
@@ -1023,8 +1023,9 @@ func (c *ChainConfig) Is4844Enabled() bool {
 func (c *ChainConfig) IsStory() bool {
 	chainId := c.ChainID.Uint64()
 	return chainId == IDStoryMainnet ||
-		chainId == IDStoryIliad ||
+		chainId == IDStoryAeneid ||
 		chainId == IDStoryOdyssey ||
+		chainId == IDStoryIliad ||
 		chainId == IDStoryLocal
 }
 
