@@ -1936,7 +1936,6 @@ func SetEthConfig(ctx *cli.Context, stack *node.Node, cfg *ethconfig.Config) {
 		}
 		cfg.Genesis = core.DefaultAeneidGenesisBlock()
 		SetDNSDiscoveryDefaults(cfg, params.AeneidGenesisHash)
-		cfg.Miner.GasPrice = big.NewInt(params.GWei * 4)
 		cfg.Miner.GasCeil = 36_000_000
 		cfg.TxPool.NoLocals = true
 	case ctx.Bool(StoryFlag.Name):
@@ -1945,7 +1944,6 @@ func SetEthConfig(ctx *cli.Context, stack *node.Node, cfg *ethconfig.Config) {
 		}
 		cfg.Genesis = core.DefaultStoryGenesisBlock()
 		SetDNSDiscoveryDefaults(cfg, params.StoryGenesisHash)
-		cfg.Miner.GasPrice = big.NewInt(params.GWei * 4)
 		cfg.Miner.GasCeil = 36_000_000
 		cfg.TxPool.NoLocals = true
 	case ctx.Bool(LocalFlag.Name):
