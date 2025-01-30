@@ -104,7 +104,7 @@ var PrecompiledContractsBerlin = PrecompiledContracts{
 
 // PrecompiledContractsCancun contains the default set of pre-compiled Ethereum
 // contracts used in the Cancun release.
-var PrecompiledContractsCancun = map[common.Address]PrecompiledContract{
+var PrecompiledContractsCancun = PrecompiledContracts{
 	common.BytesToAddress([]byte{0x1}):        &ecrecover{},
 	common.BytesToAddress([]byte{0x2}):        &sha256hash{},
 	common.BytesToAddress([]byte{0x3}):        &ripemd160hash{},
