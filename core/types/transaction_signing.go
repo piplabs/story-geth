@@ -67,7 +67,7 @@ func LatestSigner(config *params.ChainConfig) Signer {
 	var signer Signer
 	if config.ChainID != nil {
 		switch {
-		case config.CancunTime != nil:
+		case config.CancunTime != nil && config.Is4844Enabled():
 			signer = NewCancunSigner(config.ChainID)
 		case config.LondonBlock != nil:
 			signer = NewLondonSigner(config.ChainID)
