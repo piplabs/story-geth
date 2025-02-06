@@ -62,6 +62,9 @@ func (c *ipGraph) RequiredGas(input []byte) uint64 {
 	case bytes.Equal(selector, addParentIpSelector):
 		args := input[4:]
 		parentCount := new(big.Int).SetBytes(getData(args, 64, 32))
+		if parentCount.Cmp(big.NewInt(1024)) > 0 {
+			return ^uint64(0) // Return max gas if parentCount > 1024
+		}
 		return intrinsicGas + (ipGraphWriteGas * parentCount.Uint64())
 	case bytes.Equal(selector, hasParentIpSelector):
 		return ipGraphReadGas * averageParentIpCount
