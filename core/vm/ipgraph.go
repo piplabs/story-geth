@@ -392,6 +392,16 @@ func (c *ipGraph) getAncestorIpsCount(input []byte, evm *EVM, ipGraphAddress com
 }
 
 func (c *ipGraph) hasAncestorIp(input []byte, evm *EVM, ipGraphAddress common.Address) ([]byte, error) {
+	allowed, err := c.isAllowed(evm)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if !allowed {
+		return nil, fmt.Errorf("caller not allowed to query hasAncestorIp")
+	}
+
 	if evm.currentPrecompileCallType == DELEGATECALL {
 		return nil, fmt.Errorf("hasAncestorIp cannot be called with DELEGATECALL")
 	}
