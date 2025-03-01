@@ -6,6 +6,16 @@ Golang execution layer implementation of the Story.
 
 Binary archives are published at https://github.com/piplabs/story-geth/releases.
 
+## Building `story-geth`
+Go version: 1.22.0
+
+```
+go build -v ./cmd/geth
+mv ./geth $HOME/go/bin/story-geth
+source $HOME/.bashrc
+story-geth version
+```
+
 ## Running `story-geth`
 
 ### Hardware Requirements
