@@ -11,7 +11,7 @@ Go version: 1.22.0
 
 ```
 go build -v ./cmd/geth
-sudo mv ./geth $HOME/go/bin/story-geth
+mv ./geth $HOME/go/bin/story-geth
 source $HOME/.bashrc
 story-geth version
 ```
