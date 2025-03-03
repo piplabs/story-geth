@@ -1,15 +1,16 @@
-## Story-Geth
+# Story-Geth
 
 Golang execution layer implementation of the Story.
 
 [![Discord](https://img.shields.io/badge/discord-join%20chat-blue.svg)](https://discord.gg/StoryProtocol )
 
-Binary archives are published at https://github.com/piplabs/story-geth/releases.
+Binary archives are published at [https://github.com/piplabs/story-geth/releases](https://github.com/piplabs/story-geth/releases).
 
 ## Building `story-geth`
+
 Go version: 1.22.0
 
-```
+```shell
 go build -v ./cmd/geth
 mv ./geth $HOME/go/bin/story-geth
 source $HOME/.bashrc
@@ -17,6 +18,12 @@ story-geth version
 ```
 
 ## Running `story-geth`
+
+You can run the mainnet with `--story` flag attached. Here's an example command:
+
+```shell
+story-geth --story --datadir="/story/geth/" --verbosity="3" --http --http.corsdomain="*" --http.vhosts="*" --http.addr=127.0.0.1 --http.port="8545" --http.api=web3,debug,eth,txpool --ws --ws.addr=127.0.0.1 --ws.port="8546" --ws.origins="*" --ws.api=debug,eth,txpool --syncmode=full --maxpeers=100
+```
 
 ### Hardware Requirements
 
@@ -34,7 +41,7 @@ Recommended:
 * High-performance SSD with at least 1TB of free space
 * 25+ MBit/sec download Internet service
 
-### A Full node on the Odyssey test network
+### A Full node on the Iliad test network
 
 Transitioning towards developers, if you'd like to play around with creating Story
 contracts, you almost certainly would like to do that without any real money involved until
@@ -43,27 +50,27 @@ network, you want to join the **test** network with your node, which is fully eq
 the main network, but with play-IP only.
 
 ```shell
-$ ./geth --odyssey --syncmode full
+story-geth --iliad --syncmode full
 ```
 
 The `console` subcommand has the same meaning as above and is equally
 useful on the testnet too.
 
-Specifying the `--odyssey` flag, however, will reconfigure your `story-geth` instance a bit:
+Specifying the `--iliad` flag, however, will reconfigure your `story-geth` instance a bit:
 
- * Instead of connecting to the main Story network, the client will connect to the Odyssey
+* Instead of connecting to the main Story network, the client will connect to the Iliad
    test network, which uses different P2P bootnodes, different network IDs and genesis
    states.
- * Instead of using the default data directory (`~/.story` on Linux for example), `story`
-   will nest itself one level deeper into a `story` subfolder (`~/.story/odyssey` on
+* Instead of using the default data directory (`~/.story` on Linux for example), `story`
+   will nest itself one level deeper into a `story` subfolder (`~/.story/iliad` on
    Linux). Note, on OSX and Linux this also means that attaching to a running testnet node
    requires the use of a custom endpoint since `geth attach` will try to attach to a
-   production node endpoint by default, e.g., `geth attach <datadir>/geth.ipc`. 
-   
-   This will connect you to the IPC server from which you can run some helpful queries:
-    * `eth.blockNumber` will print out the latest block story-geth is sync’d to - if this is `undefined` there is likely a peer connection or syncing issue
-    * `admin.peers` will print out a list of other `story-geth` nodes your client is connected to - if this is blank there is a peer connectivity issue
-    * `eth.syncing` will return `true` if story-geth is in the process of syncing, `false` otherwise
+   production node endpoint by default, e.g., `geth attach <datadir>/geth.ipc`.
+
+  This will connect you to the IPC server from which you can run some helpful queries:
+  * `eth.blockNumber` will print out the latest block story-geth is sync’d to - if this is `undefined` there is likely a peer connection or syncing issue
+  * `admin.peers` will print out a list of other `story-geth` nodes your client is connected to - if this is blank there is a peer connectivity issue
+  * `eth.syncing` will return `true` if story-geth is in the process of syncing, `false` otherwise
 
 *Note: Although some internal protective measures prevent transactions from
 crossing over between the main network and test network, you should always
@@ -105,4 +112,3 @@ To simplify local development and testing, developers can use the **Story-Localn
 
 Find more information and setup instructions here:
 [Story-Localnet GitHub Repository](https://github.com/piplabs/story-localnet).
-
