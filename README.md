@@ -105,4 +105,3 @@ To simplify local development and testing, developers can use the **Story-Localn
 
 Find more information and setup instructions here:
 [Story-Localnet GitHub Repository](https://github.com/piplabs/story-localnet).
-
