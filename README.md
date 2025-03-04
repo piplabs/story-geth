@@ -41,7 +41,7 @@ Recommended:
 * High-performance SSD with at least 1TB of free space
 * 25+ MBit/sec download Internet service
 
-### A Full node on the Iliad test network
+### A Full node on the Aeneid test network
 
 Transitioning towards developers, if you'd like to play around with creating Story
 contracts, you almost certainly would like to do that without any real money involved until
@@ -50,19 +50,19 @@ network, you want to join the **test** network with your node, which is fully eq
 the main network, but with play-IP only.
 
 ```shell
-story-geth --iliad --syncmode full
+story-geth --aeneid --syncmode full
 ```
 
 The `console` subcommand has the same meaning as above and is equally
 useful on the testnet too.
 
-Specifying the `--iliad` flag, however, will reconfigure your `story-geth` instance a bit:
+Specifying the `--aeneid` flag, however, will reconfigure your `story-geth` instance a bit:
 
-* Instead of connecting to the main Story network, the client will connect to the Iliad
+* Instead of connecting to the main Story network, the client will connect to the Aeneid
    test network, which uses different P2P bootnodes, different network IDs and genesis
    states.
 * Instead of using the default data directory (`~/.story` on Linux for example), `story`
-   will nest itself one level deeper into a `story` subfolder (`~/.story/iliad` on
+   will nest itself one level deeper into a `story` subfolder (`~/.story/aeneid` on
    Linux). Note, on OSX and Linux this also means that attaching to a running testnet node
    requires the use of a custom endpoint since `geth attach` will try to attach to a
    production node endpoint by default, e.g., `geth attach <datadir>/geth.ipc`.
