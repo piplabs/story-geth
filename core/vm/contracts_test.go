@@ -25,7 +25,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ethereum/go-ethereum/core/rawdb"
 	"github.com/ethereum/go-ethereum/core/state"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/params"
@@ -107,7 +106,7 @@ func testPrecompiled(addr string, test precompiledTest, t *testing.T) {
 	vmctx := BlockContext{
 		Transfer: func(StateDB, common.Address, common.Address, *uint256.Int) {},
 	}
-	statedb, _ := state.New(types.EmptyRootHash, state.NewDatabase(rawdb.NewMemoryDatabase()), nil)
+	statedb, _ := state.New(types.EmptyRootHash, state.NewDatabaseForTesting())
 	evm := NewEVM(vmctx, TxContext{}, statedb, params.AllEthashProtocolChanges, Config{})
 	t.Run(fmt.Sprintf("%s-Gas=%d", test.Name, gas), func(t *testing.T) {
 		if res, _, err := RunPrecompiledContract(evm, p, in, gas, nil); err != nil {
@@ -134,7 +133,7 @@ func testPrecompiledOOG(addr string, test precompiledTest, t *testing.T) {
 	vmctx := BlockContext{
 		Transfer: func(StateDB, common.Address, common.Address, *uint256.Int) {},
 	}
-	statedb, _ := state.New(types.EmptyRootHash, state.NewDatabase(rawdb.NewMemoryDatabase()), nil)
+	statedb, _ := state.New(types.EmptyRootHash, state.NewDatabaseForTesting())
 	evm := NewEVM(vmctx, TxContext{}, statedb, params.AllEthashProtocolChanges, Config{})
 
 	t.Run(fmt.Sprintf("%s-Gas=%d", test.Name, gas), func(t *testing.T) {
@@ -158,7 +157,7 @@ func testPrecompiledFailure(addr string, test precompiledFailureTest, t *testing
 	vmctx := BlockContext{
 		Transfer: func(StateDB, common.Address, common.Address, *uint256.Int) {},
 	}
-	statedb, _ := state.New(types.EmptyRootHash, state.NewDatabase(rawdb.NewMemoryDatabase()), nil)
+	statedb, _ := state.New(types.EmptyRootHash, state.NewDatabaseForTesting())
 	evm := NewEVM(vmctx, TxContext{}, statedb, params.AllEthashProtocolChanges, Config{})
 
 	t.Run(test.Name, func(t *testing.T) {
@@ -196,7 +195,7 @@ func benchmarkPrecompiled(addr string, test precompiledTest, bench *testing.B) {
 			vmctx := BlockContext{
 				Transfer: func(StateDB, common.Address, common.Address, *uint256.Int) {},
 			}
-			statedb, _ := state.New(types.EmptyRootHash, state.NewDatabase(rawdb.NewMemoryDatabase()), nil)
+			statedb, _ := state.New(types.EmptyRootHash, state.NewDatabaseForTesting())
 			evm := NewEVM(vmctx, TxContext{}, statedb, params.AllEthashProtocolChanges, Config{})
 			copy(data, in)
 			res, _, err = RunPrecompiledContract(evm, p, data, reqGas, nil)

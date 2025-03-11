@@ -308,9 +308,6 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 	// Initialize the guardian module
 	guardian.InitInstance(config.Guardian)
 
-	// Initialize the guardian module
-	guardian.InitInstance(config.Guardian)
-
 	// Initialize the whitelist module
 	err = guardian.InitWhiteList(config.WhiteList)
 	if err != nil {
