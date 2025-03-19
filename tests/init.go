@@ -401,6 +401,7 @@ var Forks = map[string]*params.ChainConfig{
 		CancunTime:              u64(0),
 		PragueTime:              u64(0),
 		Enable4844:              true,
+		DepositContractAddress:  params.MainnetChainConfig.DepositContractAddress,
 	},
 	"CancunToPragueAtTime15k": {
 		ChainID:                 big.NewInt(1),
@@ -422,6 +423,7 @@ var Forks = map[string]*params.ChainConfig{
 		CancunTime:              u64(0),
 		PragueTime:              u64(15_000),
 		Enable4844:              true,
+		DepositContractAddress:  params.MainnetChainConfig.DepositContractAddress,
 	},
 }
 
