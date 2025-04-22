@@ -93,10 +93,12 @@ var (
 		MergeNetsplitBlock:      nil,
 		ShanghaiTime:            newUint64(1696000704),
 		CancunTime:              newUint64(1707305664),
+		PragueTime:              newUint64(1740434112),
 		Ethash:                  new(EthashConfig),
 		Enable4844:              true,
 		BlobScheduleConfig: &BlobScheduleConfig{
 			Cancun: DefaultCancunBlobConfig,
+			Prague: DefaultPragueBlobConfig,
 		},
 	}
 	// SepoliaChainConfig contains the chain parameters to run a node on the Sepolia test network.
@@ -121,10 +123,12 @@ var (
 		MergeNetsplitBlock:      big.NewInt(1735371),
 		ShanghaiTime:            newUint64(1677557088),
 		CancunTime:              newUint64(1706655072),
+		PragueTime:              newUint64(1741159776),
 		Ethash:                  new(EthashConfig),
 		Enable4844:              true,
 		BlobScheduleConfig: &BlobScheduleConfig{
 			Cancun: DefaultCancunBlobConfig,
+			Prague: DefaultPragueBlobConfig,
 		},
 	}
 
@@ -851,13 +855,13 @@ func (c *ChainConfig) CheckConfigForkOrder() error {
 	} {
 		if cur.config != nil {
 			if err := cur.config.validate(); err != nil {
-				return fmt.Errorf("invalid blob configuration for fork %s: %v", cur.name, err)
+				return fmt.Errorf("invalid chain configuration in blobSchedule for fork %q: %v", cur.name, err)
 			}
 		}
 		if cur.timestamp != nil {
 			// If the fork is configured, a blob schedule must be defined for it.
 			if cur.config == nil {
-				return fmt.Errorf("unsupported fork configuration: missing blob configuration entry for %v in schedule", cur.name)
+				return fmt.Errorf("invalid chain configuration: missing entry for fork %q in blobSchedule", cur.name)
 			}
 		}
 	}
