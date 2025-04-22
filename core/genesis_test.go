@@ -127,6 +127,15 @@ func testSetupGenesis(t *testing.T, scheme string) {
 			wantConfig: params.LocalChainConfig,
 		},
 		{
+			name: "custom block in DB, genesis == hoodi",
+			fn: func(db ethdb.Database) (*params.ChainConfig, common.Hash, *params.ConfigCompatError, error) {
+				tdb := triedb.NewDatabase(db, newDbConfig(scheme))
+				customg.Commit(db, tdb)
+				return SetupGenesisBlock(db, tdb, DefaultHoodiGenesisBlock())
+			},
+			wantErr: &GenesisMismatchError{Stored: customghash, New: params.HoodiGenesisHash},
+		},
+		{
 			name: "compatible config in DB",
 			fn: func(db ethdb.Database) (*params.ChainConfig, common.Hash, *params.ConfigCompatError, error) {
 				tdb := triedb.NewDatabase(db, newDbConfig(scheme))
@@ -202,6 +211,8 @@ func TestGenesisHashes(t *testing.T) {
 		{DefaultSepoliaGenesisBlock(), params.SepoliaGenesisHash},
 		{DefaultIliadGenesisBlock(), params.IliadGenesisHash},
 		{DefaultLocalGenesisBlock(), params.LocalGenesisHash},
+		{DefaultHoleskyGenesisBlock(), params.HoleskyGenesisHash},
+		{DefaultHoodiGenesisBlock(), params.HoodiGenesisHash},
 	} {
 		// Test via MustCommit
 		db := rawdb.NewMemoryDatabase()
