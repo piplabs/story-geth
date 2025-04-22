@@ -278,6 +278,9 @@ func (o *ChainOverrides) apply(cfg *params.ChainConfig) error {
 	if o.OverrideVerkle != nil {
 		cfg.VerkleTime = o.OverrideVerkle
 	}
+	if o.Override4844 {
+		cfg.Enable4844 = o.Override4844
+	}
 	return cfg.CheckConfigForkOrder()
 }
 
