@@ -162,6 +162,7 @@ var (
 		utils.GuardianFilterFilePathFlag,
 		utils.WhiteListEnabledFlag,
 		utils.WhiteListFilePathFlag,
+		utils.BeaconCheckpointFileFlag,
 	}, utils.NetworkFlags, utils.DatabaseFlags)
 
 	rpcFlags = []cli.Flag{

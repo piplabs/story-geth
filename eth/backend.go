@@ -155,13 +155,18 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 	}
 
 	// Validate history pruning configuration.
-	var historyPruningCutoff uint64
+	var (
+		cutoffNumber uint64
+		cutoffHash   common.Hash
+	)
 	if config.HistoryMode == ethconfig.PostMergeHistory {
 		prunecfg, ok := ethconfig.HistoryPrunePoints[genesisHash]
 		if !ok {
 			return nil, fmt.Errorf("no history pruning point is defined for genesis %x", genesisHash)
 		}
-		historyPruningCutoff = prunecfg.BlockNumber
+		cutoffNumber = prunecfg.BlockNumber
+		cutoffHash = prunecfg.BlockHash
+		log.Info("Chain cutoff configured", "number", cutoffNumber, "hash", cutoffHash)
 	}
 
 	// Set networkID to chainID by default.
@@ -205,16 +210,17 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 			EnablePreimageRecording: config.EnablePreimageRecording,
 		}
 		cacheConfig = &core.CacheConfig{
-			TrieCleanLimit:       config.TrieCleanCache,
-			TrieCleanNoPrefetch:  config.NoPrefetch,
-			TrieDirtyLimit:       config.TrieDirtyCache,
-			TrieDirtyDisabled:    config.NoPruning,
-			TrieTimeLimit:        config.TrieTimeout,
-			SnapshotLimit:        config.SnapshotCache,
-			Preimages:            config.Preimages,
-			StateHistory:         config.StateHistory,
-			StateScheme:          scheme,
-			HistoryPruningCutoff: historyPruningCutoff,
+			TrieCleanLimit:             config.TrieCleanCache,
+			TrieCleanNoPrefetch:        config.NoPrefetch,
+			TrieDirtyLimit:             config.TrieDirtyCache,
+			TrieDirtyDisabled:          config.NoPruning,
+			TrieTimeLimit:              config.TrieTimeout,
+			SnapshotLimit:              config.SnapshotCache,
+			Preimages:                  config.Preimages,
+			StateHistory:               config.StateHistory,
+			StateScheme:                scheme,
+			HistoryPruningCutoffNumber: cutoffNumber,
+			HistoryPruningCutoffHash:   cutoffHash,
 		}
 	)
 	if config.VMTrace != "" {
@@ -250,17 +256,13 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 		HashScheme:     scheme == rawdb.HashScheme,
 	}
 	chainView := eth.newChainView(eth.blockchain.CurrentBlock())
-	historyCutoff := eth.blockchain.HistoryPruningCutoff()
+	historyCutoff, _ := eth.blockchain.HistoryPruningCutoff()
 	var finalBlock uint64
 	if fb := eth.blockchain.CurrentFinalBlock(); fb != nil {
 		finalBlock = fb.Number.Uint64()
 	}
 	eth.filterMaps = filtermaps.NewFilterMaps(chainDb, chainView, historyCutoff, finalBlock, filtermaps.DefaultParams, fmConfig)
 	eth.closeFilterMaps = make(chan chan struct{})
-
-	if config.BlobPool.Datadir != "" {
-		config.BlobPool.Datadir = stack.ResolvePath(config.BlobPool.Datadir)
-	}
 
 	if config.TxPool.Journal != "" {
 		config.TxPool.Journal = stack.ResolvePath(config.TxPool.Journal)
@@ -269,12 +271,13 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 
 	txPools := []txpool.SubPool{legacyPool}
 	if eth.BlockChain().Config().Is4844Enabled() {
-		blobPool := blobpool.New(config.BlobPool, eth.blockchain)
+		if config.BlobPool.Datadir != "" {
+			config.BlobPool.Datadir = stack.ResolvePath(config.BlobPool.Datadir)
+		}
+		blobPool := blobpool.New(config.BlobPool, eth.blockchain, legacyPool.HasPendingAuth)
 		txPools = append(txPools, blobPool)
 	}
-	priceLimit := uint64(config.TxPool.PriceLimit)
-	eth.txPool, err = txpool.New(priceLimit, eth.blockchain, txPools)
-
+	eth.txPool, err = txpool.New(config.TxPool.PriceLimit, eth.blockchain, txPools)
 	if err != nil {
 		return nil, err
 	}
@@ -462,7 +465,7 @@ func (s *Ethereum) updateFilterMapsHeads() {
 		if head == nil || newHead.Hash() != head.Hash() {
 			head = newHead
 			chainView := s.newChainView(head)
-			historyCutoff := s.blockchain.HistoryPruningCutoff()
+			historyCutoff, _ := s.blockchain.HistoryPruningCutoff()
 			var finalBlock uint64
 			if fb := s.blockchain.CurrentFinalBlock(); fb != nil {
 				finalBlock = fb.Number.Uint64()
