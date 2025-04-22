@@ -8,7 +8,7 @@ Binary archives are published at [https://github.com/piplabs/story-geth/releases
 
 ## Building `story-geth`
 
-Go version: 1.22.0
+Go version: 1.23.0
 
 ```shell
 go build -v ./cmd/geth
