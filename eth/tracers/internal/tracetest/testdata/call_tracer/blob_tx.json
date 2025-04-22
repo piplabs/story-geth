@@ -42,7 +42,14 @@
       "shanghaiTime": 0,
       "cancunTime": 0,
       "terminalTotalDifficulty": 0,
-      "enable4844": true
+      "enable4844": true,
+      "blobSchedule": {
+        "cancun": {
+          "target": 3,
+          "max": 6,
+          "baseFeeUpdateFraction": 3338477
+        }
+      }
     }
   },
   "context": {

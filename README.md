@@ -36,7 +36,7 @@ Minimum:
 
 Recommended:
 
-* Fast CPU with 4+ cores
+* Fast CPU with 8+ cores
 * 16GB+ RAM
 * High-performance SSD with at least 1TB of free space
 * 25+ MBit/sec download Internet service

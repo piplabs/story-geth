@@ -43,7 +43,7 @@ func FuzzPrecompiledContracts(f *testing.F) {
 			Transfer: func(StateDB, common.Address, common.Address, *uint256.Int) {},
 		}
 		statedb, _ := state.New(types.EmptyRootHash, state.NewDatabaseForTesting())
-		evm := NewEVM(vmctx, TxContext{}, statedb, params.AllEthashProtocolChanges, Config{})
+		evm := NewEVM(vmctx, statedb, params.AllEthashProtocolChanges, Config{})
 		inWant := string(input)
 		RunPrecompiledContract(evm, p, input, gas, nil)
 		if inHave := string(input); inWant != inHave {
