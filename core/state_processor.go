@@ -30,6 +30,13 @@ import (
 	"github.com/ethereum/go-ethereum/params"
 )
 
+const (
+	// omit system calls that are not required for story-geth
+	omitEIP6110 = true // EIP-6110 is the deposit contract system call
+	omitEIP7002 = true // EIP-7002 is the withdrawal queue system call
+	omitEIP7251 = true // EIP-7251 is the consolidation queue system call
+)
+
 // StateProcessor is a basic Processor, which takes care of transitioning
 // state from one point to another.
 //
@@ -270,12 +277,18 @@ func ProcessParentBlockHash(prevHash common.Hash, evm *vm.EVM) {
 // ProcessWithdrawalQueue calls the EIP-7002 withdrawal queue contract.
 // It returns the opaque request data returned by the contract.
 func ProcessWithdrawalQueue(requests *[][]byte, evm *vm.EVM) error {
+	if omitEIP7002 {
+		return nil
+	}
 	return processRequestsSystemCall(requests, evm, 0x01, params.WithdrawalQueueAddress)
 }
 
 // ProcessConsolidationQueue calls the EIP-7251 consolidation queue contract.
 // It returns the opaque request data returned by the contract.
 func ProcessConsolidationQueue(requests *[][]byte, evm *vm.EVM) error {
+	if omitEIP7251 {
+		return nil
+	}
 	return processRequestsSystemCall(requests, evm, 0x02, params.ConsolidationQueueAddress)
 }
 
@@ -317,6 +330,9 @@ var depositTopic = common.HexToHash("0x649bbc62d0e31342afea4e5cd82d4049e7e1ee912
 // ParseDepositLogs extracts the EIP-6110 deposit values from logs emitted by
 // BeaconDepositContract.
 func ParseDepositLogs(requests *[][]byte, logs []*types.Log, config *params.ChainConfig) error {
+	if omitEIP6110 {
+		return nil
+	}
 	deposits := make([]byte, 1) // note: first byte is 0x00 (== deposit request type)
 	for _, log := range logs {
 		if log.Address == config.DepositContractAddress && len(log.Topics) > 0 && log.Topics[0] == depositTopic {
