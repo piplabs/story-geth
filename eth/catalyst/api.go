@@ -602,7 +602,7 @@ func (api *ConsensusAPI) NewPayloadV3(params engine.ExecutableData, versionedHas
 	if api.eth.BlockChain().Config().LatestFork(params.Timestamp) != forks.Cancun && api.eth.BlockChain().Config().LatestFork(params.Timestamp) != forks.Prague {
 		return engine.PayloadStatusV1{Status: engine.INVALID}, engine.UnsupportedFork.With(errors.New("newPayloadV3 must only be called for cancun payloads"))
 	}
-	if api.eth.BlockChain().Config().LatestFork(params.Timestamp) != forks.Prague {
+	if api.eth.BlockChain().Config().LatestFork(params.Timestamp) == forks.Prague {
 		return api.newPayload(params, versionedHashes, beaconRoot, [][]byte{}, false)
 	}
 	return api.newPayload(params, versionedHashes, beaconRoot, nil, false)
