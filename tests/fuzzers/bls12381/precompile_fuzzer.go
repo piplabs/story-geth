@@ -73,7 +73,7 @@ func fuzz(id byte, data []byte) int {
 		Transfer: func(vm.StateDB, common.Address, common.Address, *uint256.Int) {},
 	}
 	statedb, _ := state.New(types.EmptyRootHash, state.NewDatabaseForTesting())
-	evm := vm.NewEVM(vmctx, vm.TxContext{}, statedb, params.AllEthashProtocolChanges, vm.Config{})
+	evm := vm.NewEVM(vmctx, statedb, params.AllEthashProtocolChanges, vm.Config{})
 	// Even on bad input, it should not crash, so we still test the gas calc
 	precompile := vm.PrecompiledContractsBLS[common.BytesToAddress([]byte{id})]
 	gas := precompile.RequiredGas(data)

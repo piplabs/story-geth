@@ -359,10 +359,10 @@ var Forks = map[string]*params.ChainConfig{
 		TerminalTotalDifficulty: big.NewInt(0),
 		ShanghaiTime:            u64(0),
 		CancunTime:              u64(0),
+		Enable4844:              true,
 		BlobScheduleConfig: &params.BlobScheduleConfig{
 			Cancun: params.DefaultCancunBlobConfig,
 		},
-		Enable4844: true,
 	},
 	"ShanghaiToCancunAtTime15k": {
 		ChainID:                 big.NewInt(1),
@@ -382,10 +382,10 @@ var Forks = map[string]*params.ChainConfig{
 		TerminalTotalDifficulty: big.NewInt(0),
 		ShanghaiTime:            u64(0),
 		CancunTime:              u64(15_000),
+		Enable4844:              true,
 		BlobScheduleConfig: &params.BlobScheduleConfig{
 			Cancun: params.DefaultCancunBlobConfig,
 		},
-		Enable4844: true,
 	},
 	"Prague": {
 		ChainID:                 big.NewInt(1),
@@ -407,11 +407,11 @@ var Forks = map[string]*params.ChainConfig{
 		CancunTime:              u64(0),
 		PragueTime:              u64(0),
 		DepositContractAddress:  params.MainnetChainConfig.DepositContractAddress,
+		Enable4844:              true,
 		BlobScheduleConfig: &params.BlobScheduleConfig{
 			Cancun: params.DefaultCancunBlobConfig,
 			Prague: params.DefaultPragueBlobConfig,
 		},
-		Enable4844: true,
 	},
 	"CancunToPragueAtTime15k": {
 		ChainID:                 big.NewInt(1),
@@ -433,6 +433,7 @@ var Forks = map[string]*params.ChainConfig{
 		CancunTime:              u64(0),
 		PragueTime:              u64(15_000),
 		DepositContractAddress:  params.MainnetChainConfig.DepositContractAddress,
+		Enable4844:              true,
 		BlobScheduleConfig: &params.BlobScheduleConfig{
 			Cancun: params.DefaultCancunBlobConfig,
 			Prague: params.DefaultPragueBlobConfig,
@@ -491,7 +492,6 @@ var Forks = map[string]*params.ChainConfig{
 			Prague: params.DefaultPragueBlobConfig,
 			Osaka:  params.DefaultOsakaBlobConfig,
 		},
-		Enable4844: true,
 	},
 }
 

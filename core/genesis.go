@@ -221,10 +221,10 @@ func getGenesisState(db ethdb.Database, blockhash common.Hash) (alloc types.Gene
 		genesis = DefaultSepoliaGenesisBlock()
 	case params.HoleskyGenesisHash:
 		genesis = DefaultHoleskyGenesisBlock()
-	case params.HoodiGenesisHash:
-		genesis = DefaultHoodiGenesisBlock()
 	case params.IliadGenesisHash:
 		genesis = DefaultIliadGenesisBlock()
+	case params.HoodiGenesisHash:
+		genesis = DefaultHoodiGenesisBlock()
 	}
 	if genesis != nil {
 		return genesis.Alloc, nil
@@ -277,6 +277,9 @@ func (o *ChainOverrides) apply(cfg *params.ChainConfig) error {
 	}
 	if o.OverrideVerkle != nil {
 		cfg.VerkleTime = o.OverrideVerkle
+	}
+	if o.Override4844 {
+		cfg.Enable4844 = o.Override4844
 	}
 	return cfg.CheckConfigForkOrder()
 }
@@ -438,12 +441,12 @@ func (g *Genesis) chainConfigOrDefault(ghash common.Hash, stored *params.ChainCo
 		return params.HoleskyChainConfig
 	case ghash == params.SepoliaGenesisHash:
 		return params.SepoliaChainConfig
-	case ghash == params.HoodiGenesisHash:
-		return params.HoodiChainConfig
 	case ghash == params.IliadGenesisHash:
 		return params.IliadChainConfig
 	case ghash == params.LocalGenesisHash:
 		return params.LocalChainConfig
+	case ghash == params.HoodiGenesisHash:
+		return params.HoodiChainConfig
 	default:
 		return stored
 	}
@@ -638,18 +641,6 @@ func DefaultHoleskyGenesisBlock() *Genesis {
 	}
 }
 
-// DefaultHoodiGenesisBlock returns the Hoodi network genesis block.
-func DefaultHoodiGenesisBlock() *Genesis {
-	return &Genesis{
-		Config:     params.HoodiChainConfig,
-		Nonce:      0x1234,
-		GasLimit:   0x2255100,
-		Difficulty: big.NewInt(0x01),
-		Timestamp:  1742212800,
-		Alloc:      decodePrealloc(hoodiAllocData),
-	}
-}
-
 // DefaultIliadGenesisBlock returns the iliad network genesis block.
 func DefaultIliadGenesisBlock() *Genesis {
 	return &Genesis{
@@ -709,6 +700,18 @@ func DefaultLocalGenesisBlock() *Genesis {
 		Nonce:      0x42,
 		Timestamp:  0,
 		Alloc:      decodePrealloc(localAllocData),
+	}
+}
+
+// DefaultHoodiGenesisBlock returns the Hoodi network genesis block.
+func DefaultHoodiGenesisBlock() *Genesis {
+	return &Genesis{
+		Config:     params.HoodiChainConfig,
+		Nonce:      0x1234,
+		GasLimit:   0x2255100,
+		Difficulty: big.NewInt(0x01),
+		Timestamp:  1742212800,
+		Alloc:      decodePrealloc(hoodiAllocData),
 	}
 }
 

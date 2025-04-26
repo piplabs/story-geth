@@ -64,13 +64,13 @@ var (
 	// remains pending (and vice-versa).
 	ErrAlreadyReserved = errors.New("address already reserved")
 
-	// ErrInflightTxLimitReached is returned when the maximum number of in-flight
-	// transactions is reached for specific accounts.
-	ErrInflightTxLimitReached = errors.New("in-flight transaction limit reached for delegated accounts")
-
 	// ErrFilteredByGuardian is returned if the transaction is filtered by the guardian
 	ErrFilteredByGuardian = errors.New("filtered by guardian")
 
 	// ErrNotInWhitelist is returned if the transaction sender is not in the whitelist
 	ErrNotInWhitelist = errors.New("not in whitelist")
+
+	// ErrInflightTxLimitReached is returned when the maximum number of in-flight
+	// transactions is reached for specific accounts.
+	ErrInflightTxLimitReached = errors.New("in-flight transaction limit reached for delegated accounts")
 )

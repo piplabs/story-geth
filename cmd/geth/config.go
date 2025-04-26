@@ -192,13 +192,12 @@ func makeFullNode(ctx *cli.Context) *node.Node {
 		cfg.Eth.OverrideVerkle = &v
 	}
 
-	// Start metrics export if enabled
-	utils.SetupMetrics(&cfg.Metrics)
-
 	if ctx.IsSet(utils.Override4844Flag.Name) {
 		override4844 := ctx.Bool(utils.Override4844Flag.Name)
 		cfg.Eth.Enable4844 = override4844
 	}
+	// Start metrics export if enabled
+	utils.SetupMetrics(&cfg.Metrics)
 
 	backend, eth := utils.RegisterEthService(stack, &cfg.Eth)
 

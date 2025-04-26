@@ -1025,11 +1025,11 @@ var (
 	TestnetFlags = []cli.Flag{
 		SepoliaFlag,
 		HoleskyFlag,
-		HoodiFlag,
 		IliadFlag,
 		OdysseyFlag,
 		AeneidFlag,
 		LocalFlag,
+		HoodiFlag,
 	}
 	// NetworkFlags is the flag group of all built-in supported networks.
 	NetworkFlags = append([]cli.Flag{MainnetFlag, StoryFlag}, TestnetFlags...)
@@ -1056,9 +1056,6 @@ func MakeDataDir(ctx *cli.Context) string {
 		if ctx.Bool(HoleskyFlag.Name) {
 			return filepath.Join(path, "holesky")
 		}
-		if ctx.Bool(HoodiFlag.Name) {
-			return filepath.Join(path, "hoodi")
-		}
 		if ctx.Bool(IliadFlag.Name) {
 			return filepath.Join(path, "iliad")
 		}
@@ -1073,6 +1070,9 @@ func MakeDataDir(ctx *cli.Context) string {
 		}
 		if ctx.Bool(LocalFlag.Name) {
 			return filepath.Join(path, "local")
+		}
+		if ctx.Bool(HoodiFlag.Name) {
+			return filepath.Join(path, "hoodi")
 		}
 		return path
 	}
@@ -1134,8 +1134,6 @@ func setBootstrapNodes(ctx *cli.Context, cfg *p2p.Config) {
 			urls = params.HoleskyBootnodes
 		case ctx.Bool(SepoliaFlag.Name):
 			urls = params.SepoliaBootnodes
-		case ctx.Bool(HoodiFlag.Name):
-			urls = params.HoodiBootnodes
 		case ctx.Bool(IliadFlag.Name):
 			urls = params.IliadBootnodes
 		case ctx.Bool(OdysseyFlag.Name):
@@ -1146,6 +1144,8 @@ func setBootstrapNodes(ctx *cli.Context, cfg *p2p.Config) {
 			urls = params.StoryBootnodes
 		case ctx.Bool(LocalFlag.Name):
 			urls = params.LocalBootnodes
+		case ctx.Bool(HoodiFlag.Name):
+			urls = params.HoodiBootnodes
 		}
 	}
 	cfg.BootstrapNodes = mustParseBootnodes(urls)
@@ -1530,8 +1530,6 @@ func SetDataDir(ctx *cli.Context, cfg *node.Config) {
 		cfg.DataDir = filepath.Join(node.DefaultDataDir(), "sepolia")
 	case ctx.Bool(HoleskyFlag.Name) && cfg.DataDir == node.DefaultDataDir():
 		cfg.DataDir = filepath.Join(node.DefaultDataDir(), "holesky")
-	case ctx.Bool(HoodiFlag.Name) && cfg.DataDir == node.DefaultDataDir():
-		cfg.DataDir = filepath.Join(node.DefaultDataDir(), "hoodi")
 	case ctx.Bool(IliadFlag.Name) && cfg.DataDir == node.DefaultDataDir():
 		cfg.DataDir = filepath.Join(node.DefaultDataDir(), "iliad")
 	case ctx.Bool(OdysseyFlag.Name) && cfg.DataDir == node.DefaultDataDir():
@@ -1542,6 +1540,8 @@ func SetDataDir(ctx *cli.Context, cfg *node.Config) {
 		cfg.DataDir = filepath.Join(node.DefaultDataDir(), "story")
 	case ctx.Bool(LocalFlag.Name) && cfg.DataDir == node.DefaultDataDir():
 		cfg.DataDir = filepath.Join(node.DefaultDataDir(), "local")
+	case ctx.Bool(HoodiFlag.Name) && cfg.DataDir == node.DefaultDataDir():
+		cfg.DataDir = filepath.Join(node.DefaultDataDir(), "hoodi")
 	}
 }
 
@@ -1668,7 +1668,7 @@ func setRequiredBlocks(ctx *cli.Context, cfg *ethconfig.Config) {
 // SetEthConfig applies eth-related command line flags to the config.
 func SetEthConfig(ctx *cli.Context, stack *node.Node, cfg *ethconfig.Config) {
 	// Avoid conflicting network flags
-	flags.CheckExclusive(ctx, MainnetFlag, DeveloperFlag, SepoliaFlag, HoleskyFlag, HoodiFlag, IliadFlag, OdysseyFlag,AeneidFlag, StoryFlag, LocalFlag)
+	flags.CheckExclusive(ctx, MainnetFlag, DeveloperFlag, SepoliaFlag, HoleskyFlag, IliadFlag, OdysseyFlag, AeneidFlag, StoryFlag, LocalFlag, HoodiFlag)
 	flags.CheckExclusive(ctx, DeveloperFlag, ExternalSignerFlag) // Can't use both ephemeral unlocked and external signer
 
 	// Set configurations from CLI flags
@@ -1858,12 +1858,6 @@ func SetEthConfig(ctx *cli.Context, stack *node.Node, cfg *ethconfig.Config) {
 		}
 		cfg.Genesis = core.DefaultSepoliaGenesisBlock()
 		SetDNSDiscoveryDefaults(cfg, params.SepoliaGenesisHash)
-	case ctx.Bool(HoodiFlag.Name):
-		if !ctx.IsSet(NetworkIdFlag.Name) {
-			cfg.NetworkId = 560048
-		}
-		cfg.Genesis = core.DefaultHoodiGenesisBlock()
-		SetDNSDiscoveryDefaults(cfg, params.HoodiGenesisHash)
 	case ctx.Bool(IliadFlag.Name):
 		if !ctx.IsSet(NetworkIdFlag.Name) {
 			cfg.NetworkId = 1
@@ -1898,6 +1892,12 @@ func SetEthConfig(ctx *cli.Context, stack *node.Node, cfg *ethconfig.Config) {
 			cfg.NetworkId = 1511
 		}
 		cfg.Genesis = core.DefaultLocalGenesisBlock()
+	case ctx.Bool(HoodiFlag.Name):
+		if !ctx.IsSet(NetworkIdFlag.Name) {
+			cfg.NetworkId = 560048
+		}
+		cfg.Genesis = core.DefaultHoodiGenesisBlock()
+		SetDNSDiscoveryDefaults(cfg, params.HoodiGenesisHash)
 	case ctx.Bool(DeveloperFlag.Name):
 		if !ctx.IsSet(NetworkIdFlag.Name) {
 			cfg.NetworkId = 1337
@@ -1999,6 +1999,25 @@ func SetEthConfig(ctx *cli.Context, stack *node.Node, cfg *ethconfig.Config) {
 	}
 }
 
+// setGuardian applies guardian-related command line flags to the config.
+func setGuardian(ctx *cli.Context, c *guardian.Config) {
+	if ctx.IsSet(GuardianEnabledFlag.Name) {
+		c.Enabled = ctx.Bool(GuardianEnabledFlag.Name)
+	}
+	if ctx.IsSet(GuardianFilterFilePathFlag.Name) {
+		c.FilterFilePath = ctx.String(GuardianFilterFilePathFlag.Name)
+	}
+}
+
+func setWhiteList(ctx *cli.Context, c *guardian.WhiteListConfig) {
+	if ctx.IsSet(WhiteListFilePathFlag.Name) {
+		c.FilePath = ctx.String(WhiteListFilePathFlag.Name)
+	}
+	if ctx.IsSet(WhiteListEnabledFlag.Name) {
+		c.Enabled = ctx.Bool(WhiteListEnabledFlag.Name)
+	}
+}
+
 // MakeBeaconLightConfig constructs a beacon light client config based on the
 // related command line flags.
 func MakeBeaconLightConfig(ctx *cli.Context) bparams.ClientConfig {
@@ -2073,98 +2092,6 @@ func MakeBeaconLightConfig(ctx *cli.Context) bparams.ClientConfig {
 	}
 	if config.Checkpoint == (common.Hash{}) {
 		Fatalf("Beacon checkpoint not specified")
-	}
-	config.Apis = ctx.StringSlice(BeaconApiFlag.Name)
-	if config.Apis == nil {
-		Fatalf("Beacon node light client API URL not specified")
-	}
-	config.CustomHeader = make(map[string]string)
-	for _, s := range ctx.StringSlice(BeaconApiHeaderFlag.Name) {
-		kv := strings.Split(s, ":")
-		if len(kv) != 2 {
-			Fatalf("Invalid custom API header entry: %s", s)
-		}
-		config.CustomHeader[strings.TrimSpace(kv[0])] = strings.TrimSpace(kv[1])
-	}
-	config.Threshold = ctx.Int(BeaconThresholdFlag.Name)
-	config.NoFilter = ctx.Bool(BeaconNoFilterFlag.Name)
-	return config
-// setGuardian applies guardian-related command line flags to the config.
-func setGuardian(ctx *cli.Context, c *guardian.Config) {
-	if ctx.IsSet(GuardianEnabledFlag.Name) {
-		c.Enabled = ctx.Bool(GuardianEnabledFlag.Name)
-	}
-	if ctx.IsSet(GuardianFilterFilePathFlag.Name) {
-		c.FilterFilePath = ctx.String(GuardianFilterFilePathFlag.Name)
-	}
-}
-
-func setWhiteList(ctx *cli.Context, c *guardian.WhiteListConfig) {
-	if ctx.IsSet(WhiteListFilePathFlag.Name) {
-		c.FilePath = ctx.String(WhiteListFilePathFlag.Name)
-	}
-	if ctx.IsSet(WhiteListEnabledFlag.Name) {
-		c.Enabled = ctx.Bool(WhiteListEnabledFlag.Name)
-	}
-}
-
-// MakeBeaconLightConfig constructs a beacon light client config based on the
-// related command line flags.
-func MakeBeaconLightConfig(ctx *cli.Context) bparams.ClientConfig {
-	var config bparams.ClientConfig
-	customConfig := ctx.IsSet(BeaconConfigFlag.Name)
-	CheckExclusive(ctx, MainnetFlag, SepoliaFlag, HoleskyFlag, BeaconConfigFlag)
-	switch {
-	case ctx.Bool(MainnetFlag.Name):
-		config.ChainConfig = *bparams.MainnetLightConfig
-	case ctx.Bool(SepoliaFlag.Name):
-		config.ChainConfig = *bparams.SepoliaLightConfig
-	case ctx.Bool(HoleskyFlag.Name):
-		config.ChainConfig = *bparams.HoleskyLightConfig
-	default:
-		if !customConfig {
-			config.ChainConfig = *bparams.MainnetLightConfig
-		}
-	}
-	// Genesis root and time should always be specified together with custom chain config
-	if customConfig {
-		if !ctx.IsSet(BeaconGenesisRootFlag.Name) {
-			Fatalf("Custom beacon chain config is specified but genesis root is missing")
-		}
-		if !ctx.IsSet(BeaconGenesisTimeFlag.Name) {
-			Fatalf("Custom beacon chain config is specified but genesis time is missing")
-		}
-		if !ctx.IsSet(BeaconCheckpointFlag.Name) {
-			Fatalf("Custom beacon chain config is specified but checkpoint is missing")
-		}
-		config.ChainConfig = bparams.ChainConfig{
-			GenesisTime: ctx.Uint64(BeaconGenesisTimeFlag.Name),
-		}
-		if c, err := hexutil.Decode(ctx.String(BeaconGenesisRootFlag.Name)); err == nil && len(c) <= 32 {
-			copy(config.GenesisValidatorsRoot[:len(c)], c)
-		} else {
-			Fatalf("Invalid hex string", "beacon.genesis.gvroot", ctx.String(BeaconGenesisRootFlag.Name), "error", err)
-		}
-		configFile := ctx.String(BeaconConfigFlag.Name)
-		if err := config.ChainConfig.LoadForks(configFile); err != nil {
-			Fatalf("Could not load beacon chain config", "file", configFile, "error", err)
-		}
-		log.Info("Using custom beacon chain config", "file", configFile)
-	} else {
-		if ctx.IsSet(BeaconGenesisRootFlag.Name) {
-			Fatalf("Genesis root is specified but custom beacon chain config is missing")
-		}
-		if ctx.IsSet(BeaconGenesisTimeFlag.Name) {
-			Fatalf("Genesis time is specified but custom beacon chain config is missing")
-		}
-	}
-	// Checkpoint is required with custom chain config and is optional with pre-defined config
-	if ctx.IsSet(BeaconCheckpointFlag.Name) {
-		if c, err := hexutil.Decode(ctx.String(BeaconCheckpointFlag.Name)); err == nil && len(c) <= 32 {
-			copy(config.Checkpoint[:len(c)], c)
-		} else {
-			Fatalf("Invalid hex string", "beacon.checkpoint", ctx.String(BeaconCheckpointFlag.Name), "error", err)
-		}
 	}
 	config.Apis = ctx.StringSlice(BeaconApiFlag.Name)
 	if config.Apis == nil {
@@ -2387,8 +2314,6 @@ func MakeGenesis(ctx *cli.Context) *core.Genesis {
 		genesis = core.DefaultHoleskyGenesisBlock()
 	case ctx.Bool(SepoliaFlag.Name):
 		genesis = core.DefaultSepoliaGenesisBlock()
-	case ctx.Bool(HoodiFlag.Name):
-		genesis = core.DefaultHoodiGenesisBlock()
 	case ctx.Bool(IliadFlag.Name):
 		genesis = core.DefaultIliadGenesisBlock()
 	case ctx.Bool(OdysseyFlag.Name):
@@ -2399,6 +2324,8 @@ func MakeGenesis(ctx *cli.Context) *core.Genesis {
 		genesis = core.DefaultStoryGenesisBlock()
 	case ctx.Bool(LocalFlag.Name):
 		genesis = core.DefaultLocalGenesisBlock()
+	case ctx.Bool(HoodiFlag.Name):
+		genesis = core.DefaultHoodiGenesisBlock()
 	case ctx.Bool(DeveloperFlag.Name):
 		Fatalf("Developer chains are ephemeral")
 	}
