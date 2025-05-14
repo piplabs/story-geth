@@ -226,6 +226,7 @@ var (
 		TerminalTotalDifficulty: big.NewInt(0),
 		ShanghaiTime:            newUint64(0),
 		CancunTime:              newUint64(0),
+		PragueTime:              newUint64(1748305808),
 		Enable4844:              false,
 		BlobScheduleConfig: &BlobScheduleConfig{
 			Cancun: DefaultCancunBlobConfig,
