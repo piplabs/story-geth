@@ -4046,7 +4046,8 @@ func TestPragueRequests(t *testing.T) {
 	if rh == nil {
 		t.Fatal("block has nil requests hash")
 	}
-	expectedRequestsHash := common.HexToHash("0x06ffb72b9f0823510b128bca6cd4f96f59b745de6791e9fc350b596e7605101e")
+	// Due to omit of EIP-7002, EIP-7251 and EIP-6110, the hash differs from the origin one.
+	expectedRequestsHash := common.HexToHash("0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")
 	if *rh != expectedRequestsHash {
 		t.Fatalf("block has wrong requestsHash %v, want %v", *rh, expectedRequestsHash)
 	}
