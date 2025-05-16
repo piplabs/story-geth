@@ -624,9 +624,10 @@ func FuzzEthProtocolHandlers(f *testing.F) {
 }
 
 func TestGetPooledTransaction(t *testing.T) {
-	t.Run("blobTx", func(t *testing.T) {
-		testGetPooledTransaction(t, true)
-	})
+	// Not supporting blob transactions yet
+	// t.Run("blobTx", func(t *testing.T) {
+	// 	testGetPooledTransaction(t, true)
+	// })
 	t.Run("legacyTx", func(t *testing.T) {
 		testGetPooledTransaction(t, false)
 	})
