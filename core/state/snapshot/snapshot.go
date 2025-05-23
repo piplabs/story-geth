@@ -487,7 +487,9 @@ func (t *Tree) cap(diff *diffLayer, layers int) *diskLayer {
 			t.onFlatten()
 		}
 		diff.parent = flattened
-		if flattened.memory < aggregatorMemoryLimit {
+
+		customizeMemLimit := uint64(1 * 1024) // 1KB
+		if flattened.memory < customizeMemLimit {
 			// Accumulator layer is smaller than the limit, so we can abort, unless
 			// there's a snapshot being generated currently. In that case, the trie
 			// will move from underneath the generator so we **must** merge all the
@@ -620,6 +622,7 @@ func diffToDisk(bottom *diffLayer) *diskLayer {
 	}
 	// Update the snapshot block marker and write any remainder data
 	rawdb.WriteSnapshotRoot(batch, bottom.root)
+	log.Info("Write snapshot root", "root", bottom.root)
 
 	// Write out the generator progress marker and report
 	journalProgress(batch, base.genMarker, stats)
