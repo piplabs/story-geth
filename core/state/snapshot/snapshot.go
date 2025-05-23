@@ -488,7 +488,7 @@ func (t *Tree) cap(diff *diffLayer, layers int) *diskLayer {
 		}
 		diff.parent = flattened
 
-		customizeMemLimit := uint64(1 * 1024) // 1KB
+		customizeMemLimit := uint64(128 * 1024) // 128KB
 		if flattened.memory < customizeMemLimit {
 			// Accumulator layer is smaller than the limit, so we can abort, unless
 			// there's a snapshot being generated currently. In that case, the trie
