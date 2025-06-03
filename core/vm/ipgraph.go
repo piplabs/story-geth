@@ -616,7 +616,6 @@ func (c *ipGraph) getRoyaltyLrp(ipId, ancestorIpId common.Address, evm *EVM, ipG
 
 func (c *ipGraph) topologicalSort(ipId, ancestorIpId common.Address, evm *EVM, ipGraphAddress common.Address) (
 	[]common.Address, map[common.Address][]common.Address, error) {
-
 	allParents := make(map[common.Address][]common.Address)
 	visited := make(map[common.Address]bool)
 	inTopoOrder := make(map[common.Address]bool)
