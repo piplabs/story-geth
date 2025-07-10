@@ -1,5 +1,31 @@
-**/*_test.go
+# Git files
+.git
+.github
+.gitignore
 
+# Documentation
+*.md
+docs/
+LICENSE
+
+# Development files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Test files
+**/*_test.go
+testdata/
+tests/testdata
+
+# Build artifacts
 build/_workspace
 build/_bin
-tests/testdata
+build/bin/
+build/cache/
+
+# Temporary files
+*.tmp
+*.log
