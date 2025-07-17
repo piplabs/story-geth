@@ -301,7 +301,7 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 		txPools = append(txPools, blobPool)
 	}
 
-	eth.txPool, err = txpool.New(config.TxPool.PriceLimit, eth.blockchain, []txpool.SubPool{legacyPool, eth.blobTxPool})
+	eth.txPool, err = txpool.New(config.TxPool.PriceLimit, eth.blockchain, []txpool.SubPool{legacyPool})
 	if err != nil {
 		return nil, err
 	}
