@@ -1544,6 +1544,15 @@ func (api *TransactionAPI) SendRawTransaction(ctx context.Context, input hexutil
 	return SubmitTransaction(ctx, api.b, tx)
 }
 
+// SendRawTransactionSync will add the signed transaction to the transaction pool.
+// The sender is responsible for signing the transaction and using the correct nonce.
+//
+// This method is synchronous and will block until the transaction
+// receipt is available or a standard/timeout error occurs.
+func (api *TransactionAPI) SendRawTransactionSync(ctx context.Context, input hexutil.Bytes, timeout hexutil.Uint) (map[string]interface{}, error) {
+	return map[string]interface{}{}, errors.New("SendRawTransactionSync is not supported in this API")
+}
+
 // Sign calculates an ECDSA signature for:
 // keccak256("\x19Ethereum Signed Message:\n" + len(message) + message).
 //

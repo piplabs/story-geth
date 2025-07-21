@@ -690,6 +690,16 @@ func (ec *Client) SendTransaction(ctx context.Context, tx *types.Transaction) er
 	return ec.c.CallContext(ctx, nil, "eth_sendRawTransaction", hexutil.Encode(data))
 }
 
+// SendTransactionSync injects a signed transaction into the pending pool for execution,
+// then waits for the transaction receipt to become available or until a timeout occurs.
+func (ec *Client) SendTransactionSync(ctx context.Context, tx *types.Transaction) error {
+	data, err := tx.MarshalBinary()
+	if err != nil {
+		return err
+	}
+	return ec.c.CallContext(ctx, nil, "eth_sendRawTransactionSync", hexutil.Encode(data))
+}
+
 // RevertErrorData returns the 'revert reason' data of a contract call.
 //
 // This can be used with CallContract and EstimateGas, and only when the server is Geth.
