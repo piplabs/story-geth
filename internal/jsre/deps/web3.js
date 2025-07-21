@@ -5465,6 +5465,14 @@ var methods = function () {
         params: 0
     });
 
+    var sendRawTransactionSync = new Method({
+        name: 'sendRawTransactionSync',
+        call: 'eth_sendRawTransactionSync',
+        params: 2,
+        inputFormatter: [null, utils.fromDecimal],
+        outputFormatter: formatters.outputTransactionReceiptFormatter
+    });
+
     return [
         getBalance,
         getStorageAt,
@@ -5488,7 +5496,8 @@ var methods = function () {
         compileLLL,
         compileSerpent,
         submitWork,
-        getWork
+        getWork,
+        sendRawTransactionSync
     ];
 };
 
