@@ -113,6 +113,7 @@ func newSupplyTracer(cfg json.RawMessage) (*tracing.Hooks, error) {
 		delta:  newSupplyInfo(),
 		logger: logger,
 	}
+	log.Info("Supply tracer initialized", "path", logger.Filename, "maxSize", config.MaxSize)
 	return &tracing.Hooks{
 		OnBlockchainInit: t.onBlockchainInit,
 		OnBlockStart:     t.onBlockStart,
@@ -150,10 +151,12 @@ func (s *supplyTracer) resetDelta() {
 }
 
 func (s *supplyTracer) onBlockchainInit(chainConfig *params.ChainConfig) {
+	log.Info("Supply tracer initialized for blockchain", "chainConfig", chainConfig)
 	s.chainConfig = chainConfig
 }
 
 func (s *supplyTracer) onBlockStart(ev tracing.BlockEvent) {
+	log.Info("Supply tracer onBlockStart", "blockNumber", ev.Block.NumberU64(), "blockHash", ev.Block.Hash())
 	s.resetDelta()
 
 	s.delta.Number = ev.Block.NumberU64()
@@ -176,6 +179,7 @@ func (s *supplyTracer) onBlockStart(ev tracing.BlockEvent) {
 }
 
 func (s *supplyTracer) onBlockEnd(err error) {
+	log.Info("Supply tracer onBlockEnd", "blockNumber", s.delta.Number, "blockHash", s.delta.Hash, "error", err)
 	s.write(s.delta)
 }
 
@@ -214,6 +218,7 @@ func (s *supplyTracer) onBalanceChange(a common.Address, prevBalance, newBalance
 }
 
 func (s *supplyTracer) onTxStart(vm *tracing.VMContext, tx *types.Transaction, from common.Address) {
+	log.Info("Supply tracer onTxStart", "txHash", tx.Hash(), "from", from.Hex())
 	s.txCallstack = make([]supplyTxCallstack, 0, 1)
 }
 

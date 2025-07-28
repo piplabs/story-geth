@@ -1992,6 +1992,7 @@ func SetEthConfig(ctx *cli.Context, stack *node.Node, cfg *ethconfig.Config) {
 	}
 	// VM tracing config.
 	if ctx.IsSet(VMTraceFlag.Name) {
+		log.Info("configuring VM tracing", "name", ctx.String(VMTraceFlag.Name), "jsonConfig", ctx.String(VMTraceJsonConfigFlag.Name))
 		if name := ctx.String(VMTraceFlag.Name); name != "" {
 			cfg.VMTrace = name
 			cfg.VMTraceJsonConfig = ctx.String(VMTraceJsonConfigFlag.Name)

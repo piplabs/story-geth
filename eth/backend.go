@@ -217,6 +217,7 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 		if err != nil {
 			return nil, fmt.Errorf("failed to create tracer %s: %v", config.VMTrace, err)
 		}
+		log.Info("Using tracer", "name", config.VMTrace, "config", traceConfig)
 		vmConfig.Tracer = t
 	}
 	// Override the chain config with provided settings.
