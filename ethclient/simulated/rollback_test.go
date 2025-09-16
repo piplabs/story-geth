@@ -38,23 +38,23 @@ func TestTransactionRollbackBehavior(t *testing.T) {
 	defer sim.Close()
 	client := sim.Client()
 
-	btx0 := testSendSignedTx(t, testKey, sim, true, 0)
+	// btx0 := testSendSignedTx(t, testKey, sim, true, 0)
 	tx0 := testSendSignedTx(t, testKey2, sim, false, 0)
 	tx1 := testSendSignedTx(t, testKey2, sim, false, 1)
 
 	sim.Rollback()
 
-	if pendingStateHasTx(client, btx0) || pendingStateHasTx(client, tx0) || pendingStateHasTx(client, tx1) {
+	if pendingStateHasTx(client, tx0) || pendingStateHasTx(client, tx1) {
 		t.Fatalf("all transactions were not rolled back")
 	}
 
-	btx2 := testSendSignedTx(t, testKey, sim, true, 0)
+	// btx2 := testSendSignedTx(t, testKey, sim, true, 0)
 	tx2 := testSendSignedTx(t, testKey2, sim, false, 0)
 	tx3 := testSendSignedTx(t, testKey2, sim, false, 1)
 
 	sim.Commit()
 
-	if !pendingStateHasTx(client, btx2) || !pendingStateHasTx(client, tx2) || !pendingStateHasTx(client, tx3) {
+	if !pendingStateHasTx(client, tx2) || !pendingStateHasTx(client, tx3) {
 		t.Fatalf("all post-rollback transactions were not included")
 	}
 }

@@ -1177,6 +1177,7 @@ func TestBlobCountLimit(t *testing.T) {
 			Cancun: params.DefaultCancunBlobConfig,
 			Prague: params.DefaultPragueBlobConfig,
 		},
+		Enable4844: true,
 	}
 	chain := &testBlockChain{
 		config:  config,
