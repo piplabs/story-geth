@@ -250,10 +250,10 @@ func (miner *Miner) prepareWork(genParams *generateParams, witness bool) (*envir
 		log.Error("Failed to create sealing context", "err", err)
 		return nil, err
 	}
-	if header.ParentBeaconRoot != nil {
+	if header.ParentBeaconRoot != nil && miner.chainConfig.IsOsaka(header.Number, header.Time) {
 		core.ProcessBeaconBlockRoot(*header.ParentBeaconRoot, env.evm)
 	}
-	if miner.chainConfig.IsPrague(header.Number, header.Time) {
+	if miner.chainConfig.IsOsaka(header.Number, header.Time) {
 		core.ProcessParentBlockHash(header.ParentHash, env.evm)
 	}
 	return env, nil

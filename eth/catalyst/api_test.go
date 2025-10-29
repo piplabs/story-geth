@@ -1558,6 +1558,8 @@ func TestParentBeaconBlockRoot(t *testing.T) {
 	genesis.Config.ShanghaiTime = &time
 	genesis.Config.CancunTime = &time
 	genesis.Config.BlobScheduleConfig = params.DefaultBlobSchedule
+	genesis.Config.PragueTime = &time
+	genesis.Config.OsakaTime = &time
 
 	n, ethservice := startEthService(t, genesis, blocks)
 	defer n.Close()

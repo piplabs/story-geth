@@ -1359,16 +1359,13 @@ func (c *ChainConfig) ActiveSystemContracts(time uint64) map[string]common.Addre
 	fork := c.LatestFork(time)
 	active := make(map[string]common.Address)
 	if fork >= forks.Osaka {
-		// no new system contracts
+		active["BEACON_ROOTS_ADDRESS"] = BeaconRootsAddress
+		active["HISTORY_STORAGE_ADDRESS"] = HistoryStorageAddress
 	}
 	if fork >= forks.Prague {
 		active["CONSOLIDATION_REQUEST_PREDEPLOY_ADDRESS"] = ConsolidationQueueAddress
 		active["DEPOSIT_CONTRACT_ADDRESS"] = c.DepositContractAddress
-		active["HISTORY_STORAGE_ADDRESS"] = HistoryStorageAddress
 		active["WITHDRAWAL_REQUEST_PREDEPLOY_ADDRESS"] = WithdrawalQueueAddress
-	}
-	if fork >= forks.Cancun {
-		active["BEACON_ROOTS_ADDRESS"] = BeaconRootsAddress
 	}
 	return active
 }

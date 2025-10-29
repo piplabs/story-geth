@@ -244,11 +244,14 @@ func (eth *Ethereum) stateAtTransaction(ctx context.Context, block *types.Block,
 	// Insert parent beacon block root in the state as per EIP-4788.
 	context := core.NewEVMBlockContext(block.Header(), eth.blockchain, nil)
 	evm := vm.NewEVM(context, statedb, eth.blockchain.Config(), vm.Config{})
-	if beaconRoot := block.BeaconRoot(); beaconRoot != nil {
-		core.ProcessBeaconBlockRoot(*beaconRoot, evm)
+
+	if eth.blockchain.Config().IsOsaka(block.Number(), block.Time()) {
+		if beaconRoot := block.BeaconRoot(); beaconRoot != nil {
+			core.ProcessBeaconBlockRoot(*beaconRoot, evm)
+		}
 	}
-	// If prague hardfork, insert parent block hash in the state as per EIP-2935.
-	if eth.blockchain.Config().IsPrague(block.Number(), block.Time()) {
+	// If osaka hardfork, insert parent block hash in the state as per EIP-2935.
+	if eth.blockchain.Config().IsOsaka(block.Number(), block.Time()) {
 		core.ProcessParentBlockHash(block.ParentHash(), evm)
 	}
 	if txIndex == 0 && len(block.Transactions()) == 0 {

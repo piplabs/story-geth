@@ -3832,11 +3832,13 @@ func TestEIP7910Config(t *testing.T) {
 			ShanghaiTime:            newUint64(0),
 			CancunTime:              newUint64(0),
 			PragueTime:              newUint64(1742999832),
+			OsakaTime:               newUint64(1761677592),
 			DepositContractAddress:  common.HexToAddress("0x00000000219ab540356cBB839Cbe05303d7705Fa"),
 			Ethash:                  new(params.EthashConfig),
 			BlobScheduleConfig: &params.BlobScheduleConfig{
 				Cancun: params.DefaultCancunBlobConfig,
 				Prague: params.DefaultPragueBlobConfig,
+				Osaka:  params.DefaultOsakaBlobConfig,
 			},
 		}
 	)
@@ -3852,7 +3854,7 @@ func TestEIP7910Config(t *testing.T) {
 			file: "next-and-last",
 		},
 		{
-			time: *gspec.Config.PragueTime,
+			time: *gspec.Config.OsakaTime,
 			file: "current",
 		},
 	}

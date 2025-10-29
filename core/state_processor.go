@@ -93,10 +93,12 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 	context = NewEVMBlockContext(header, p.chain, nil)
 	evm := vm.NewEVM(context, tracingStateDB, config, cfg)
 
-	if beaconRoot := block.BeaconRoot(); beaconRoot != nil {
-		ProcessBeaconBlockRoot(*beaconRoot, evm)
+	if config.IsOsaka(block.Number(), block.Time()) {
+		if beaconRoot := block.BeaconRoot(); beaconRoot != nil {
+			ProcessBeaconBlockRoot(*beaconRoot, evm)
+		}
 	}
-	if config.IsPrague(block.Number(), block.Time()) || config.IsVerkle(block.Number(), block.Time()) {
+	if config.IsOsaka(block.Number(), block.Time()) || config.IsVerkle(block.Number(), block.Time()) {
 		ProcessParentBlockHash(block.ParentHash(), evm)
 	}
 

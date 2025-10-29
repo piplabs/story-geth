@@ -264,10 +264,10 @@ func (sim *simulator) processBlock(ctx context.Context, block *simBlock, header,
 	if precompiles != nil {
 		evm.SetPrecompiles(precompiles)
 	}
-	if sim.chainConfig.IsPrague(header.Number, header.Time) || sim.chainConfig.IsVerkle(header.Number, header.Time) {
+	if sim.chainConfig.IsOsaka(header.Number, header.Time) || sim.chainConfig.IsVerkle(header.Number, header.Time) {
 		core.ProcessParentBlockHash(header.ParentHash, evm)
 	}
-	if header.ParentBeaconRoot != nil {
+	if header.ParentBeaconRoot != nil && sim.chainConfig.IsOsaka(header.Number, header.Time) {
 		core.ProcessBeaconBlockRoot(*header.ParentBeaconRoot, evm)
 	}
 	var allLogs []*types.Log

@@ -1,13 +1,13 @@
 {
   "current": {
-    "activationTime": 1742999832,
+    "activationTime": 1761677592,
     "blobSchedule": {
       "target": 6,
       "max": 9,
       "baseFeeUpdateFraction": 5007716
     },
     "chainId": "0x88bb0",
-    "forkId": "0x0929e24e",
+    "forkId": "0xe7e0e7ff",
     "precompiles": {
       "BLAKE2F": "0x0000000000000000000000000000000000000009",
       "BLS12_G1ADD": "0x000000000000000000000000000000000000000b",

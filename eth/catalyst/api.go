@@ -636,10 +636,10 @@ func (api *ConsensusAPI) NewPayloadV3(params engine.ExecutableData, versionedHas
 		return invalidStatus, paramsErr("nil beaconRoot post-cancun")
 	// All types of execution layer requests are omitted for now. Therefore, here we don't require consensus client to provide requests with newPayloadV4.
 	// Instead, we allow newPayloadV3 and pass the empty requests after Prague fork.
-	case !api.checkFork(params.Timestamp, forks.Cancun) && !api.checkFork(params.Timestamp, forks.Prague):
-		return invalidStatus, unsupportedForkErr("newPayloadV3 must only be called for cancun/prague payloads")
+	case !api.checkFork(params.Timestamp, forks.Cancun, forks.Prague, forks.Osaka):
+		return invalidStatus, unsupportedForkErr("newPayloadV3 must only be called for cancun/prague/osaka payloads")
 	}
-	if api.eth.BlockChain().Config().LatestFork(params.Timestamp) == forks.Prague {
+	if api.checkFork(params.Timestamp, forks.Prague, forks.Osaka) {
 		return api.newPayload(params, versionedHashes, beaconRoot, [][]byte{}, false)
 	}
 	return api.newPayload(params, versionedHashes, beaconRoot, nil, false)

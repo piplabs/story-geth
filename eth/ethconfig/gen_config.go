@@ -11,6 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/txpool/blobpool"
 	"github.com/ethereum/go-ethereum/core/txpool/legacypool"
 	"github.com/ethereum/go-ethereum/eth/gasprice"
+	"github.com/ethereum/go-ethereum/guardian"
 	"github.com/ethereum/go-ethereum/miner"
 )
 
@@ -62,6 +63,9 @@ func (c Config) MarshalTOML() (interface{}, error) {
 		OverrideBPO1            *uint64 `toml:",omitempty"`
 		OverrideBPO2            *uint64 `toml:",omitempty"`
 		OverrideVerkle          *uint64 `toml:",omitempty"`
+		Enable4844              bool
+		Guardian                guardian.Config
+		WhiteList               guardian.WhiteListConfig
 	}
 	var enc Config
 	enc.Genesis = c.Genesis
@@ -109,6 +113,9 @@ func (c Config) MarshalTOML() (interface{}, error) {
 	enc.OverrideBPO1 = c.OverrideBPO1
 	enc.OverrideBPO2 = c.OverrideBPO2
 	enc.OverrideVerkle = c.OverrideVerkle
+	enc.Enable4844 = c.Enable4844
+	enc.Guardian = c.Guardian
+	enc.WhiteList = c.WhiteList
 	return &enc, nil
 }
 
@@ -160,6 +167,9 @@ func (c *Config) UnmarshalTOML(unmarshal func(interface{}) error) error {
 		OverrideBPO1            *uint64 `toml:",omitempty"`
 		OverrideBPO2            *uint64 `toml:",omitempty"`
 		OverrideVerkle          *uint64 `toml:",omitempty"`
+		Enable4844              *bool
+		Guardian                *guardian.Config
+		WhiteList               *guardian.WhiteListConfig
 	}
 	var dec Config
 	if err := unmarshal(&dec); err != nil {
@@ -299,6 +309,15 @@ func (c *Config) UnmarshalTOML(unmarshal func(interface{}) error) error {
 	}
 	if dec.OverrideVerkle != nil {
 		c.OverrideVerkle = dec.OverrideVerkle
+	}
+	if dec.Enable4844 != nil {
+		c.Enable4844 = *dec.Enable4844
+	}
+	if dec.Guardian != nil {
+		c.Guardian = *dec.Guardian
+	}
+	if dec.WhiteList != nil {
+		c.WhiteList = *dec.WhiteList
 	}
 	return nil
 }
