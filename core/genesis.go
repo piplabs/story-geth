@@ -760,6 +760,7 @@ func DeveloperGenesisBlock(gasLimit uint64, faucet *common.Address) *Genesis {
 			common.BytesToAddress([]byte{0x0f}):       {Balance: big.NewInt(1)}, // BLSG1Pairing
 			common.BytesToAddress([]byte{0x10}):       {Balance: big.NewInt(1)}, // BLSG1MapG1
 			common.BytesToAddress([]byte{0x11}):       {Balance: big.NewInt(1)}, // BLSG2MapG2
+			common.BytesToAddress([]byte{0x1, 00}):    {Balance: big.NewInt(1)}, // P256Verify
 			common.BytesToAddress([]byte{0x01, 0x01}): {Balance: big.NewInt(1)}, // ipGraph
 			// Pre-deploy system contracts
 			params.BeaconRootsAddress:        {Nonce: 1, Code: params.BeaconRootsCode, Balance: common.Big0},

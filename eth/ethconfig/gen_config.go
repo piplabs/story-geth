@@ -66,6 +66,8 @@ func (c Config) MarshalTOML() (interface{}, error) {
 		Enable4844              bool
 		Guardian                guardian.Config
 		WhiteList               guardian.WhiteListConfig
+		TxSyncDefaultTimeout    time.Duration `toml:",omitempty"`
+		TxSyncMaxTimeout        time.Duration `toml:",omitempty"`
 	}
 	var enc Config
 	enc.Genesis = c.Genesis
@@ -116,6 +118,8 @@ func (c Config) MarshalTOML() (interface{}, error) {
 	enc.Enable4844 = c.Enable4844
 	enc.Guardian = c.Guardian
 	enc.WhiteList = c.WhiteList
+	enc.TxSyncDefaultTimeout = c.TxSyncDefaultTimeout
+	enc.TxSyncMaxTimeout = c.TxSyncMaxTimeout
 	return &enc, nil
 }
 
@@ -170,6 +174,8 @@ func (c *Config) UnmarshalTOML(unmarshal func(interface{}) error) error {
 		Enable4844              *bool
 		Guardian                *guardian.Config
 		WhiteList               *guardian.WhiteListConfig
+		TxSyncDefaultTimeout    *time.Duration `toml:",omitempty"`
+		TxSyncMaxTimeout        *time.Duration `toml:",omitempty"`
 	}
 	var dec Config
 	if err := unmarshal(&dec); err != nil {
@@ -318,6 +324,12 @@ func (c *Config) UnmarshalTOML(unmarshal func(interface{}) error) error {
 	}
 	if dec.WhiteList != nil {
 		c.WhiteList = *dec.WhiteList
+	}
+	if dec.TxSyncDefaultTimeout != nil {
+		c.TxSyncDefaultTimeout = *dec.TxSyncDefaultTimeout
+	}
+	if dec.TxSyncMaxTimeout != nil {
+		c.TxSyncMaxTimeout = *dec.TxSyncMaxTimeout
 	}
 	return nil
 }
