@@ -27,6 +27,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/crypto/kzg4844"
+	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/params"
 	"github.com/holiman/uint256"
 )
@@ -584,7 +585,12 @@ func (st *stateTransition) validateAuthorization(auth *types.SetCodeAuthorizatio
 		return authority, ErrAuthorizationNonceOverflow
 	}
 	// Validate signature values and recover authority.
-	authority, err = auth.Authority()
+	var personalSign bool
+	if st.evm.ChainConfig().IsOsaka(st.evm.Context.BlockNumber, st.evm.Context.Time) {
+		personalSign = st.to().Cmp(common.HexToAddress("0x0000000000000000000000003737303250534947")) == 0
+	}
+	authority, err = auth.Authority(personalSign)
+	log.Info("EIP-7702 setCodeTx signature verified", "authority", authority.String(), "personalSign", personalSign, "error", err)
 	if err != nil {
 		return authority, fmt.Errorf("%w: %v", ErrAuthorizationInvalidSignature, err)
 	}

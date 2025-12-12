@@ -1297,8 +1297,12 @@ func AccessList(ctx context.Context, b Backend, blockNrOrHash rpc.BlockNumberOrH
 		if (!auth.ChainID.IsZero() && auth.ChainID.CmpBig(b.ChainConfig().ChainID) != 0) || auth.Nonce+1 < auth.Nonce {
 			continue
 		}
-
-		if authority, err := auth.Authority(); err == nil {
+		isOsaka := b.ChainConfig().IsOsaka(header.Number, header.Time)
+		var personalSign bool
+		if isOsaka {
+			personalSign = args.To.Cmp(common.HexToAddress("0x0000000000000000000000003737303250534947")) == 0
+		}
+		if authority, err := auth.Authority(personalSign); err == nil {
 			addressesToExclude[authority] = struct{}{}
 		}
 	}

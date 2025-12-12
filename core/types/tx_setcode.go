@@ -20,13 +20,16 @@ import (
 	"bytes"
 	"crypto/ecdsa"
 	"errors"
+	"fmt"
 	"math/big"
+	"strings"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/holiman/uint256"
+	"golang.org/x/crypto/sha3"
 )
 
 // DelegationPrefix is used by code to denote the account is delegating to
@@ -114,9 +117,31 @@ func (a *SetCodeAuthorization) SigHash() common.Hash {
 	})
 }
 
+// SigHashPersonalSign returns the hash of SetCodeAuthorization for personal_sign signing.
+// Story-geth implements this to allow compatibility with wallets that only support personal_sign.
+// This is used as a fallback if the standard SigHash fails to recover the signer.
+func (a *SetCodeAuthorization) SigHashPersonalSign() common.Hash {
+	// use human readable format to improve user experience and security
+	enc := fmt.Sprintf(
+		"EIP-7702 Authorization\nChainID: %s\nImplementation: %s\nNonce: %d",
+		a.ChainID.ToBig().String(),
+		strings.ToLower(a.Address.Hex()),
+		a.Nonce,
+	)
+	msg := fmt.Sprintf("\x19Ethereum Signed Message:\n%d%s", len(enc), enc)
+	hasher := sha3.NewLegacyKeccak256()
+	hasher.Write([]byte(msg))
+	return common.BytesToHash(hasher.Sum(nil))
+}
+
 // Authority recovers the the authorizing account of an authorization.
-func (a *SetCodeAuthorization) Authority() (common.Address, error) {
-	sighash := a.SigHash()
+func (a *SetCodeAuthorization) Authority(personalSign bool) (common.Address, error) {
+	var sighash common.Hash
+	if !personalSign {
+		sighash = a.SigHash()
+	} else {
+		sighash = a.SigHashPersonalSign()
+	}
 	if !crypto.ValidateSignatureValues(a.V, a.R.ToBig(), a.S.ToBig(), true) {
 		return common.Address{}, ErrInvalidSig
 	}
