@@ -193,8 +193,12 @@ func (t *prestateTracer) OnTxStart(env *tracing.VMContext, tx *types.Transaction
 	t.lookupAccount(env.Coinbase)
 
 	// Add accounts with authorizations to the prestate before they get applied.
+	personalSign := false
+	if t.chainConfig.IsOsaka(t.env.BlockNumber, t.env.Time) {
+		personalSign = t.to.Cmp(params.SetCodeTxPersonalSignTargetAddress) == 0
+	}
 	for _, auth := range tx.SetCodeAuthorizations() {
-		addr, err := auth.Authority()
+		addr, err := auth.Authority(personalSign)
 		if err != nil {
 			continue
 		}

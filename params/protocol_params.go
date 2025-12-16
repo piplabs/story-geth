@@ -205,6 +205,9 @@ var (
 	// SystemAddress is where the system-transaction is sent from as per EIP-4788
 	SystemAddress = common.HexToAddress("0xfffffffffffffffffffffffffffffffffffffffe")
 
+	// SetCodeTxPersonalSignTargetAddress is the `to` address used for EIP-7702 SetCodeTx when authorization is performed via personal_sign.
+	SetCodeTxPersonalSignTargetAddress = common.HexToAddress("0x0000000000000000000000003737303250534947")
+
 	// EIP-4788 - Beacon block root in the EVM
 	BeaconRootsAddress = common.HexToAddress("0x635d042977F6b52F27De3DAbAa7EFd4A5741F0B2")
 	BeaconRootsCode    = common.FromHex("3373fffffffffffffffffffffffffffffffffffffffe14604d57602036146024575f5ffd5b5f35801560495762001fff810690815414603c575f5ffd5b62001fff01545f5260205ff35b5f5ffd5b62001fff42064281555f359062001fff015500")
