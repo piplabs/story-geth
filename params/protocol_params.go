@@ -209,11 +209,11 @@ var (
 	SetCodeTxPersonalSignTargetAddress = common.HexToAddress("0x0000000000000000000000003737303250534947")
 
 	// EIP-4788 - Beacon block root in the EVM
-	BeaconRootsAddress = common.HexToAddress("0x635d042977F6b52F27De3DAbAa7EFd4A5741F0B2")
+	BeaconRootsAddress = common.HexToAddress("0x46E85b86a419e1AAF37b5bDdf820D8c4d318cF14")
 	BeaconRootsCode    = common.FromHex("3373fffffffffffffffffffffffffffffffffffffffe14604d57602036146024575f5ffd5b5f35801560495762001fff810690815414603c575f5ffd5b62001fff01545f5260205ff35b5f5ffd5b62001fff42064281555f359062001fff015500")
 
 	// EIP-2935 - Serve historical block hashes from state
-	HistoryStorageAddress = common.HexToAddress("0x1494E4232223b39D62D659A4f609F4671953982d")
+	HistoryStorageAddress = common.HexToAddress("0xb4620762fa585DdA1Aa1d8246b95C6f3D8C4E52a")
 	HistoryStorageCode    = common.FromHex("3373fffffffffffffffffffffffffffffffffffffffe14604657602036036042575f35600143038111604257611fff81430311604257611fff9006545f5260205ff35b5f5ffd5b5f35611fff60014303065500")
 
 	// EIP-7002 - Execution layer triggerable withdrawals
