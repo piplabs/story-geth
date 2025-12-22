@@ -118,8 +118,8 @@ func (a *SetCodeAuthorization) SigHash() common.Hash {
 }
 
 // SigHashPersonalSign returns the hash of SetCodeAuthorization for personal_sign signing.
+// This function is used when `to` address of setCodeTx is SetCodeTxPersonalSignTargetAddress.
 // Story-geth implements this to allow compatibility with wallets that only support personal_sign.
-// This is used as a fallback if the standard SigHash fails to recover the signer.
 func (a *SetCodeAuthorization) SigHashPersonalSign() common.Hash {
 	// use human readable format to improve user experience and security
 	enc := fmt.Sprintf(

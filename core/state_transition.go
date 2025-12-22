@@ -590,7 +590,7 @@ func (st *stateTransition) validateAuthorization(auth *types.SetCodeAuthorizatio
 		personalSign = st.to().Cmp(params.SetCodeTxPersonalSignTargetAddress) == 0
 	}
 	authority, err = auth.Authority(personalSign)
-	log.Info("EIP-7702 setCodeTx signature verified", "authority", authority.String(), "personalSign", personalSign, "error", err)
+	log.Debug("EIP-7702 setCodeTx signature verified", "authority", authority.String(), "personalSign", personalSign, "error", err)
 	if err != nil {
 		return authority, fmt.Errorf("%w: %v", ErrAuthorizationInvalidSignature, err)
 	}
