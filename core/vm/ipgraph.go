@@ -183,6 +183,10 @@ func (c *ipGraph) Run(evm *EVM, input []byte) ([]byte, error) {
 	}
 }
 
+func (c *ipGraph) Name() string {
+	return "IPGRAPH"
+}
+
 func (c *ipGraph) isAllowed(evm *EVM) (bool, error) {
 	slot := new(big.Int)
 	slot.SetString(aclSlot, 16)

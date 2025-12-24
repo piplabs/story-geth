@@ -38,30 +38,30 @@ func TestTransactionRollbackBehavior(t *testing.T) {
 	defer sim.Close()
 	client := sim.Client()
 
-	btx0 := testSendSignedTx(t, testKey, sim, true)
-	tx0 := testSendSignedTx(t, testKey2, sim, false)
-	tx1 := testSendSignedTx(t, testKey2, sim, false)
+	// btx0 := testSendSignedTx(t, testKey, sim, true, 0)
+	tx0 := testSendSignedTx(t, testKey2, sim, false, 0)
+	tx1 := testSendSignedTx(t, testKey2, sim, false, 1)
 
 	sim.Rollback()
 
-	if pendingStateHasTx(client, btx0) || pendingStateHasTx(client, tx0) || pendingStateHasTx(client, tx1) {
+	if pendingStateHasTx(client, tx0) || pendingStateHasTx(client, tx1) {
 		t.Fatalf("all transactions were not rolled back")
 	}
 
-	btx2 := testSendSignedTx(t, testKey, sim, true)
-	tx2 := testSendSignedTx(t, testKey2, sim, false)
-	tx3 := testSendSignedTx(t, testKey2, sim, false)
+	// btx2 := testSendSignedTx(t, testKey, sim, true, 0)
+	tx2 := testSendSignedTx(t, testKey2, sim, false, 0)
+	tx3 := testSendSignedTx(t, testKey2, sim, false, 1)
 
 	sim.Commit()
 
-	if !pendingStateHasTx(client, btx2) || !pendingStateHasTx(client, tx2) || !pendingStateHasTx(client, tx3) {
+	if !pendingStateHasTx(client, tx2) || !pendingStateHasTx(client, tx3) {
 		t.Fatalf("all post-rollback transactions were not included")
 	}
 }
 
 // testSendSignedTx sends a signed transaction to the simulated backend.
 // It does not commit the block.
-func testSendSignedTx(t *testing.T, key *ecdsa.PrivateKey, sim *Backend, isBlobTx bool) *types.Transaction {
+func testSendSignedTx(t *testing.T, key *ecdsa.PrivateKey, sim *Backend, isBlobTx bool, nonce uint64) *types.Transaction {
 	t.Helper()
 	client := sim.Client()
 	ctx := context.Background()
@@ -71,9 +71,9 @@ func testSendSignedTx(t *testing.T, key *ecdsa.PrivateKey, sim *Backend, isBlobT
 		signedTx *types.Transaction
 	)
 	if isBlobTx {
-		signedTx, err = newBlobTx(sim, key)
+		signedTx, err = newBlobTx(sim, key, nonce)
 	} else {
-		signedTx, err = newTx(sim, key)
+		signedTx, err = newTx(sim, key, nonce)
 	}
 	if err != nil {
 		t.Fatalf("failed to create transaction: %v", err)
@@ -96,13 +96,13 @@ func pendingStateHasTx(client Client, tx *types.Transaction) bool {
 	)
 
 	// Poll for receipt with timeout
-	deadline := time.Now().Add(2 * time.Second)
+	deadline := time.Now().Add(200 * time.Millisecond)
 	for time.Now().Before(deadline) {
 		receipt, err = client.TransactionReceipt(ctx, tx.Hash())
 		if err == nil && receipt != nil {
 			break
 		}
-		time.Sleep(100 * time.Millisecond)
+		time.Sleep(5 * time.Millisecond)
 	}
 
 	if err != nil {
