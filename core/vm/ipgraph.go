@@ -21,17 +21,21 @@ const (
 	ipGraphExternalReadGas = 2100
 )
 
-var ipgraphMgaspsMeter = metrics.NewRegisteredResettingTimer("ipgraph/mgasps", nil)
-var addParentIpMgaspsMeter = metrics.NewRegisteredResettingTimer("ipgraph/addParentIp/mgasps", nil)
-var hasParentIpMgaspsMeter = metrics.NewRegisteredResettingTimer("ipgraph/hasParentIp/mgasps", nil)
-var getParentIpsMgaspsMeter = metrics.NewRegisteredResettingTimer("ipgraph/getParentIps/mgasps", nil)
-var getParentIpsCountMgaspsMeter = metrics.NewRegisteredResettingTimer("ipgraph/getParentIpsCount/mgasps", nil)
-var getAncestorIpsMgaspsMeter = metrics.NewRegisteredResettingTimer("ipgraph/getAncestorIps/mgasps", nil)
-var getAncestorIpsCountMgaspsMeter = metrics.NewRegisteredResettingTimer("ipgraph/getAncestorIpsCount/mgasps", nil)
-var hasAncestorIpMgaspsMeter = metrics.NewRegisteredResettingTimer("ipgraph/hasAncestorIp/mgasps", nil)
-var setRoyaltyMgaspsMeter = metrics.NewRegisteredResettingTimer("ipgraph/setRoyalty/mgasps", nil)
-var getRoyaltyMgaspsMeter = metrics.NewRegisteredResettingTimer("ipgraph/getRoyalty/mgasps", nil)
-var getRoyaltyStackMgaspsMeter = metrics.NewRegisteredResettingTimer("ipgraph/getRoyaltyStack/mgasps", nil)
+var ipgraphMgaspsHistogram = metrics.NewRegisteredHistogram("ipgraph/mgasps", nil, metrics.NewExpDecaySample(1028, 0.015))
+var addParentIpMgaspsHistogram = metrics.NewRegisteredHistogram("ipgraph/addParentIp/mgasps", nil, metrics.NewExpDecaySample(1028, 0.015))
+var hasParentIpMgaspsHistogram = metrics.NewRegisteredHistogram("ipgraph/hasParentIp/mgasps", nil, metrics.NewExpDecaySample(1028, 0.015))
+var getParentIpsMgaspsHistogram = metrics.NewRegisteredHistogram("ipgraph/getParentIps/mgasps", nil, metrics.NewExpDecaySample(1028, 0.015))
+var getParentIpsCountMgaspsHistogram = metrics.NewRegisteredHistogram("ipgraph/getParentIpsCount/mgasps", nil, metrics.NewExpDecaySample(1028, 0.015))
+var getAncestorIpsMgaspsHistogram = metrics.NewRegisteredHistogram("ipgraph/getAncestorIps/mgasps", nil, metrics.NewExpDecaySample(1028, 0.015))
+var getAncestorIpsCountMgaspsHistogram = metrics.NewRegisteredHistogram("ipgraph/getAncestorIpsCount/mgasps", nil, metrics.NewExpDecaySample(1028, 0.015))
+var hasAncestorIpMgaspsHistogram = metrics.NewRegisteredHistogram("ipgraph/hasAncestorIp/mgasps", nil, metrics.NewExpDecaySample(1028, 0.015))
+var setRoyaltyMgaspsHistogram = metrics.NewRegisteredHistogram("ipgraph/setRoyalty/mgasps", nil, metrics.NewExpDecaySample(1028, 0.015))
+var getRoyaltyMgaspsHistogram = metrics.NewRegisteredHistogram("ipgraph/getRoyalty/mgasps", nil, metrics.NewExpDecaySample(1028, 0.015))
+var getRoyaltyStackMgaspsHistogram = metrics.NewRegisteredHistogram("ipgraph/getRoyaltyStack/mgasps", nil, metrics.NewExpDecaySample(1028, 0.015))
+
+// Metrics to track actual parent and ancestor counts
+var actualParentCountHistogram = metrics.NewRegisteredHistogram("ipgraph/actual/parentCount", nil, metrics.NewExpDecaySample(1028, 0.015))
+var actualAncestorCountHistogram = metrics.NewRegisteredHistogram("ipgraph/actual/ancestorCount", nil, metrics.NewExpDecaySample(1028, 0.015))
 
 var (
 	royaltyPolicyKindLAP           = big.NewInt(0)         // Liquid Absolute Percentage (LAP) Royalty Policy
@@ -146,7 +150,7 @@ func (c *ipGraph) RequiredGas(input []byte) uint64 {
 	}
 }
 
-func GetMetric(input []byte) *metrics.ResettingTimer {
+func GetMetric(input []byte) metrics.Histogram {
 	if len(input) < 4 {
 		return nil
 	}
@@ -155,41 +159,41 @@ func GetMetric(input []byte) *metrics.ResettingTimer {
 
 	switch {
 	case bytes.Equal(selector, addParentIpSelector):
-		return addParentIpMgaspsMeter
+		return addParentIpMgaspsHistogram
 	case bytes.Equal(selector, hasParentIpSelector):
-		return hasParentIpMgaspsMeter
+		return hasParentIpMgaspsHistogram
 	case bytes.Equal(selector, getParentIpsSelector):
-		return getParentIpsMgaspsMeter
+		return getParentIpsMgaspsHistogram
 	case bytes.Equal(selector, getParentIpsCountSelector):
-		return getParentIpsCountMgaspsMeter
+		return getParentIpsCountMgaspsHistogram
 	case bytes.Equal(selector, getAncestorIpsSelector):
-		return getAncestorIpsMgaspsMeter
+		return getAncestorIpsMgaspsHistogram
 	case bytes.Equal(selector, getAncestorIpsCountSelector):
-		return getAncestorIpsCountMgaspsMeter
+		return getAncestorIpsCountMgaspsHistogram
 	case bytes.Equal(selector, hasAncestorIpsSelector):
-		return hasAncestorIpMgaspsMeter
+		return hasAncestorIpMgaspsHistogram
 	case bytes.Equal(selector, setRoyaltySelector):
-		return setRoyaltyMgaspsMeter
+		return setRoyaltyMgaspsHistogram
 	case bytes.Equal(selector, getRoyaltySelector):
-		return getRoyaltyMgaspsMeter
+		return getRoyaltyMgaspsHistogram
 	case bytes.Equal(selector, getRoyaltyStackSelector):
-		return getRoyaltyStackMgaspsMeter
+		return getRoyaltyStackMgaspsHistogram
 	case bytes.Equal(selector, hasParentIpExtSelector):
-		return hasParentIpMgaspsMeter
+		return hasParentIpMgaspsHistogram
 	case bytes.Equal(selector, getParentIpsExtSelector):
-		return getParentIpsMgaspsMeter
+		return getParentIpsMgaspsHistogram
 	case bytes.Equal(selector, getParentIpsCountExtSelector):
-		return getParentIpsCountMgaspsMeter
+		return getParentIpsCountMgaspsHistogram
 	case bytes.Equal(selector, getAncestorIpsExtSelector):
-		return getAncestorIpsMgaspsMeter
+		return getAncestorIpsMgaspsHistogram
 	case bytes.Equal(selector, getAncestorIpsCountExtSelector):
-		return getAncestorIpsCountMgaspsMeter
+		return getAncestorIpsCountMgaspsHistogram
 	case bytes.Equal(selector, hasAncestorIpsExtSelector):
-		return hasAncestorIpMgaspsMeter
+		return hasAncestorIpMgaspsHistogram
 	case bytes.Equal(selector, getRoyaltyExtSelector):
-		return getRoyaltyMgaspsMeter
+		return getRoyaltyMgaspsHistogram
 	case bytes.Equal(selector, getRoyaltyStackExtSelector):
-		return getRoyaltyStackMgaspsMeter
+		return getRoyaltyStackMgaspsHistogram
 	default:
 		return nil
 	}
@@ -319,6 +323,10 @@ func (c *ipGraph) hasParentIp(input []byte, evm *EVM, ipGraphAddress common.Addr
 
 	currentLengthHash := evm.StateDB.GetState(ipGraphAddress, common.BytesToHash(ipId.Bytes()))
 	currentLength := currentLengthHash.Big()
+
+	// Record actual parent count
+	actualParentCountHistogram.Update(currentLength.Int64())
+
 	if evm.currentPrecompileCallType == DELEGATECALL {
 		return nil, fmt.Errorf("hasParentIp cannot be called with DELEGATECALL")
 	}
@@ -354,6 +362,9 @@ func (c *ipGraph) getParentIps(input []byte, evm *EVM, ipGraphAddress common.Add
 
 	currentLengthHash := evm.StateDB.GetState(ipGraphAddress, common.BytesToHash(ipId.Bytes()))
 	currentLength := currentLengthHash.Big()
+
+	// Record actual parent count
+	actualParentCountHistogram.Update(currentLength.Int64())
 
 	output := make([]byte, 64+currentLength.Uint64()*32)
 	copy(output[0:32], common.BigToHash(new(big.Int).SetUint64(32)).Bytes())
@@ -413,6 +424,9 @@ func (c *ipGraph) getAncestorIps(input []byte, evm *EVM, ipGraphAddress common.A
 	ipId := common.BytesToAddress(input[0:32])
 	ancestorsMap := c.findAncestors(ipId, evm, ipGraphAddress)
 
+	// Record actual ancestor count
+	actualAncestorCountHistogram.Update(int64(len(ancestorsMap)))
+
 	// Convert map keys to a sorted slice for stable ordering results
 	ancestors := make([]common.Address, 0, len(ancestorsMap))
 	for ancestor := range ancestorsMap {
@@ -453,6 +467,9 @@ func (c *ipGraph) getAncestorIpsCount(input []byte, evm *EVM, ipGraphAddress com
 	ipId := common.BytesToAddress(input[0:32])
 	ancestors := c.findAncestors(ipId, evm, ipGraphAddress)
 
+	// Record actual ancestor count
+	actualAncestorCountHistogram.Update(int64(len(ancestors)))
+
 	count := new(big.Int).SetUint64(uint64(len(ancestors)))
 	return common.BigToHash(count).Bytes(), nil
 }
@@ -477,6 +494,9 @@ func (c *ipGraph) hasAncestorIp(input []byte, evm *EVM, ipGraphAddress common.Ad
 	ipId := common.BytesToAddress(input[0:32])
 	parentIpId := common.BytesToAddress(input[32:64])
 	ancestors := c.findAncestors(ipId, evm, ipGraphAddress)
+
+	// Record actual ancestor count
+	actualAncestorCountHistogram.Update(int64(len(ancestors)))
 
 	if _, found := ancestors[parentIpId]; found {
 		return common.LeftPadBytes([]byte{1}, 32), nil
