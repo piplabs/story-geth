@@ -40,6 +40,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto/bn256"
 	"github.com/ethereum/go-ethereum/crypto/kzg4844"
 	"github.com/ethereum/go-ethereum/crypto/secp256r1"
+	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/params"
 	"github.com/holiman/uint256"
 	"golang.org/x/crypto/ripemd160"
@@ -283,6 +284,7 @@ func RunPrecompiledContract(evm *EVM, p PrecompiledContract, input []byte, suppl
 	if p.Name() == "IPGRAPH" {
 		metric := GetMetric(input)
 		mgasps := float64(gasCost) * 1000 / float64(runT)
+		log.Info("IPGraph metrics", "mgasps", mgasps)
 		metric.Update(int64(mgasps))
 	}
 	return output, suppliedGas, err

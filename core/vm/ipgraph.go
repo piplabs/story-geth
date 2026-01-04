@@ -21,7 +21,6 @@ const (
 	ipGraphExternalReadGas = 2100
 )
 
-var ipgraphMgaspsHistogram = metrics.NewRegisteredHistogram("ipgraph/mgasps", nil, metrics.NewExpDecaySample(1028, 0.015))
 var addParentIpMgaspsHistogram = metrics.NewRegisteredHistogram("ipgraph/addParentIp/mgasps", nil, metrics.NewExpDecaySample(1028, 0.015))
 var hasParentIpMgaspsHistogram = metrics.NewRegisteredHistogram("ipgraph/hasParentIp/mgasps", nil, metrics.NewExpDecaySample(1028, 0.015))
 var getParentIpsMgaspsHistogram = metrics.NewRegisteredHistogram("ipgraph/getParentIps/mgasps", nil, metrics.NewExpDecaySample(1028, 0.015))
@@ -326,6 +325,7 @@ func (c *ipGraph) hasParentIp(input []byte, evm *EVM, ipGraphAddress common.Addr
 
 	// Record actual parent count
 	actualParentCountHistogram.Update(currentLength.Int64())
+	log.Info("IPGraph metrics", "actualParentCount", currentLength.Int64())
 
 	if evm.currentPrecompileCallType == DELEGATECALL {
 		return nil, fmt.Errorf("hasParentIp cannot be called with DELEGATECALL")
@@ -365,6 +365,7 @@ func (c *ipGraph) getParentIps(input []byte, evm *EVM, ipGraphAddress common.Add
 
 	// Record actual parent count
 	actualParentCountHistogram.Update(currentLength.Int64())
+	log.Info("IPGraph metrics", "actualParentCount", currentLength.Int64())
 
 	output := make([]byte, 64+currentLength.Uint64()*32)
 	copy(output[0:32], common.BigToHash(new(big.Int).SetUint64(32)).Bytes())
@@ -426,6 +427,7 @@ func (c *ipGraph) getAncestorIps(input []byte, evm *EVM, ipGraphAddress common.A
 
 	// Record actual ancestor count
 	actualAncestorCountHistogram.Update(int64(len(ancestorsMap)))
+	log.Info("IPGraph metrics", "actualAncestorCount", int64(len(ancestorsMap)))
 
 	// Convert map keys to a sorted slice for stable ordering results
 	ancestors := make([]common.Address, 0, len(ancestorsMap))
@@ -469,6 +471,7 @@ func (c *ipGraph) getAncestorIpsCount(input []byte, evm *EVM, ipGraphAddress com
 
 	// Record actual ancestor count
 	actualAncestorCountHistogram.Update(int64(len(ancestors)))
+	log.Info("IPGraph metrics", "actualAncestorCount", int64(len(ancestors)))
 
 	count := new(big.Int).SetUint64(uint64(len(ancestors)))
 	return common.BigToHash(count).Bytes(), nil
@@ -497,6 +500,7 @@ func (c *ipGraph) hasAncestorIp(input []byte, evm *EVM, ipGraphAddress common.Ad
 
 	// Record actual ancestor count
 	actualAncestorCountHistogram.Update(int64(len(ancestors)))
+	log.Info("IPGraph metrics", "actualAncestorCount", int64(len(ancestors)))
 
 	if _, found := ancestors[parentIpId]; found {
 		return common.LeftPadBytes([]byte{1}, 32), nil
