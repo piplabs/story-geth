@@ -22,6 +22,16 @@ const (
 )
 
 var ipgraphMgaspsMeter = metrics.NewRegisteredResettingTimer("ipgraph/mgasps", nil)
+var addParentIpMgaspsMeter = metrics.NewRegisteredResettingTimer("ipgraph/addParentIp/mgasps", nil)
+var hasParentIpMgaspsMeter = metrics.NewRegisteredResettingTimer("ipgraph/hasParentIp/mgasps", nil)
+var getParentIpsMgaspsMeter = metrics.NewRegisteredResettingTimer("ipgraph/getParentIps/mgasps", nil)
+var getParentIpsCountMgaspsMeter = metrics.NewRegisteredResettingTimer("ipgraph/getParentIpsCount/mgasps", nil)
+var getAncestorIpsMgaspsMeter = metrics.NewRegisteredResettingTimer("ipgraph/getAncestorIps/mgasps", nil)
+var getAncestorIpsCountMgaspsMeter = metrics.NewRegisteredResettingTimer("ipgraph/getAncestorIpsCount/mgasps", nil)
+var hasAncestorIpMgaspsMeter = metrics.NewRegisteredResettingTimer("ipgraph/hasAncestorIp/mgasps", nil)
+var setRoyaltyMgaspsMeter = metrics.NewRegisteredResettingTimer("ipgraph/setRoyalty/mgasps", nil)
+var getRoyaltyMgaspsMeter = metrics.NewRegisteredResettingTimer("ipgraph/getRoyalty/mgasps", nil)
+var getRoyaltyStackMgaspsMeter = metrics.NewRegisteredResettingTimer("ipgraph/getRoyaltyStack/mgasps", nil)
 
 var (
 	royaltyPolicyKindLAP           = big.NewInt(0)         // Liquid Absolute Percentage (LAP) Royalty Policy
@@ -133,6 +143,55 @@ func (c *ipGraph) RequiredGas(input []byte) uint64 {
 		}
 	default:
 		return intrinsicGas
+	}
+}
+
+func GetMetric(input []byte) *metrics.ResettingTimer {
+	if len(input) < 4 {
+		return nil
+	}
+
+	selector := input[:4]
+
+	switch {
+	case bytes.Equal(selector, addParentIpSelector):
+		return addParentIpMgaspsMeter
+	case bytes.Equal(selector, hasParentIpSelector):
+		return hasParentIpMgaspsMeter
+	case bytes.Equal(selector, getParentIpsSelector):
+		return getParentIpsMgaspsMeter
+	case bytes.Equal(selector, getParentIpsCountSelector):
+		return getParentIpsCountMgaspsMeter
+	case bytes.Equal(selector, getAncestorIpsSelector):
+		return getAncestorIpsMgaspsMeter
+	case bytes.Equal(selector, getAncestorIpsCountSelector):
+		return getAncestorIpsCountMgaspsMeter
+	case bytes.Equal(selector, hasAncestorIpsSelector):
+		return hasAncestorIpMgaspsMeter
+	case bytes.Equal(selector, setRoyaltySelector):
+		return setRoyaltyMgaspsMeter
+	case bytes.Equal(selector, getRoyaltySelector):
+		return getRoyaltyMgaspsMeter
+	case bytes.Equal(selector, getRoyaltyStackSelector):
+		return getRoyaltyStackMgaspsMeter
+	case bytes.Equal(selector, hasParentIpExtSelector):
+		return hasParentIpMgaspsMeter
+	case bytes.Equal(selector, getParentIpsExtSelector):
+		return getParentIpsMgaspsMeter
+	case bytes.Equal(selector, getParentIpsCountExtSelector):
+		return getParentIpsCountMgaspsMeter
+	case bytes.Equal(selector, getAncestorIpsExtSelector):
+		return getAncestorIpsMgaspsMeter
+	case bytes.Equal(selector, getAncestorIpsCountExtSelector):
+		return getAncestorIpsCountMgaspsMeter
+	case bytes.Equal(selector, hasAncestorIpsExtSelector):
+		return hasAncestorIpMgaspsMeter
+	case bytes.Equal(selector, getRoyaltyExtSelector):
+		return getRoyaltyMgaspsMeter
+	case bytes.Equal(selector, getRoyaltyStackExtSelector):
+		return getRoyaltyStackMgaspsMeter
+	default:
+		return nil
 	}
 }
 

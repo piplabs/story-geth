@@ -281,8 +281,9 @@ func RunPrecompiledContract(evm *EVM, p PrecompiledContract, input []byte, suppl
 	output, err := p.Run(evm, input)
 	runT := time.Since(start) + 1
 	if p.Name() == "IPGRAPH" {
+		metric := GetMetric(input)
 		mgasps := float64(gasCost) * 1000 / float64(runT)
-		ipgraphMgaspsMeter.Update(time.Duration(mgasps))
+		metric.Update(time.Duration(mgasps))
 	}
 	return output, suppliedGas, err
 }
