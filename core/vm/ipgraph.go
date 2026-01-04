@@ -9,6 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/log"
+	"github.com/ethereum/go-ethereum/metrics"
 )
 
 const (
@@ -19,6 +20,8 @@ const (
 	intrinsicGas           = 1000
 	ipGraphExternalReadGas = 2100
 )
+
+var ipgraphMgaspsMeter = metrics.NewRegisteredResettingTimer("ipgraph/mgasps", nil)
 
 var (
 	royaltyPolicyKindLAP           = big.NewInt(0)         // Liquid Absolute Percentage (LAP) Royalty Policy

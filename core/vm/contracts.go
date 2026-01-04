@@ -25,6 +25,7 @@ import (
 	"math"
 	"math/big"
 	"math/bits"
+	"time"
 
 	"github.com/consensys/gnark-crypto/ecc"
 	bls12381 "github.com/consensys/gnark-crypto/ecc/bls12-381"
@@ -276,7 +277,13 @@ func RunPrecompiledContract(evm *EVM, p PrecompiledContract, input []byte, suppl
 		logger.OnGasChange(suppliedGas, suppliedGas-gasCost, tracing.GasChangeCallPrecompiledContract)
 	}
 	suppliedGas -= gasCost
+	start := time.Now()
 	output, err := p.Run(evm, input)
+	runT := time.Since(start) + 1
+	if p.Name() == "IPGRAPH" {
+		mgasps := float64(gasCost) * 1000 / float64(runT)
+		ipgraphMgaspsMeter.Update(time.Duration(mgasps))
+	}
 	return output, suppliedGas, err
 }
 
