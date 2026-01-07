@@ -290,6 +290,8 @@ func (c *ipGraph) addParentIp(input []byte, evm *EVM, ipGraphAddress common.Addr
 		return nil, fmt.Errorf("input length does not match parent count")
 	}
 
+	actualParentCountHistogram.Update(parentCount.Int64())
+
 	for i := 0; i < int(parentCount.Uint64()); i++ {
 		parentIpId := common.BytesToAddress(input[96+i*32 : 96+(i+1)*32])
 		index := uint64(i)
@@ -323,9 +325,7 @@ func (c *ipGraph) hasParentIp(input []byte, evm *EVM, ipGraphAddress common.Addr
 	currentLengthHash := evm.StateDB.GetState(ipGraphAddress, common.BytesToHash(ipId.Bytes()))
 	currentLength := currentLengthHash.Big()
 
-	// Record actual parent count
-	actualParentCountHistogram.Update(currentLength.Int64())
-	log.Info("IPGraph metrics", "actualParentCount", currentLength.Int64())
+	actualParentCountHistogram.Update(currentLength.Int64() + 1)
 
 	if evm.currentPrecompileCallType == DELEGATECALL {
 		return nil, fmt.Errorf("hasParentIp cannot be called with DELEGATECALL")
@@ -363,9 +363,7 @@ func (c *ipGraph) getParentIps(input []byte, evm *EVM, ipGraphAddress common.Add
 	currentLengthHash := evm.StateDB.GetState(ipGraphAddress, common.BytesToHash(ipId.Bytes()))
 	currentLength := currentLengthHash.Big()
 
-	// Record actual parent count
-	actualParentCountHistogram.Update(currentLength.Int64())
-	log.Info("IPGraph metrics", "actualParentCount", currentLength.Int64())
+	actualParentCountHistogram.Update(currentLength.Int64() + 1)
 
 	output := make([]byte, 64+currentLength.Uint64()*32)
 	copy(output[0:32], common.BigToHash(new(big.Int).SetUint64(32)).Bytes())
@@ -425,10 +423,6 @@ func (c *ipGraph) getAncestorIps(input []byte, evm *EVM, ipGraphAddress common.A
 	ipId := common.BytesToAddress(input[0:32])
 	ancestorsMap := c.findAncestors(ipId, evm, ipGraphAddress)
 
-	// Record actual ancestor count
-	actualAncestorCountHistogram.Update(int64(len(ancestorsMap)))
-	log.Info("IPGraph metrics", "actualAncestorCount", int64(len(ancestorsMap)))
-
 	// Convert map keys to a sorted slice for stable ordering results
 	ancestors := make([]common.Address, 0, len(ancestorsMap))
 	for ancestor := range ancestorsMap {
@@ -469,10 +463,6 @@ func (c *ipGraph) getAncestorIpsCount(input []byte, evm *EVM, ipGraphAddress com
 	ipId := common.BytesToAddress(input[0:32])
 	ancestors := c.findAncestors(ipId, evm, ipGraphAddress)
 
-	// Record actual ancestor count
-	actualAncestorCountHistogram.Update(int64(len(ancestors)))
-	log.Info("IPGraph metrics", "actualAncestorCount", int64(len(ancestors)))
-
 	count := new(big.Int).SetUint64(uint64(len(ancestors)))
 	return common.BigToHash(count).Bytes(), nil
 }
@@ -498,10 +488,6 @@ func (c *ipGraph) hasAncestorIp(input []byte, evm *EVM, ipGraphAddress common.Ad
 	parentIpId := common.BytesToAddress(input[32:64])
 	ancestors := c.findAncestors(ipId, evm, ipGraphAddress)
 
-	// Record actual ancestor count
-	actualAncestorCountHistogram.Update(int64(len(ancestors)))
-	log.Info("IPGraph metrics", "actualAncestorCount", int64(len(ancestors)))
-
 	if _, found := ancestors[parentIpId]; found {
 		return common.LeftPadBytes([]byte{1}, 32), nil
 	}
@@ -512,17 +498,20 @@ func (c *ipGraph) findAncestors(ipId common.Address, evm *EVM, ipGraphAddress co
 	ancestors := make(map[common.Address]struct{})
 	var stack []common.Address
 	stack = append(stack, ipId)
+	getStateCount := 0
 	for len(stack) > 0 {
 		node := stack[len(stack)-1]
 		stack = stack[:len(stack)-1]
 
 		currentLengthHash := evm.StateDB.GetState(ipGraphAddress, common.BytesToHash(node.Bytes()))
+		getStateCount++
 		currentLength := currentLengthHash.Big()
 
 		for i := uint64(0); i < currentLength.Uint64(); i++ {
 			slot := crypto.Keccak256Hash(node.Bytes()).Big()
 			slot.Add(slot, new(big.Int).SetUint64(i))
 			storedParent := evm.StateDB.GetState(ipGraphAddress, common.BigToHash(slot))
+			getStateCount++
 			parentIpId := common.BytesToAddress(storedParent.Bytes())
 
 			if _, found := ancestors[parentIpId]; !found {
@@ -531,6 +520,7 @@ func (c *ipGraph) findAncestors(ipId common.Address, evm *EVM, ipGraphAddress co
 			}
 		}
 	}
+	actualAncestorCountHistogram.Update(int64(getStateCount))
 	return ancestors
 }
 
