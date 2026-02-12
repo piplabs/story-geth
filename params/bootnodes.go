@@ -79,16 +79,15 @@ var OdysseyBootnodes = []string{
 // Aeneid testnet network.
 var AeneidBootnodes = []string{
 	// Upstream bootnodes
-	"enode://a7e893eb4b07bd9b0c0659730c066564dff0f5fa98c08a7df9f380b84e64fbea16165ee5cce6c3414d64bea8cacc1ac200540c50607a7bf170b9d5504f81bbf8@35.211.57.203:30303",
+	"enode://a7e893eb4b07bd9b0c0659730c066564dff0f5fa98c08a7df9f380b84e64fbea16165ee5cce6c3414d64bea8cacc1ac200540c50607a7bf170b9d5504f81bbf8@b1-b.odyssey-devnet.storyrpc.io:30303",
 }
 
 // StoryBootnodes are the enode URLs of the P2P bootstrap nodes running on the
 // Story main network.
 var StoryBootnodes = []string{
 	// Upstream bootnodes
-	// TODO: update bootnodes for mainnet
-	"enode://f42110982b6ddaa4de8031f9fecb619d181902db5529a43bc9b1187debbc67771bf937b2210cbfd33babd2acbe138506596e23d0d1792ab3cb5229c5bb051544@35.211.238.157:30303",
-	"enode://2ae459a7cc28b59822377deec266e24e5ed00374d7a83e2e8d0d67dd89dc2b80366c1353c7909fe81b840f6081188850677fa20dd5d262c9e3f67eb23d0be0b5@35.211.209.170:30303",
+	"enode://f42110982b6ddaa4de8031f9fecb619d181902db5529a43bc9b1187debbc67771bf937b2210cbfd33babd2acbe138506596e23d0d1792ab3cb5229c5bb051544@b1.storyrpc.io:30303",
+	"enode://2ae459a7cc28b59822377deec266e24e5ed00374d7a83e2e8d0d67dd89dc2b80366c1353c7909fe81b840f6081188850677fa20dd5d262c9e3f67eb23d0be0b5@b2.storyrpc.io:30303",
 }
 
 var V5Bootnodes = []string{

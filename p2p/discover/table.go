@@ -25,6 +25,7 @@ package discover
 import (
 	"context"
 	"fmt"
+	"net"
 	"net/netip"
 	"slices"
 	"sync"
@@ -205,6 +206,18 @@ func (tab *Table) close() {
 func (tab *Table) setFallbackNodes(nodes []*enode.Node) error {
 	nursery := make([]*enode.Node, 0, len(nodes))
 	for _, n := range nodes {
+		// Resolve DNS names to IP addresses for bootstrap nodes if needed.
+		if !n.IPAddr().IsValid() && n.Hostname() != "" {
+			ips, err := net.LookupIP(n.Hostname())
+			if err != nil {
+				return err
+			}
+			ip := ips[0]
+			if ipv4 := ip.To4(); ipv4 != nil {
+				ip = ipv4
+			}
+			n = enode.NewV4(n.Pubkey(), ip, n.TCP(), n.UDP())
+		}
 		if err := n.ValidateComplete(); err != nil {
 			return fmt.Errorf("bad bootstrap node %q: %v", n, err)
 		}
