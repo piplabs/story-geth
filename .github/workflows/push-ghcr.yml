@@ -55,8 +55,8 @@ jobs:
             -t $REPOSITORY_URI:latest \
             -t $REPOSITORY_URI:$COMMIT \
             -t $REPOSITORY_URI:$VERSION \
-            --cache-from=type=local,src=/tmp/.buildx-cache \
-            --cache-to=type=local,dest=/tmp/.buildx-cache \
+            --cache-from type=gha \
+            --cache-to type=gha,mode=max \
             --push \
             -f ./Dockerfile \
             . 
