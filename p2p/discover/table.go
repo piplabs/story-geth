@@ -37,6 +37,7 @@ import (
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/metrics"
 	"github.com/ethereum/go-ethereum/p2p/enode"
+	"github.com/ethereum/go-ethereum/p2p/enr"
 	"github.com/ethereum/go-ethereum/p2p/netutil"
 )
 
@@ -206,17 +207,12 @@ func (tab *Table) close() {
 func (tab *Table) setFallbackNodes(nodes []*enode.Node) error {
 	nursery := make([]*enode.Node, 0, len(nodes))
 	for _, n := range nodes {
-		// Resolve DNS names to IP addresses for bootstrap nodes if needed.
-		if !n.IPAddr().IsValid() && n.Hostname() != "" {
-			ips, err := net.LookupIP(n.Hostname())
+		if n.Hostname() != "" && !n.IPAddr().IsValid() {
+			resolved, err := resolveBootnodeHostname(n, tab.log)
 			if err != nil {
-				return err
+				return fmt.Errorf("bad bootstrap node %q: %v", n, err)
 			}
-			ip := ips[0]
-			if ipv4 := ip.To4(); ipv4 != nil {
-				ip = ipv4
-			}
-			n = enode.NewV4(n.Pubkey(), ip, n.TCP(), n.UDP())
+			n = resolved
 		}
 		if err := n.ValidateComplete(); err != nil {
 			return fmt.Errorf("bad bootstrap node %q: %v", n, err)
@@ -229,6 +225,42 @@ func (tab *Table) setFallbackNodes(nodes []*enode.Node) error {
 	}
 	tab.nursery = nursery
 	return nil
+}
+
+// resolveBootnodeHostname resolves the DNS hostname of a bootstrap node to an IP address.
+func resolveBootnodeHostname(n *enode.Node, logger log.Logger) (*enode.Node, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	ips, err := net.DefaultResolver.LookupNetIP(ctx, "ip", n.Hostname())
+	if err != nil {
+		return nil, fmt.Errorf("DNS lookup failed for %q: %v", n.Hostname(), err)
+	}
+
+	var ip4, ip6 netip.Addr
+	for _, ip := range ips {
+		if ip.Is4() && !ip4.IsValid() {
+			ip4 = ip
+		}
+		if ip.Is6() && !ip6.IsValid() {
+			ip6 = ip
+		}
+	}
+	if !ip4.IsValid() && !ip6.IsValid() {
+		return nil, fmt.Errorf("no IP addresses found for hostname %q", n.Hostname())
+	}
+
+	rec := n.Record()
+	if ip4.IsValid() {
+		rec.Set(enr.IPv4Addr(ip4))
+	}
+	if ip6.IsValid() {
+		rec.Set(enr.IPv6Addr(ip6))
+	}
+	rec.SetSeq(n.Seq())
+	resolved := enode.SignNull(rec, n.ID()).WithHostname(n.Hostname())
+	logger.Debug("Resolved bootstrap node hostname", "name", n.Hostname(), "ip", resolved.IP())
+	return resolved, nil
 }
 
 // isInitDone returns whether the table's initial seeding procedure has completed.
