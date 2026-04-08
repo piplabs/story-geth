@@ -46,20 +46,6 @@ func (evm *EVM) precompile(addr common.Address) (PrecompiledContract, bool) {
 	return p, ok
 }
 
-// evmAware is implemented by precompiles that require access to the EVM context (e.g. ipGraph).
-type evmAware interface {
-	SetEVM(evm *EVM)
-	SetCallerContext(caller common.Address, callType OpCode)
-}
-
-// injectContext sets the EVM and caller context on precompiles that implement evmAware.
-func injectContext(evm *EVM, p PrecompiledContract, caller common.Address, callType OpCode) {
-	if ea, ok := p.(evmAware); ok {
-		ea.SetEVM(evm)
-		ea.SetCallerContext(caller, callType)
-	}
-}
-
 // BlockContext provides the EVM with auxiliary information. Once provided
 // it shouldn't be modified.
 type BlockContext struct {
@@ -80,6 +66,7 @@ type BlockContext struct {
 	BaseFee     *big.Int       // Provides information for BASEFEE (0 if vm runs with NoBaseFee flag and 0 gas price)
 	BlobBaseFee *big.Int       // Provides information for BLOBBASEFEE (0 if vm runs with NoBaseFee flag and 0 blob gas price)
 	Random      *common.Hash   // Provides information for PREVRANDAO
+	SlotNum     uint64         // Provides information for SLOTNUM
 }
 
 // TxContext provides the EVM with information about a transaction.
@@ -158,6 +145,8 @@ func NewEVM(blockCtx BlockContext, statedb StateDB, chainConfig *params.ChainCon
 	evm.precompiles = activePrecompiledContracts(evm.chainRules)
 
 	switch {
+	case evm.chainRules.IsAmsterdam:
+		evm.table = &amsterdamInstructionSet
 	case evm.chainRules.IsOsaka:
 		evm.table = &osakaInstructionSet
 	case evm.chainRules.IsVerkle:
@@ -243,6 +232,20 @@ func isSystemCall(caller common.Address) bool {
 	return caller == params.SystemAddress
 }
 
+// evmAware is implemented by precompiles that require access to the EVM context (e.g. ipGraph).
+type evmAware interface {
+	SetEVM(evm *EVM)
+	SetCallerContext(caller common.Address, callType OpCode)
+}
+
+// injectContext sets the EVM and caller context on precompiles that implement evmAware.
+func injectContext(evm *EVM, p PrecompiledContract, caller common.Address, callType OpCode) {
+	if ea, ok := p.(evmAware); ok {
+		ea.SetEVM(evm)
+		ea.SetCallerContext(caller, callType)
+	}
+}
+
 // Call executes the contract associated with the addr with the given input as
 // parameters. It also handles any necessary value transfer required and takse
 // the necessary steps to create accounts and reverses the state in case of an
@@ -259,13 +262,14 @@ func (evm *EVM) Call(caller common.Address, addr common.Address, input []byte, g
 	if evm.depth > int(params.CallCreateDepth) {
 		return nil, gas, ErrDepth
 	}
-	// Fail if we're trying to transfer more than the available balance
-	if !value.IsZero() && !evm.Context.CanTransfer(evm.StateDB, caller, value) {
+	syscall := isSystemCall(caller)
+
+	// Fail if we're trying to transfer more than the available balance.
+	if !syscall && !value.IsZero() && !evm.Context.CanTransfer(evm.StateDB, caller, value) {
 		return nil, gas, ErrInsufficientBalance
 	}
 	snapshot := evm.StateDB.Snapshot()
 	p, isPrecompile := evm.precompile(addr)
-
 	if !evm.StateDB.Exist(addr) {
 		if !isPrecompile && evm.chainRules.IsEIP4762 && !isSystemCall(caller) {
 			// Add proof of absence to witness
@@ -289,11 +293,19 @@ func (evm *EVM) Call(caller common.Address, addr common.Address, input []byte, g
 		}
 		evm.StateDB.CreateAccount(addr)
 	}
-	evm.Context.Transfer(evm.StateDB, caller, addr, value)
-
+	// Perform the value transfer only in non-syscall mode.
+	// Calling this is required even for zero-value transfers,
+	// to ensure the state clearing mechanism is applied.
+	if !syscall {
+		evm.Context.Transfer(evm.StateDB, caller, addr, value)
+	}
 	if isPrecompile {
 		injectContext(evm, p, caller, CALL)
-		ret, gas, err = RunPrecompiledContract(p, input, gas, evm.Config.Tracer)
+		var stateDB StateDB
+		if evm.chainRules.IsAmsterdam {
+			stateDB = evm.StateDB
+		}
+		ret, gas, err = RunPrecompiledContract(stateDB, p, addr, input, gas, evm.Config.Tracer)
 	} else {
 		// Initialise a new contract and set the code that is to be used by the EVM.
 		code := evm.resolveCode(addr)
@@ -317,7 +329,6 @@ func (evm *EVM) Call(caller common.Address, addr common.Address, input []byte, g
 			if evm.Config.Tracer != nil && evm.Config.Tracer.OnGasChange != nil {
 				evm.Config.Tracer.OnGasChange(gas, 0, tracing.GasChangeCallFailedExecution)
 			}
-
 			gas = 0
 		}
 		// TODO: consider clearing up unused snapshots:
@@ -358,7 +369,11 @@ func (evm *EVM) CallCode(caller common.Address, addr common.Address, input []byt
 	// It is allowed to call precompiles, even via delegatecall
 	if p, isPrecompile := evm.precompile(addr); isPrecompile {
 		injectContext(evm, p, caller, CALLCODE)
-		ret, gas, err = RunPrecompiledContract(p, input, gas, evm.Config.Tracer)
+		var stateDB StateDB
+		if evm.chainRules.IsAmsterdam {
+			stateDB = evm.StateDB
+		}
+		ret, gas, err = RunPrecompiledContract(stateDB, p, addr, input, gas, evm.Config.Tracer)
 	} else {
 		// Initialise a new contract and set the code that is to be used by the EVM.
 		// The contract is a scoped environment for this execution context only.
@@ -402,7 +417,11 @@ func (evm *EVM) DelegateCall(originCaller common.Address, caller common.Address,
 	// It is allowed to call precompiles, even via delegatecall
 	if p, isPrecompile := evm.precompile(addr); isPrecompile {
 		injectContext(evm, p, caller, DELEGATECALL)
-		ret, gas, err = RunPrecompiledContract(p, input, gas, evm.Config.Tracer)
+		var stateDB StateDB
+		if evm.chainRules.IsAmsterdam {
+			stateDB = evm.StateDB
+		}
+		ret, gas, err = RunPrecompiledContract(stateDB, p, addr, input, gas, evm.Config.Tracer)
 	} else {
 		// Initialise a new contract and make initialise the delegate values
 		//
@@ -455,7 +474,11 @@ func (evm *EVM) StaticCall(caller common.Address, addr common.Address, input []b
 
 	if p, isPrecompile := evm.precompile(addr); isPrecompile {
 		injectContext(evm, p, caller, STATICCALL)
-		ret, gas, err = RunPrecompiledContract(p, input, gas, evm.Config.Tracer)
+		var stateDB StateDB
+		if evm.chainRules.IsAmsterdam {
+			stateDB = evm.StateDB
+		}
+		ret, gas, err = RunPrecompiledContract(stateDB, p, addr, input, gas, evm.Config.Tracer)
 	} else {
 		// Initialise a new contract and set the code that is to be used by the EVM.
 		// The contract is a scoped environment for this execution context only.

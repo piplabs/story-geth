@@ -365,9 +365,6 @@ func checkAccumulator(e era.Era) error {
 	if it.Error() != nil {
 		return fmt.Errorf("error reading block %d: %w", it.Number(), it.Error())
 	}
-	if it.Error() != nil {
-		return fmt.Errorf("error reading block %d: %w", it.Number(), it.Error())
-	}
 	// 4+5) Verify accumulator and total difficulty.
 	got, err := era.ComputeAccumulator(hashes, tds)
 	if err != nil {
