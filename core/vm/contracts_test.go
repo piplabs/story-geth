@@ -20,15 +20,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"math/big"
 	"os"
 	"testing"
 	"time"
-
-	"github.com/ethereum/go-ethereum/core/state"
-	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/params"
-	"github.com/holiman/uint256"
 
 	"github.com/ethereum/go-ethereum/common"
 )
@@ -73,7 +67,7 @@ var allPrecompiles = map[common.Address]PrecompiledContract{
 	common.BytesToAddress([]byte{0x0f, 0x0f}): &bls12381MapG1{},
 	common.BytesToAddress([]byte{0x0f, 0x10}): &bls12381MapG2{},
 
-	common.BytesToAddress([]byte{0x0b}): &p256Verify{eip7951: true},
+	common.BytesToAddress([]byte{0x0b}): &p256Verify{},
 }
 
 // EIP-152 test vectors
@@ -104,13 +98,8 @@ func testPrecompiled(addr string, test precompiledTest, t *testing.T) {
 	p := allPrecompiles[common.HexToAddress(addr)]
 	in := common.Hex2Bytes(test.Input)
 	gas := p.RequiredGas(in)
-	vmctx := BlockContext{
-		Transfer: func(StateDB, common.Address, common.Address, *uint256.Int) {},
-	}
-	statedb, _ := state.New(types.EmptyRootHash, state.NewDatabaseForTesting())
-	evm := NewEVM(vmctx, statedb, params.AllEthashProtocolChanges, Config{})
 	t.Run(fmt.Sprintf("%s-Gas=%d", test.Name, gas), func(t *testing.T) {
-		if res, _, err := RunPrecompiledContract(evm, p, in, gas, nil); err != nil {
+		if res, _, err := RunPrecompiledContract(p, in, gas, nil); err != nil {
 			t.Error(err)
 		} else if common.Bytes2Hex(res) != test.Expected {
 			t.Errorf("Expected %v, got %v", test.Expected, common.Bytes2Hex(res))
@@ -131,14 +120,8 @@ func testPrecompiledOOG(addr string, test precompiledTest, t *testing.T) {
 	in := common.Hex2Bytes(test.Input)
 	gas := test.Gas - 1
 
-	vmctx := BlockContext{
-		Transfer: func(StateDB, common.Address, common.Address, *uint256.Int) {},
-	}
-	statedb, _ := state.New(types.EmptyRootHash, state.NewDatabaseForTesting())
-	evm := NewEVM(vmctx, statedb, params.AllEthashProtocolChanges, Config{})
-
 	t.Run(fmt.Sprintf("%s-Gas=%d", test.Name, gas), func(t *testing.T) {
-		_, _, err := RunPrecompiledContract(evm, p, in, gas, nil)
+		_, _, err := RunPrecompiledContract(p, in, gas, nil)
 		if err.Error() != "out of gas" {
 			t.Errorf("Expected error [out of gas], got [%v]", err)
 		}
@@ -154,15 +137,8 @@ func testPrecompiledFailure(addr string, test precompiledFailureTest, t *testing
 	p := allPrecompiles[common.HexToAddress(addr)]
 	in := common.Hex2Bytes(test.Input)
 	gas := p.RequiredGas(in)
-
-	vmctx := BlockContext{
-		Transfer: func(StateDB, common.Address, common.Address, *uint256.Int) {},
-	}
-	statedb, _ := state.New(types.EmptyRootHash, state.NewDatabaseForTesting())
-	evm := NewEVM(vmctx, statedb, params.AllEthashProtocolChanges, Config{})
-
 	t.Run(test.Name, func(t *testing.T) {
-		_, _, err := RunPrecompiledContract(evm, p, in, gas, nil)
+		_, _, err := RunPrecompiledContract(p, in, gas, nil)
 		if err.Error() != test.ExpectedError {
 			t.Errorf("Expected error [%v], got [%v]", test.ExpectedError, err)
 		}
@@ -192,13 +168,8 @@ func benchmarkPrecompiled(addr string, test precompiledTest, bench *testing.B) {
 		bench.ReportAllocs()
 		start := time.Now()
 		for bench.Loop() {
-			vmctx := BlockContext{
-				Transfer: func(StateDB, common.Address, common.Address, *uint256.Int) {},
-			}
-			statedb, _ := state.New(types.EmptyRootHash, state.NewDatabaseForTesting())
-			evm := NewEVM(vmctx, statedb, params.AllEthashProtocolChanges, Config{})
 			copy(data, in)
-			res, _, err = RunPrecompiledContract(evm, p, data, reqGas, nil)
+			res, _, err = RunPrecompiledContract(p, data, reqGas, nil)
 		}
 		elapsed := uint64(time.Since(start))
 		if elapsed < 1 {
@@ -391,75 +362,6 @@ func TestPrecompiledBLS12381G2MultiExpFail(t *testing.T) { testJsonFail("blsG2Mu
 func TestPrecompiledBLS12381PairingFail(t *testing.T)    { testJsonFail("blsPairing", "f0e", t) }
 func TestPrecompiledBLS12381MapG1Fail(t *testing.T)      { testJsonFail("blsMapG1", "f0f", t) }
 func TestPrecompiledBLS12381MapG2Fail(t *testing.T)      { testJsonFail("blsMapG2", "f10", t) }
-
-func TestIPGraphGasCalculation(t *testing.T) {
-	ipGraph := &ipGraph{}
-
-	tests := []struct {
-		name    string
-		input   []byte
-		wantGas uint64
-	}{
-		{
-			name: "AddParentIP with single parent",
-			input: append(addParentIpSelector,
-				append(
-					make([]byte, 64),
-					append(
-						common.BigToHash(big.NewInt(1)).Bytes(),
-						make([]byte, 32)...,
-					)...,
-				)...,
-			),
-			wantGas: intrinsicGas + ipGraphWriteGas*1,
-		},
-		{
-			name: "AddParentIP with three parents",
-			input: append(addParentIpSelector,
-				append(
-					make([]byte, 64),
-					append(
-						common.BigToHash(big.NewInt(3)).Bytes(),
-						make([]byte, 96)...,
-					)...,
-				)...,
-			),
-			wantGas: intrinsicGas + ipGraphWriteGas*3,
-		},
-		{
-			name: "AddParentIP with zero parents",
-			input: append(addParentIpSelector,
-				append(
-					make([]byte, 64),
-					common.BigToHash(big.NewInt(0)).Bytes()...,
-				)...,
-			),
-			wantGas: intrinsicGas + ipGraphWriteGas*0,
-		},
-		{
-			name: "AddParentIP with large number of parents",
-			input: append(addParentIpSelector,
-				append(
-					make([]byte, 64),
-					append(
-						common.BigToHash(big.NewInt(100)).Bytes(),
-						make([]byte, 3200)...,
-					)...,
-				)...,
-			),
-			wantGas: intrinsicGas + ipGraphWriteGas*100,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			gotGas := ipGraph.RequiredGas(tt.input)
-			if gotGas != tt.wantGas {
-				t.Errorf("RequiredGas() = %v, want %v", gotGas, tt.wantGas)
-			}
-		})
-	}
-}
 
 func loadJson(name string) ([]precompiledTest, error) {
 	data, err := os.ReadFile(fmt.Sprintf("testdata/precompiles/%v.json", name))

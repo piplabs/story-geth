@@ -1,22 +1,16 @@
-name: Go tests
-
 on:
   push:
     branches:
-      - main
-    paths-ignore:
-      - '.github/**'
+      - master
   pull_request:
     branches:
-      - main
-    paths-ignore:
-      - '.github/**'
+      - master
   workflow_dispatch:
 
 jobs:
   lint:
     name: Lint
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted-ghr, size-s-x64]
     steps:
     - uses: actions/checkout@v4
       with:
@@ -40,32 +34,66 @@ jobs:
         go run build/ci.go check_generate
         go run build/ci.go check_baddeps
 
-  build:
-    runs-on: ubuntu-latest
+  keeper:
+    name: Keeper Builds
+    needs: test
+    runs-on: [self-hosted-ghr, size-l-x64]
     steps:
-      - uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b # v4.1.5
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
 
       - name: Set up Go
-        uses: actions/setup-go@v5 
+        uses: actions/setup-go@v5
         with:
-          go-version: 1.21.4
+          go-version: '1.25'
+          cache: false
 
-      - name: Cache Go modules
-        uses: actions/cache@v4
+      - name: Build
+        run: go run build/ci.go keeper
+
+  test-32bit:
+    name: "32bit tests"
+    needs: test
+    runs-on: [self-hosted-ghr, size-l-x64]
+    steps:
+      - uses: actions/checkout@v4
         with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-go-mod-cache-${{ hashFiles('**/go.mod', '**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-mod-cache-latest
+          submodules: false
 
-      - name: Install dependencies
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+          cache: false
+
+      - name: Install cross toolchain
         run: |
-          go mod download
+          apt-get update
+          apt-get -yq --no-install-suggests --no-install-recommends install gcc-multilib
+
+      - name: Build
+        run: go run build/ci.go test -arch 386 -short -p 8
+
+  test:
+    name: Test
+    needs: lint
+    runs-on: [self-hosted-ghr, size-l-x64]
+    strategy:
+      matrix:
+        go:
+          - '1.25'
+          - '1.24'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go }}
+          cache: false
 
       - name: Run tests
-        run: go test -short ./...
-        env:
-          GOOS: linux
-          GOARCH: amd64
+        run: go run build/ci.go test -p 8

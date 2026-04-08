@@ -383,14 +383,11 @@ func (api *API) traceChain(start, end *types.Block, config *TraceConfig, closed 
 			// as per EIP-4788.
 			context := core.NewEVMBlockContext(next.Header(), api.chainContext(ctx), nil)
 			evm := vm.NewEVM(context, statedb, api.backend.ChainConfig(), vm.Config{})
-
-			if api.backend.ChainConfig().IsOsaka(next.Number(), next.Time()) {
-				if beaconRoot := next.BeaconRoot(); beaconRoot != nil {
-					core.ProcessBeaconBlockRoot(*beaconRoot, evm)
-				}
+			if beaconRoot := next.BeaconRoot(); beaconRoot != nil {
+				core.ProcessBeaconBlockRoot(*beaconRoot, evm)
 			}
 			// Insert parent hash in history contract.
-			if api.backend.ChainConfig().IsOsaka(next.Number(), next.Time()) {
+			if api.backend.ChainConfig().IsPrague(next.Number(), next.Time()) {
 				core.ProcessParentBlockHash(next.ParentHash(), evm)
 			}
 			// Clean out any pending release functions of trace state. Note this
@@ -542,13 +539,10 @@ func (api *API) IntermediateRoots(ctx context.Context, hash common.Hash, config 
 		deleteEmptyObjects = chainConfig.IsEIP158(block.Number())
 	)
 	evm := vm.NewEVM(vmctx, statedb, chainConfig, vm.Config{})
-
-	if chainConfig.IsOsaka(block.Number(), block.Time()) {
-		if beaconRoot := block.BeaconRoot(); beaconRoot != nil {
-			core.ProcessBeaconBlockRoot(*beaconRoot, evm)
-		}
+	if beaconRoot := block.BeaconRoot(); beaconRoot != nil {
+		core.ProcessBeaconBlockRoot(*beaconRoot, evm)
 	}
-	if chainConfig.IsOsaka(block.Number(), block.Time()) {
+	if chainConfig.IsPrague(block.Number(), block.Time()) {
 		core.ProcessParentBlockHash(block.ParentHash(), evm)
 	}
 	for i, tx := range block.Transactions() {
@@ -609,13 +603,10 @@ func (api *API) traceBlock(ctx context.Context, block *types.Block, config *Trac
 
 	blockCtx := core.NewEVMBlockContext(block.Header(), api.chainContext(ctx), nil)
 	evm := vm.NewEVM(blockCtx, statedb, api.backend.ChainConfig(), vm.Config{})
-
-	if api.backend.ChainConfig().IsOsaka(block.Number(), block.Time()) {
-		if beaconRoot := block.BeaconRoot(); beaconRoot != nil {
-			core.ProcessBeaconBlockRoot(*beaconRoot, evm)
-		}
+	if beaconRoot := block.BeaconRoot(); beaconRoot != nil {
+		core.ProcessBeaconBlockRoot(*beaconRoot, evm)
 	}
-	if api.backend.ChainConfig().IsOsaka(block.Number(), block.Time()) {
+	if api.backend.ChainConfig().IsPrague(block.Number(), block.Time()) {
 		core.ProcessParentBlockHash(block.ParentHash(), evm)
 	}
 
@@ -790,13 +781,10 @@ func (api *API) standardTraceBlockToFile(ctx context.Context, block *types.Block
 	}
 
 	evm := vm.NewEVM(vmctx, statedb, chainConfig, vm.Config{})
-
-	if chainConfig.IsOsaka(block.Number(), block.Time()) {
-		if beaconRoot := block.BeaconRoot(); beaconRoot != nil {
-			core.ProcessBeaconBlockRoot(*beaconRoot, evm)
-		}
+	if beaconRoot := block.BeaconRoot(); beaconRoot != nil {
+		core.ProcessBeaconBlockRoot(*beaconRoot, evm)
 	}
-	if chainConfig.IsOsaka(block.Number(), block.Time()) {
+	if chainConfig.IsPrague(block.Number(), block.Time()) {
 		core.ProcessParentBlockHash(block.ParentHash(), evm)
 	}
 	for i, tx := range block.Transactions() {
@@ -998,7 +986,7 @@ func (api *API) TraceCall(ctx context.Context, args ethapi.TransactionArgs, bloc
 	}
 	var (
 		msg         = args.ToMessage(blockContext.BaseFee, true)
-		tx          = args.ToTransaction(types.LegacyTxType)
+		tx          = args.ToTransaction(types.DynamicFeeTxType)
 		traceConfig *TraceConfig
 	)
 	// Lower the basefee to 0 to avoid breaking EVM

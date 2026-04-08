@@ -46,6 +46,20 @@ func (evm *EVM) precompile(addr common.Address) (PrecompiledContract, bool) {
 	return p, ok
 }
 
+// evmAware is implemented by precompiles that require access to the EVM context (e.g. ipGraph).
+type evmAware interface {
+	SetEVM(evm *EVM)
+	SetCallerContext(caller common.Address, callType OpCode)
+}
+
+// injectContext sets the EVM and caller context on precompiles that implement evmAware.
+func injectContext(evm *EVM, p PrecompiledContract, caller common.Address, callType OpCode) {
+	if ea, ok := p.(evmAware); ok {
+		ea.SetEVM(evm)
+		ea.SetCallerContext(caller, callType)
+	}
+}
+
 // BlockContext provides the EVM with auxiliary information. Once provided
 // it shouldn't be modified.
 type BlockContext struct {
@@ -73,9 +87,8 @@ type BlockContext struct {
 type TxContext struct {
 	// Message information
 	Origin       common.Address      // Provides information for ORIGIN
-	GasPrice     *big.Int            // Provides information for GASPRICE (and is used to zero the basefee if NoBaseFee is set)
+	GasPrice     *uint256.Int        // Provides information for GASPRICE (and is used to zero the basefee if NoBaseFee is set)
 	BlobHashes   []common.Hash       // Provides information for BLOBHASH
-	BlobFeeCap   *big.Int            // Is used to zero the blobbasefee if NoBaseFee is set
 	AccessEvents *state.AccessEvents // Capture all state accesses for this tx
 }
 
@@ -122,18 +135,8 @@ type EVM struct {
 	// precompiles holds the precompiled contracts for the current epoch
 	precompiles map[common.Address]PrecompiledContract
 
-	// currentPrecompileCallType identifies the current type of the precompile call
-	// (CALL, CALLCODE, DELEGATECALL, STATICCALL)
-	currentPrecompileCallType OpCode
-
-	// current caller address
-	caller common.Address
-
 	// jumpDests stores results of JUMPDEST analysis.
 	jumpDests JumpDestCache
-
-	hasher    crypto.KeccakState // Keccak256 hasher instance shared across opcodes
-	hasherBuf common.Hash        // Keccak256 hasher result array shared across opcodes
 
 	readOnly   bool   // Whether to throw on stateful modifications
 	returnData []byte // Last CALL's return data for subsequent reuse
@@ -151,7 +154,6 @@ func NewEVM(blockCtx BlockContext, statedb StateDB, chainConfig *params.ChainCon
 		chainConfig: chainConfig,
 		chainRules:  chainConfig.Rules(blockCtx.BlockNumber, blockCtx.Random != nil, blockCtx.Time),
 		jumpDests:   newMapJumpDests(),
-		hasher:      crypto.NewKeccakState(),
 	}
 	evm.precompiles = activePrecompiledContracts(evm.chainRules)
 
@@ -221,7 +223,7 @@ func (evm *EVM) SetJumpDestCache(jumpDests JumpDestCache) {
 // This is not threadsafe and should only be done very cautiously.
 func (evm *EVM) SetTxContext(txCtx TxContext) {
 	if evm.chainRules.IsEIP4762 {
-		txCtx.AccessEvents = state.NewAccessEvents(evm.StateDB.PointCache())
+		txCtx.AccessEvents = state.NewAccessEvents()
 	}
 	evm.TxContext = txCtx
 }
@@ -290,10 +292,8 @@ func (evm *EVM) Call(caller common.Address, addr common.Address, input []byte, g
 	evm.Context.Transfer(evm.StateDB, caller, addr, value)
 
 	if isPrecompile {
-		evm.currentPrecompileCallType = CALL
-		evm.caller = caller
-		ret, gas, err = RunPrecompiledContract(evm, p, input, gas, evm.Config.Tracer)
-		log.Info("Call", "precompile", true, "ret", ret, "gas", gas, "err", err)
+		injectContext(evm, p, caller, CALL)
+		ret, gas, err = RunPrecompiledContract(p, input, gas, evm.Config.Tracer)
 	} else {
 		// Initialise a new contract and set the code that is to be used by the EVM.
 		code := evm.resolveCode(addr)
@@ -357,9 +357,8 @@ func (evm *EVM) CallCode(caller common.Address, addr common.Address, input []byt
 
 	// It is allowed to call precompiles, even via delegatecall
 	if p, isPrecompile := evm.precompile(addr); isPrecompile {
-		evm.currentPrecompileCallType = CALLCODE
-		evm.caller = caller
-		ret, gas, err = RunPrecompiledContract(evm, p, input, gas, evm.Config.Tracer)
+		injectContext(evm, p, caller, CALLCODE)
+		ret, gas, err = RunPrecompiledContract(p, input, gas, evm.Config.Tracer)
 	} else {
 		// Initialise a new contract and set the code that is to be used by the EVM.
 		// The contract is a scoped environment for this execution context only.
@@ -402,9 +401,8 @@ func (evm *EVM) DelegateCall(originCaller common.Address, caller common.Address,
 
 	// It is allowed to call precompiles, even via delegatecall
 	if p, isPrecompile := evm.precompile(addr); isPrecompile {
-		evm.currentPrecompileCallType = DELEGATECALL
-		evm.caller = caller
-		ret, gas, err = RunPrecompiledContract(evm, p, input, gas, evm.Config.Tracer)
+		injectContext(evm, p, caller, DELEGATECALL)
+		ret, gas, err = RunPrecompiledContract(p, input, gas, evm.Config.Tracer)
 	} else {
 		// Initialise a new contract and make initialise the delegate values
 		//
@@ -456,9 +454,8 @@ func (evm *EVM) StaticCall(caller common.Address, addr common.Address, input []b
 	evm.StateDB.AddBalance(addr, new(uint256.Int), tracing.BalanceChangeTouchAccount)
 
 	if p, isPrecompile := evm.precompile(addr); isPrecompile {
-		evm.currentPrecompileCallType = STATICCALL
-		evm.caller = caller
-		ret, gas, err = RunPrecompiledContract(evm, p, input, gas, evm.Config.Tracer)
+		injectContext(evm, p, caller, STATICCALL)
+		ret, gas, err = RunPrecompiledContract(p, input, gas, evm.Config.Tracer)
 	} else {
 		// Initialise a new contract and set the code that is to be used by the EVM.
 		// The contract is a scoped environment for this execution context only.
@@ -634,7 +631,7 @@ func (evm *EVM) Create(caller common.Address, code []byte, gas uint64, value *ui
 // The different between Create2 with Create is Create2 uses keccak256(0xff ++ msg.sender ++ salt ++ keccak256(init_code))[12:]
 // instead of the usual sender-and-nonce-hash as the address where the contract is initialized at.
 func (evm *EVM) Create2(caller common.Address, code []byte, gas uint64, endowment *uint256.Int, salt *uint256.Int) (ret []byte, contractAddr common.Address, leftOverGas uint64, err error) {
-	inithash := crypto.HashData(evm.hasher, code)
+	inithash := crypto.Keccak256Hash(code)
 	contractAddr = crypto.CreateAddress2(caller, salt.Bytes32(), inithash[:])
 	return evm.create(caller, code, gas, endowment, contractAddr, CREATE2)
 }

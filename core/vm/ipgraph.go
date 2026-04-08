@@ -48,7 +48,20 @@ var (
 	MaxUint32                      = new(big.Int).SetUint64(uint64(^uint32(0)))
 )
 
-type ipGraph struct{}
+type ipGraph struct {
+	evm      *EVM
+	caller   common.Address
+	callType OpCode
+}
+
+func (c *ipGraph) SetEVM(evm *EVM) {
+	c.evm = evm
+}
+
+func (c *ipGraph) SetCallerContext(caller common.Address, callType OpCode) {
+	c.caller = caller
+	c.callType = callType
+}
 
 func (c *ipGraph) RequiredGas(input []byte) uint64 {
 	// Smart contract function's selector is the first 4 bytes of the input
@@ -133,11 +146,12 @@ func (c *ipGraph) RequiredGas(input []byte) uint64 {
 	}
 }
 
-func (c *ipGraph) Run(evm *EVM, input []byte) ([]byte, error) {
+func (c *ipGraph) Run(input []byte) ([]byte, error) {
 	if len(input) < 4 {
 		return nil, fmt.Errorf("input too short")
 	}
 
+	evm := c.evm
 	selector := input[:4]
 	args := input[4:]
 
@@ -190,7 +204,7 @@ func (c *ipGraph) Name() string {
 func (c *ipGraph) isAllowed(evm *EVM) (bool, error) {
 	slot := new(big.Int)
 	slot.SetString(aclSlot, 16)
-	slot = crypto.Keccak256Hash(evm.caller.Bytes(), slot.Bytes()).Big()
+	slot = crypto.Keccak256Hash(c.caller.Bytes(), slot.Bytes()).Big()
 	isAllowedHash := evm.StateDB.GetState(aclAddress, common.BigToHash(slot))
 	isAllowedBig := isAllowedHash.Big()
 
@@ -211,8 +225,8 @@ func (c *ipGraph) addParentIp(input []byte, evm *EVM, ipGraphAddress common.Addr
 		return nil, fmt.Errorf("caller not allowed to add parent IP")
 	}
 
-	if evm.currentPrecompileCallType != CALL {
-		return nil, fmt.Errorf("addParentIp can only be called with CALL, not %v", evm.currentPrecompileCallType)
+	if c.callType != CALL {
+		return nil, fmt.Errorf("addParentIp can only be called with CALL, not %v", c.callType)
 	}
 
 	if len(input) < 96 {
@@ -257,7 +271,7 @@ func (c *ipGraph) hasParentIp(input []byte, evm *EVM, ipGraphAddress common.Addr
 
 	currentLengthHash := evm.StateDB.GetState(ipGraphAddress, common.BytesToHash(ipId.Bytes()))
 	currentLength := currentLengthHash.Big()
-	if evm.currentPrecompileCallType == DELEGATECALL {
+	if c.callType == DELEGATECALL {
 		return nil, fmt.Errorf("hasParentIp cannot be called with DELEGATECALL")
 	}
 	for i := uint64(0); i < currentLength.Uint64(); i++ {
@@ -282,7 +296,7 @@ func (c *ipGraph) getParentIps(input []byte, evm *EVM, ipGraphAddress common.Add
 		return nil, fmt.Errorf("caller not allowed to query getParentIps")
 	}
 
-	if evm.currentPrecompileCallType == DELEGATECALL {
+	if c.callType == DELEGATECALL {
 		return nil, fmt.Errorf("getParentIps cannot be called with DELEGATECALL")
 	}
 	if len(input) != 32 {
@@ -317,7 +331,7 @@ func (c *ipGraph) getParentIpsCount(input []byte, evm *EVM, ipGraphAddress commo
 		return nil, fmt.Errorf("caller not allowed to query parent Ips count")
 	}
 
-	if evm.currentPrecompileCallType == DELEGATECALL {
+	if c.callType == DELEGATECALL {
 		return nil, fmt.Errorf("getParentIpsCount cannot be called with DELEGATECALL")
 	}
 	if len(input) != 32 {
@@ -342,7 +356,7 @@ func (c *ipGraph) getAncestorIps(input []byte, evm *EVM, ipGraphAddress common.A
 		return nil, fmt.Errorf("caller not allowed to query getAncestorIps")
 	}
 
-	if evm.currentPrecompileCallType == DELEGATECALL {
+	if c.callType == DELEGATECALL {
 		return nil, fmt.Errorf("getAncestorIps cannot be called with DELEGATECALL")
 	}
 	if len(input) != 32 {
@@ -382,7 +396,7 @@ func (c *ipGraph) getAncestorIpsCount(input []byte, evm *EVM, ipGraphAddress com
 		return nil, fmt.Errorf("caller not allowed to query getAncestorIpsCount")
 	}
 
-	if evm.currentPrecompileCallType == DELEGATECALL {
+	if c.callType == DELEGATECALL {
 		return nil, fmt.Errorf("getAncestorIpsCount cannot be called with DELEGATECALL")
 	}
 	if len(input) != 32 {
@@ -406,7 +420,7 @@ func (c *ipGraph) hasAncestorIp(input []byte, evm *EVM, ipGraphAddress common.Ad
 		return nil, fmt.Errorf("caller not allowed to query hasAncestorIp")
 	}
 
-	if evm.currentPrecompileCallType == DELEGATECALL {
+	if c.callType == DELEGATECALL {
 		return nil, fmt.Errorf("hasAncestorIp cannot be called with DELEGATECALL")
 	}
 	if len(input) != 64 {
@@ -459,8 +473,8 @@ func (c *ipGraph) setRoyalty(input []byte, evm *EVM, ipGraphAddress common.Addre
 		return nil, fmt.Errorf("caller not allowed to set Royalty")
 	}
 
-	if evm.currentPrecompileCallType != CALL {
-		return nil, fmt.Errorf("setRoyalty can only be called with CALL, not %v", evm.currentPrecompileCallType)
+	if c.callType != CALL {
+		return nil, fmt.Errorf("setRoyalty can only be called with CALL, not %v", c.callType)
 	}
 
 	if len(input) != 128 {
@@ -502,7 +516,7 @@ func (c *ipGraph) getRoyalty(input []byte, evm *EVM, ipGraphAddress common.Addre
 		return nil, fmt.Errorf("caller not allowed to query getRoyalty")
 	}
 
-	if evm.currentPrecompileCallType == DELEGATECALL {
+	if c.callType == DELEGATECALL {
 		return nil, fmt.Errorf("getRoyalty cannot be called with DELEGATECALL")
 	}
 	if len(input) != 96 {
@@ -671,7 +685,7 @@ func (c *ipGraph) getRoyaltyStack(input []byte, evm *EVM, ipGraphAddress common.
 		return nil, fmt.Errorf("caller not allowed to query getRoyaltyStack")
 	}
 
-	if evm.currentPrecompileCallType == DELEGATECALL {
+	if c.callType == DELEGATECALL {
 		return nil, fmt.Errorf("getRoyaltyStack cannot be called with DELEGATECALL")
 	}
 	totalRoyalty := big.NewInt(0)

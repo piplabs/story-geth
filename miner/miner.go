@@ -48,11 +48,12 @@ type Config struct {
 	GasCeil             uint64         // Target gas ceiling for mined blocks.
 	GasPrice            *big.Int       // Minimum gas price for mining a transaction
 	Recommit            time.Duration  // The time interval for miner to re-create mining work.
+	MaxBlobsPerBlock    int            // Maximum number of blobs per block (0 for unset uses protocol default)
 }
 
 // DefaultConfig contains default settings for miner.
 var DefaultConfig = Config{
-	GasCeil:  36_000_000,
+	GasCeil:  60_000_000,
 	GasPrice: big.NewInt(params.GWei / 1000),
 
 	// The default recommit time is chosen as two seconds since

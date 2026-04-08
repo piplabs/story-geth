@@ -20,27 +20,27 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/rawdb"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/ethdb"
-	"github.com/ethereum/go-ethereum/triedb"
-	"github.com/ethereum/go-ethereum/triedb/hashdb"
-	"github.com/ethereum/go-ethereum/triedb/pathdb"
+	"github.com/ethereum/go-ethereum/triedb/database"
 	"github.com/holiman/uint256"
 )
 
-func newTestDatabase(diskdb ethdb.Database, scheme string) *triedb.Database {
-	config := &triedb.Config{Preimages: true}
-	if scheme == rawdb.HashScheme {
-		config.HashDB = &hashdb.Config{CleanCacheSize: 0}
-	} else {
-		config.PathDB = &pathdb.Config{TrieCleanSize: 0, StateCleanSize: 0}
-	}
-	return triedb.NewDatabase(diskdb, config)
+// emptyNodeDB is a minimal NodeDatabase that always returns empty nodes.
+// Used for testing trie construction where no persistence is needed.
+type emptyNodeDB struct{}
+
+func (e *emptyNodeDB) NodeReader(_ common.Hash) (database.NodeReader, error) {
+	return &emptyNodeReader{}, nil
+}
+
+type emptyNodeReader struct{}
+
+func (e *emptyNodeReader) Node(_ common.Hash, _ []byte, _ common.Hash) ([]byte, error) {
+	return nil, nil
 }
 
 func TestBinaryIterator(t *testing.T) {
-	trie, err := NewBinaryTrie(types.EmptyVerkleHash, newTestDatabase(rawdb.NewMemoryDatabase(), rawdb.PathScheme))
+	trie, err := NewBinaryTrie(types.EmptyVerkleHash, &emptyNodeDB{})
 	if err != nil {
 		t.Fatal(err)
 	}

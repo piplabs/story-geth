@@ -32,7 +32,7 @@ const (
 
 	MaximumExtraDataSize  uint64 = 32    // Maximum size extra data may be after Genesis.
 	ExpByteGas            uint64 = 10    // Times ceil(log256(exponent)) for the EXP instruction.
-	SloadGas              uint64 = 50    // Multiplied by the number of 32-byte words that are copied (round up) for any *COPY operation and added.
+	SloadGas              uint64 = 50    //
 	CallValueTransferGas  uint64 = 9000  // Paid for CALL when the value transfer is non-zero.
 	CallNewAccountGas     uint64 = 25000 // Paid for CALL when the destination address didn't exist prior.
 	TxGas                 uint64 = 21000 // Per transaction not creating a contract. NOTE: Not payable on data of calls between transactions.
@@ -82,7 +82,7 @@ const (
 	CallCreateDepth       uint64 = 1024  // Maximum depth of call/create stack.
 	ExpGas                uint64 = 10    // Once per EXP instruction
 	LogGas                uint64 = 375   // Per LOG* operation.
-	CopyGas               uint64 = 3     //
+	CopyGas               uint64 = 3     //	Multiplied by the number of 32-byte words that are copied (round up) for any *COPY operation and added.
 	StackLimit            uint64 = 1024  // Maximum size of VM stack allowed.
 	TierStepGas           uint64 = 0     // Once per operation, for a selection of them.
 	LogTopicGas           uint64 = 375   // Multiplied by the * of the LOG*, per LOG transaction. e.g. LOG0 incurs 0 * c_txLogTopicGas, LOG4 incurs 4 * c_txLogTopicGas.
@@ -165,8 +165,7 @@ const (
 	Bls12381MapG1Gas          uint64 = 5500  // Gas price for BLS12-381 mapping field element to G1 operation
 	Bls12381MapG2Gas          uint64 = 23800 // Gas price for BLS12-381 mapping field element to G2 operation
 
-	P256VerifyGasPreOsaka uint64 = 3450 // secp256r1 elliptic curve signature verifier gas price
-	P256VerifyGas         uint64 = 6900 // secp256r1 elliptic curve signature verifier gas price
+	P256VerifyGas uint64 = 6900 // secp256r1 elliptic curve signature verifier gas price
 
 	// The Refund Quotient is the cap on how much of the used gas can be refunded. Before EIP-3529,
 	// up to half the consumed gas could be refunded. Redefined as 1/5th in EIP-3529
@@ -209,11 +208,11 @@ var (
 	SetCodeTxPersonalSignTargetAddress = common.HexToAddress("0x0000000000000000000000003737303250534947")
 
 	// EIP-4788 - Beacon block root in the EVM
-	BeaconRootsAddress = common.HexToAddress("0x635d042977F6b52F27De3DAbAa7EFd4A5741F0B2")
+	BeaconRootsAddress = common.HexToAddress("0x000F3df6D732807Ef1319fB7B8bB8522d0Beac02")
 	BeaconRootsCode    = common.FromHex("3373fffffffffffffffffffffffffffffffffffffffe14604d57602036146024575f5ffd5b5f35801560495762001fff810690815414603c575f5ffd5b62001fff01545f5260205ff35b5f5ffd5b62001fff42064281555f359062001fff015500")
 
 	// EIP-2935 - Serve historical block hashes from state
-	HistoryStorageAddress = common.HexToAddress("0x1494E4232223b39D62D659A4f609F4671953982d")
+	HistoryStorageAddress = common.HexToAddress("0x0000F90827F1C53a10cb7A02335B175320002935")
 	HistoryStorageCode    = common.FromHex("3373fffffffffffffffffffffffffffffffffffffffe14604657602036036042575f35600143038111604257611fff81430311604257611fff9006545f5260205ff35b5f5ffd5b5f35611fff60014303065500")
 
 	// EIP-7002 - Execution layer triggerable withdrawals

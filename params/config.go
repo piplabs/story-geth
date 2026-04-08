@@ -71,7 +71,6 @@ var (
 		BPO2Time:                newUint64(1767747671),
 		DepositContractAddress:  common.HexToAddress("0x00000000219ab540356cbb839cbe05303d7705fa"),
 		Ethash:                  new(EthashConfig),
-		Enable4844:              true,
 		BlobScheduleConfig: &BlobScheduleConfig{
 			Cancun: DefaultCancunBlobConfig,
 			Prague: DefaultPragueBlobConfig,
@@ -108,7 +107,6 @@ var (
 		BPO2Time:                newUint64(1760389824),
 		DepositContractAddress:  common.HexToAddress("0x4242424242424242424242424242424242424242"),
 		Ethash:                  new(EthashConfig),
-		Enable4844:              true,
 		BlobScheduleConfig: &BlobScheduleConfig{
 			Cancun: DefaultCancunBlobConfig,
 			Prague: DefaultPragueBlobConfig,
@@ -145,7 +143,6 @@ var (
 		BPO2Time:                newUint64(1761607008),
 		DepositContractAddress:  common.HexToAddress("0x7f02c3e3c98b133055b8b348b2ac625669ed295d"),
 		Ethash:                  new(EthashConfig),
-		Enable4844:              true,
 		BlobScheduleConfig: &BlobScheduleConfig{
 			Cancun: DefaultCancunBlobConfig,
 			Prague: DefaultPragueBlobConfig,
@@ -154,7 +151,6 @@ var (
 			BPO2:   DefaultBPO2BlobConfig,
 		},
 	}
-
 	// HoodiChainConfig contains the chain parameters to run a node on the Hoodi test network.
 	HoodiChainConfig = &ChainConfig{
 		ChainID:                 big.NewInt(560048),
@@ -183,7 +179,6 @@ var (
 		BPO2Time:                newUint64(1762955544),
 		DepositContractAddress:  common.HexToAddress("0x00000000219ab540356cBB839Cbe05303d7705Fa"),
 		Ethash:                  new(EthashConfig),
-		Enable4844:              true,
 		BlobScheduleConfig: &BlobScheduleConfig{
 			Cancun: DefaultCancunBlobConfig,
 			Prague: DefaultPragueBlobConfig,
@@ -210,7 +205,6 @@ var (
 		TerminalTotalDifficulty: big.NewInt(0),
 		ShanghaiTime:            newUint64(0),
 		CancunTime:              newUint64(0),
-		Enable4844:              false,
 	}
 
 	OdysseyChainConfig = &ChainConfig{
@@ -230,7 +224,6 @@ var (
 		TerminalTotalDifficulty: big.NewInt(0),
 		ShanghaiTime:            newUint64(0),
 		CancunTime:              newUint64(0),
-		Enable4844:              false,
 	}
 
 	AeneidChainConfig = &ChainConfig{
@@ -252,7 +245,6 @@ var (
 		CancunTime:              newUint64(0),
 		PragueTime:              newUint64(1748305808),
 		OsakaTime:               newUint64(1767830400),
-		Enable4844:              false,
 		BlobScheduleConfig: &BlobScheduleConfig{
 			Cancun: DefaultCancunBlobConfig,
 			Prague: DefaultPragueBlobConfig,
@@ -279,7 +271,6 @@ var (
 		CancunTime:              newUint64(0),
 		PragueTime:              newUint64(1751934608),
 		OsakaTime:               newUint64(1768435200),
-		Enable4844:              false,
 		BlobScheduleConfig: &BlobScheduleConfig{
 			Cancun: DefaultCancunBlobConfig,
 			Prague: DefaultPragueBlobConfig,
@@ -305,7 +296,6 @@ var (
 		ShanghaiTime:            newUint64(0),
 		CancunTime:              newUint64(0),
 		PragueTime:              newUint64(0),
-		Enable4844:              false,
 		BlobScheduleConfig: &BlobScheduleConfig{
 			Cancun: DefaultCancunBlobConfig,
 			Prague: DefaultPragueBlobConfig,
@@ -314,6 +304,7 @@ var (
 			BPO2:   DefaultBPO2BlobConfig,
 		},
 	}
+
 	// AllEthashProtocolChanges contains every protocol change (EIPs) introduced
 	// and accepted by the Ethereum core developers into the Ethash consensus.
 	AllEthashProtocolChanges = &ChainConfig{
@@ -342,7 +333,6 @@ var (
 		VerkleTime:              nil,
 		Ethash:                  new(EthashConfig),
 		Clique:                  nil,
-		Enable4844:              true,
 	}
 
 	AllDevChainProtocolChanges = &ChainConfig{
@@ -364,7 +354,6 @@ var (
 		CancunTime:              newUint64(0),
 		TerminalTotalDifficulty: big.NewInt(0),
 		PragueTime:              newUint64(0),
-		Enable4844:              true,
 		OsakaTime:               newUint64(0),
 		BlobScheduleConfig: &BlobScheduleConfig{
 			Cancun: DefaultCancunBlobConfig,
@@ -401,7 +390,6 @@ var (
 		TerminalTotalDifficulty: big.NewInt(math.MaxInt64),
 		Ethash:                  nil,
 		Clique:                  &CliqueConfig{Period: 0, Epoch: 30000},
-		Enable4844:              true,
 	}
 
 	// TestChainConfig contains every protocol change (EIPs) introduced
@@ -432,7 +420,6 @@ var (
 		TerminalTotalDifficulty: big.NewInt(math.MaxInt64),
 		Ethash:                  new(EthashConfig),
 		Clique:                  nil,
-		Enable4844:              true,
 	}
 
 	// MergedTestChainConfig contains every protocol change (EIPs) introduced
@@ -463,7 +450,6 @@ var (
 		TerminalTotalDifficulty: big.NewInt(0),
 		Ethash:                  new(EthashConfig),
 		Clique:                  nil,
-		Enable4844:              true,
 		BlobScheduleConfig: &BlobScheduleConfig{
 			Cancun: DefaultCancunBlobConfig,
 			Prague: DefaultPragueBlobConfig,
@@ -499,7 +485,6 @@ var (
 		TerminalTotalDifficulty: big.NewInt(math.MaxInt64),
 		Ethash:                  new(EthashConfig),
 		Clique:                  nil,
-		Enable4844:              true,
 	}
 	TestRules = TestChainConfig.Rules(new(big.Int), false, 0)
 )
@@ -631,9 +616,6 @@ type ChainConfig struct {
 	Ethash             *EthashConfig       `json:"ethash,omitempty"`
 	Clique             *CliqueConfig       `json:"clique,omitempty"`
 	BlobScheduleConfig *BlobScheduleConfig `json:"blobSchedule,omitempty"`
-
-	// 4844 Overrides
-	Enable4844 bool `json:"enable4844,omitempty"`
 }
 
 // EthashConfig is the consensus engine configs for proof-of-work based sealing.
@@ -964,6 +946,12 @@ func (c *ChainConfig) IsShanghai(num *big.Int, time uint64) bool {
 	return c.IsLondon(num) && isTimestampForked(c.ShanghaiTime, time)
 }
 
+// Is4844Enabled returns whether EIP-4844 blob transactions are enabled.
+// Story-geth disables blob transactions at the protocol level.
+func (c *ChainConfig) Is4844Enabled() bool {
+	return false
+}
+
 // IsCancun returns whether time is either equal to the Cancun fork time or greater.
 func (c *ChainConfig) IsCancun(num *big.Int, time uint64) bool {
 	return c.IsLondon(num) && isTimestampForked(c.CancunTime, time)
@@ -1273,42 +1261,12 @@ func (c *ChainConfig) checkCompatible(newcfg *ChainConfig, headNumber *big.Int, 
 
 // BaseFeeChangeDenominator bounds the amount the base fee can change between blocks.
 func (c *ChainConfig) BaseFeeChangeDenominator() uint64 {
-	if c.IsStory() {
-		// For Iliad and Aeneid, use the DefaultBaseFeeChangeDenominator.
-		if c.IsIliad() || c.IsAeneid() {
-			return DefaultBaseFeeChangeDenominator
-		}
-		return DefaultBaseFeeChangeDenomStory
-	}
-
 	return DefaultBaseFeeChangeDenominator
 }
 
 // ElasticityMultiplier bounds the maximum gas limit an EIP-1559 block may have.
 func (c *ChainConfig) ElasticityMultiplier() uint64 {
 	return DefaultElasticityMultiplier
-}
-
-// Is4844Enabled checks whether blob transactions are supported.
-func (c *ChainConfig) Is4844Enabled() bool {
-	return c.Enable4844
-}
-
-func (c *ChainConfig) IsStory() bool {
-	chainId := c.ChainID.Uint64()
-	return chainId == IDStoryMainnet ||
-		chainId == IDStoryAeneid ||
-		chainId == IDStoryOdyssey ||
-		chainId == IDStoryIliad ||
-		chainId == IDStoryLocal
-}
-
-func (c *ChainConfig) IsIliad() bool {
-	return c.ChainID.Uint64() == IDStoryIliad
-}
-
-func (c *ChainConfig) IsAeneid() bool {
-	return c.ChainID.Uint64() == IDStoryAeneid
 }
 
 // LatestFork returns the latest time-based fork that would be active for the given time.
@@ -1372,13 +1330,16 @@ func (c *ChainConfig) ActiveSystemContracts(time uint64) map[string]common.Addre
 	fork := c.LatestFork(time)
 	active := make(map[string]common.Address)
 	if fork >= forks.Osaka {
-		active["BEACON_ROOTS_ADDRESS"] = BeaconRootsAddress
-		active["HISTORY_STORAGE_ADDRESS"] = HistoryStorageAddress
+		// no new system contracts
 	}
 	if fork >= forks.Prague {
 		active["CONSOLIDATION_REQUEST_PREDEPLOY_ADDRESS"] = ConsolidationQueueAddress
 		active["DEPOSIT_CONTRACT_ADDRESS"] = c.DepositContractAddress
+		active["HISTORY_STORAGE_ADDRESS"] = HistoryStorageAddress
 		active["WITHDRAWAL_REQUEST_PREDEPLOY_ADDRESS"] = WithdrawalQueueAddress
+	}
+	if fork >= forks.Cancun {
+		active["BEACON_ROOTS_ADDRESS"] = BeaconRootsAddress
 	}
 	return active
 }
@@ -1545,7 +1506,6 @@ func (err *ConfigCompatError) Error() string {
 // Rules is a one time interface meaning that it shouldn't be used in between transition
 // phases.
 type Rules struct {
-	ChainID                                                 *big.Int
 	IsHomestead, IsEIP150, IsEIP155, IsEIP158               bool
 	IsEIP2929, IsEIP4762                                    bool
 	IsByzantium, IsConstantinople, IsPetersburg, IsIstanbul bool
@@ -1556,15 +1516,10 @@ type Rules struct {
 
 // Rules ensures c's ChainID is not nil.
 func (c *ChainConfig) Rules(num *big.Int, isMerge bool, timestamp uint64) Rules {
-	chainID := c.ChainID
-	if chainID == nil {
-		chainID = new(big.Int)
-	}
 	// disallow setting Merge out of order
 	isMerge = isMerge && c.IsLondon(num)
 	isVerkle := isMerge && c.IsVerkle(num, timestamp)
 	return Rules{
-		ChainID:          new(big.Int).Set(chainID),
 		IsHomestead:      c.IsHomestead(num),
 		IsEIP150:         c.IsEIP150(num),
 		IsEIP155:         c.IsEIP155(num),

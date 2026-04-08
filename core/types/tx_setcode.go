@@ -97,7 +97,10 @@ func SignSetCode(prv *ecdsa.PrivateKey, auth SetCodeAuthorization) (SetCodeAutho
 	if err != nil {
 		return SetCodeAuthorization{}, err
 	}
-	r, s, _ := decodeSignature(sig)
+	r, s, _, err := decodeSignature(sig)
+	if err != nil {
+		return SetCodeAuthorization{}, err
+	}
 	return SetCodeAuthorization{
 		ChainID: auth.ChainID,
 		Address: auth.Address,
@@ -121,7 +124,6 @@ func (a *SetCodeAuthorization) SigHash() common.Hash {
 // This function is used when `to` address of setCodeTx is SetCodeTxPersonalSignTargetAddress.
 // Story-geth implements this to allow compatibility with wallets that only support personal_sign.
 func (a *SetCodeAuthorization) SigHashPersonalSign() common.Hash {
-	// use human readable format to improve user experience and security
 	enc := fmt.Sprintf(
 		"EIP-7702 Authorization\nChainID: %s\nImplementation: %s\nNonce: %d",
 		a.ChainID.ToBig().String(),
@@ -135,12 +137,14 @@ func (a *SetCodeAuthorization) SigHashPersonalSign() common.Hash {
 }
 
 // Authority recovers the the authorizing account of an authorization.
-func (a *SetCodeAuthorization) Authority(personalSign bool) (common.Address, error) {
+// If personalSign is true, the personal_sign hash is used instead of the typed data hash.
+func (a *SetCodeAuthorization) Authority(personalSign ...bool) (common.Address, error) {
+	usePersonalSign := len(personalSign) > 0 && personalSign[0]
 	var sighash common.Hash
-	if !personalSign {
-		sighash = a.SigHash()
-	} else {
+	if usePersonalSign {
 		sighash = a.SigHashPersonalSign()
+	} else {
+		sighash = a.SigHash()
 	}
 	if !crypto.ValidateSignatureValues(a.V, a.R.ToBig(), a.S.ToBig(), true) {
 		return common.Address{}, ErrInvalidSig
