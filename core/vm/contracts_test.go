@@ -110,7 +110,7 @@ func testPrecompiled(addr string, test precompiledTest, t *testing.T) {
 	statedb, _ := state.New(types.EmptyRootHash, state.NewDatabaseForTesting())
 	evm := NewEVM(vmctx, statedb, params.AllEthashProtocolChanges, Config{})
 	t.Run(fmt.Sprintf("%s-Gas=%d", test.Name, gas), func(t *testing.T) {
-		if res, _, err := RunPrecompiledContract(evm, p, in, gas, nil); err != nil {
+		if res, _, err := RunPrecompiledContract(evm, nil, p, common.HexToAddress(addr), in, gas, nil); err != nil {
 			t.Error(err)
 		} else if common.Bytes2Hex(res) != test.Expected {
 			t.Errorf("Expected %v, got %v", test.Expected, common.Bytes2Hex(res))
@@ -130,9 +130,13 @@ func testPrecompiledOOG(addr string, test precompiledTest, t *testing.T) {
 	p := allPrecompiles[common.HexToAddress(addr)]
 	in := common.Hex2Bytes(test.Input)
 	gas := test.Gas - 1
-
+	vmctx := BlockContext{
+		Transfer: func(StateDB, common.Address, common.Address, *uint256.Int) {},
+	}
+	statedb, _ := state.New(types.EmptyRootHash, state.NewDatabaseForTesting())
+	evm := NewEVM(vmctx, statedb, params.AllEthashProtocolChanges, Config{})
 	t.Run(fmt.Sprintf("%s-Gas=%d", test.Name, gas), func(t *testing.T) {
-		_, _, err := RunPrecompiledContract(evm, p, in, gas, nil)
+		_, _, err := RunPrecompiledContract(evm, nil, p, common.HexToAddress(addr), in, gas, nil)
 		if err.Error() != "out of gas" {
 			t.Errorf("Expected error [out of gas], got [%v]", err)
 		}
@@ -156,7 +160,7 @@ func testPrecompiledFailure(addr string, test precompiledFailureTest, t *testing
 	evm := NewEVM(vmctx, statedb, params.AllEthashProtocolChanges, Config{})
 
 	t.Run(test.Name, func(t *testing.T) {
-		_, _, err := RunPrecompiledContract(evm, p, in, gas, nil)
+		_, _, err := RunPrecompiledContract(evm, nil, p, common.HexToAddress(addr), in, gas, nil)
 		if err.Error() != test.ExpectedError {
 			t.Errorf("Expected error [%v], got [%v]", test.ExpectedError, err)
 		}
@@ -181,13 +185,17 @@ func benchmarkPrecompiled(addr string, test precompiledTest, bench *testing.B) {
 		err  error
 		data = make([]byte, len(in))
 	)
-
+	vmctx := BlockContext{
+		Transfer: func(StateDB, common.Address, common.Address, *uint256.Int) {},
+	}
+	statedb, _ := state.New(types.EmptyRootHash, state.NewDatabaseForTesting())
+	evm := NewEVM(vmctx, statedb, params.AllEthashProtocolChanges, Config{})
 	bench.Run(fmt.Sprintf("%s-Gas=%d", test.Name, reqGas), func(bench *testing.B) {
 		bench.ReportAllocs()
 		start := time.Now()
 		for bench.Loop() {
 			copy(data, in)
-			res, _, err = RunPrecompiledContract(evm, p, data, reqGas, nil)
+			res, _, err = RunPrecompiledContract(evm, nil, p, common.HexToAddress(addr), data, reqGas, nil)
 		}
 		elapsed := uint64(time.Since(start))
 		if elapsed < 1 {

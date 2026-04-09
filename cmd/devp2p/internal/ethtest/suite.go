@@ -447,7 +447,7 @@ func (s *Suite) TestGetReceipts(t *utesting.T) {
 		t.Fatalf("could not write to connection: %v", err)
 	}
 	// Wait for response.
-	resp := new(eth.ReceiptsPacket[*eth.ReceiptList69])
+	resp := new(eth.ReceiptsPacket)
 	if err := conn.ReadMsg(ethProto, eth.ReceiptsMsg, &resp); err != nil {
 		t.Fatalf("error reading block bodies msg: %v", err)
 	}
@@ -456,47 +456,6 @@ func (s *Suite) TestGetReceipts(t *utesting.T) {
 	}
 	if resp.List.Len() != len(req.GetReceiptsRequest) {
 		t.Fatalf("wrong receipts in response: expected %d receipts, got %d", len(req.GetReceiptsRequest), resp.List.Len())
-	}
-}
-
-func (s *Suite) TestGetReceipts(t *utesting.T) {
-	t.Log(`This test sends GetReceipts requests to the node for known blocks in the test chain.`)
-	conn, err := s.dialAndPeer(nil)
-	if err != nil {
-		t.Fatalf("peering failed: %v", err)
-	}
-	defer conn.Close()
-
-	// Find some blocks containing receipts.
-	var hashes = make([]common.Hash, 0, 3)
-	for i := range s.chain.Len() {
-		block := s.chain.GetBlock(i)
-		if len(block.Transactions()) > 0 {
-			hashes = append(hashes, block.Hash())
-		}
-		if len(hashes) == cap(hashes) {
-			break
-		}
-	}
-
-	// Create block bodies request.
-	req := &eth.GetReceiptsPacket{
-		RequestId:          66,
-		GetReceiptsRequest: (eth.GetReceiptsRequest)(hashes),
-	}
-	if err := conn.Write(ethProto, eth.GetReceiptsMsg, req); err != nil {
-		t.Fatalf("could not write to connection: %v", err)
-	}
-	// Wait for response.
-	resp := new(eth.ReceiptsPacket[*eth.ReceiptList69])
-	if err := conn.ReadMsg(ethProto, eth.ReceiptsMsg, &resp); err != nil {
-		t.Fatalf("error reading block bodies msg: %v", err)
-	}
-	if got, want := resp.RequestId, req.RequestId; got != want {
-		t.Fatalf("unexpected request id in respond", got, want)
-	}
-	if len(resp.List) != len(req.GetReceiptsRequest) {
-		t.Fatalf("wrong bodies in response: expected %d bodies, got %d", len(req.GetReceiptsRequest), len(resp.List))
 	}
 }
 

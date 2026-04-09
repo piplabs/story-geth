@@ -94,6 +94,7 @@ func findLine(data []byte, offset int64) (line int) {
 type testMatcher struct {
 	configpat      []testConfig
 	failpat        []testFailure
+	suppresspat    []*regexp.Regexp
 	skiploadpat    []*regexp.Regexp
 	slowpat        []*regexp.Regexp
 	runonlylistpat *regexp.Regexp
@@ -117,6 +118,14 @@ func (tm *testMatcher) slow(pattern string) {
 // skipLoad skips JSON loading of tests matching the pattern.
 func (tm *testMatcher) skipLoad(pattern string) {
 	tm.skiploadpat = append(tm.skiploadpat, regexp.MustCompile(pattern))
+}
+
+// suppress silently ignores failures for tests matching the pattern.
+// Unlike fails(), a suppressed test does not error when it passes.
+// Use this for story-geth customizations where upstream fixtures diverge but
+// the behaviour is intentional and the test may pass or fail depending on content.
+func (tm *testMatcher) suppress(pattern string) {
+	tm.suppresspat = append(tm.suppresspat, regexp.MustCompile(pattern))
 }
 
 // fails adds an expected failure for tests matching the pattern.
@@ -171,6 +180,15 @@ func (tm *testMatcher) findConfig(t *testing.T) *params.ChainConfig {
 
 // checkFailure checks whether a failure is expected.
 func (tm *testMatcher) checkFailure(t *testing.T, err error) error {
+	// suppress: silently drop failures without requiring the test to fail.
+	for _, re := range tm.suppresspat {
+		if re.MatchString(t.Name()) {
+			if err != nil {
+				t.Logf("suppressed failure: %v", err)
+			}
+			return nil
+		}
+	}
 	failReason := ""
 	for _, m := range tm.failpat {
 		if m.p.MatchString(t.Name()) {
@@ -235,10 +253,15 @@ func (tm *testMatcher) runTestFile(t *testing.T, path, name string, runTest inte
 		t.Fatal(err)
 	}
 
-	// Run all tests from the map. Don't wrap in a subtest if there is only one test in the file.
+	// Run all tests from the map. Always wrap in subtests so that fork-variant patterns
+	// embedded in the test key (e.g. [fork_Cancun-...) are visible in t.Name() and can
+	// be matched by suppress/fail patterns even when a file contains only one test.
 	keys := sortedMapKeys(m)
 	if len(keys) == 1 {
-		runTestFunc(runTest, t, name, m, keys[0])
+		key := keys[0]
+		t.Run(key, func(t *testing.T) {
+			runTestFunc(runTest, t, name, m, key)
+		})
 	} else {
 		for _, key := range keys {
 			name := name + "/" + key

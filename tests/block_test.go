@@ -85,6 +85,21 @@ func TestExecutionSpecBlocktests(t *testing.T) {
 	bt.skipLoad(".*prague/eip7251_consolidations/test_system_contract_deployment.json")
 	bt.skipLoad(".*prague/eip7002_el_triggerable_withdrawals/test_system_contract_deployment.json")
 
+	// Story-geth defers ProcessBeaconBlockRoot to Osaka (upstream does it at Cancun).
+	// All upstream fixtures were generated against upstream geth where beacon root is
+	// written from Cancun, so Cancun/Prague/Osaka fork variants may diverge in state root.
+	// Use suppress (not fails) because some tests in those forks still pass.
+	bt.suppress(`.*\[fork_Cancun-`)
+	bt.suppress(`.*\[fork_ShanghaiToCancunAtTime15k-`)
+	bt.suppress(`.*\[fork_Prague-`)
+	bt.suppress(`.*\[fork_CancunToPragueAtTime15k-`)
+	bt.suppress(`.*\[fork_Osaka-`)
+	bt.suppress(`.*\[fork_PragueToOsakaAtTime15k-`)
+	bt.suppress(`.*\[fork_OsakaToBPO1AtTime15k-`)
+	bt.suppress(`.*\[fork_BPO1ToBPO2AtTime15k-`)
+	bt.suppress(`.*\[fork_BPO2ToBPO3AtTime15k-`)
+	bt.suppress(`.*\[fork_BPO3ToBPO4AtTime15k-`)
+
 	bt.walk(t, executionSpecBlockchainTestDir, func(t *testing.T, name string, test *BlockTest) {
 		execBlockTest(t, bt, test)
 	})

@@ -44,7 +44,7 @@ func TestTransactionRollbackBehavior(t *testing.T) {
 
 	sim.Rollback()
 
-	if pendingStateHasTx(client, tx0) || pendingStateHasTx(client, tx1) {
+	if pendingStateHasTx(client, btx0) || pendingStateHasTx(client, tx0) || pendingStateHasTx(client, tx1) {
 		t.Fatalf("all transactions were not rolled back")
 	}
 
@@ -54,7 +54,7 @@ func TestTransactionRollbackBehavior(t *testing.T) {
 
 	sim.Commit()
 
-	if !pendingStateHasTx(client, tx2) || !pendingStateHasTx(client, tx3) {
+	if !pendingStateHasTx(client, btx2) || !pendingStateHasTx(client, tx2) || !pendingStateHasTx(client, tx3) {
 		t.Fatalf("all post-rollback transactions were not included")
 	}
 }

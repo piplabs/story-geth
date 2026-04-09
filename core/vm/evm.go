@@ -66,6 +66,7 @@ type BlockContext struct {
 	BaseFee     *big.Int       // Provides information for BASEFEE (0 if vm runs with NoBaseFee flag and 0 gas price)
 	BlobBaseFee *big.Int       // Provides information for BLOBBASEFEE (0 if vm runs with NoBaseFee flag and 0 blob gas price)
 	Random      *common.Hash   // Provides information for PREVRANDAO
+	SlotNum     uint64         // Provides information for SLOTNUM
 }
 
 // TxContext provides the EVM with information about a transaction.
@@ -151,6 +152,8 @@ func NewEVM(blockCtx BlockContext, statedb StateDB, chainConfig *params.ChainCon
 	evm.precompiles = activePrecompiledContracts(evm.chainRules)
 
 	switch {
+	case evm.chainRules.IsAmsterdam:
+		evm.table = &amsterdamInstructionSet
 	case evm.chainRules.IsOsaka:
 		evm.table = &osakaInstructionSet
 	case evm.chainRules.IsVerkle:
@@ -252,13 +255,14 @@ func (evm *EVM) Call(caller common.Address, addr common.Address, input []byte, g
 	if evm.depth > int(params.CallCreateDepth) {
 		return nil, gas, ErrDepth
 	}
-	// Fail if we're trying to transfer more than the available balance
-	if !value.IsZero() && !evm.Context.CanTransfer(evm.StateDB, caller, value) {
+	syscall := isSystemCall(caller)
+
+	// Fail if we're trying to transfer more than the available balance.
+	if !syscall && !value.IsZero() && !evm.Context.CanTransfer(evm.StateDB, caller, value) {
 		return nil, gas, ErrInsufficientBalance
 	}
 	snapshot := evm.StateDB.Snapshot()
 	p, isPrecompile := evm.precompile(addr)
-
 	if !evm.StateDB.Exist(addr) {
 		if !isPrecompile && evm.chainRules.IsEIP4762 && !isSystemCall(caller) {
 			// Add proof of absence to witness
@@ -282,13 +286,21 @@ func (evm *EVM) Call(caller common.Address, addr common.Address, input []byte, g
 		}
 		evm.StateDB.CreateAccount(addr)
 	}
-	evm.Context.Transfer(evm.StateDB, caller, addr, value)
-
+	// Perform the value transfer only in non-syscall mode.
+	// Calling this is required even for zero-value transfers,
+	// to ensure the state clearing mechanism is applied.
+	if !syscall {
+		evm.Context.Transfer(evm.StateDB, caller, addr, value)
+	}
 	if isPrecompile {
 		evm.currentPrecompileCallType = CALL
 		evm.caller = caller
-		ret, gas, err = RunPrecompiledContract(evm, p, input, gas, evm.Config.Tracer)
-		log.Info("Call", "precompile", true, "ret", ret, "gas", gas, "err", err)
+
+		var stateDB StateDB
+		if evm.chainRules.IsAmsterdam {
+			stateDB = evm.StateDB
+		}
+		ret, gas, err = RunPrecompiledContract(evm, stateDB, p, addr, input, gas, evm.Config.Tracer)
 	} else {
 		// Initialise a new contract and set the code that is to be used by the EVM.
 		code := evm.resolveCode(addr)
@@ -312,7 +324,6 @@ func (evm *EVM) Call(caller common.Address, addr common.Address, input []byte, g
 			if evm.Config.Tracer != nil && evm.Config.Tracer.OnGasChange != nil {
 				evm.Config.Tracer.OnGasChange(gas, 0, tracing.GasChangeCallFailedExecution)
 			}
-
 			gas = 0
 		}
 		// TODO: consider clearing up unused snapshots:
@@ -354,7 +365,11 @@ func (evm *EVM) CallCode(caller common.Address, addr common.Address, input []byt
 	if p, isPrecompile := evm.precompile(addr); isPrecompile {
 		evm.currentPrecompileCallType = CALLCODE
 		evm.caller = caller
-		ret, gas, err = RunPrecompiledContract(evm, p, input, gas, evm.Config.Tracer)
+		var stateDB StateDB
+		if evm.chainRules.IsAmsterdam {
+			stateDB = evm.StateDB
+		}
+		ret, gas, err = RunPrecompiledContract(evm, stateDB, p, addr, input, gas, evm.Config.Tracer)
 	} else {
 		// Initialise a new contract and set the code that is to be used by the EVM.
 		// The contract is a scoped environment for this execution context only.
@@ -399,7 +414,11 @@ func (evm *EVM) DelegateCall(originCaller common.Address, caller common.Address,
 	if p, isPrecompile := evm.precompile(addr); isPrecompile {
 		evm.currentPrecompileCallType = DELEGATECALL
 		evm.caller = caller
-		ret, gas, err = RunPrecompiledContract(evm, p, input, gas, evm.Config.Tracer)
+		var stateDB StateDB
+		if evm.chainRules.IsAmsterdam {
+			stateDB = evm.StateDB
+		}
+		ret, gas, err = RunPrecompiledContract(evm, stateDB, p, addr, input, gas, evm.Config.Tracer)
 	} else {
 		// Initialise a new contract and make initialise the delegate values
 		//
@@ -453,7 +472,11 @@ func (evm *EVM) StaticCall(caller common.Address, addr common.Address, input []b
 	if p, isPrecompile := evm.precompile(addr); isPrecompile {
 		evm.currentPrecompileCallType = STATICCALL
 		evm.caller = caller
-		ret, gas, err = RunPrecompiledContract(evm, p, input, gas, evm.Config.Tracer)
+		var stateDB StateDB
+		if evm.chainRules.IsAmsterdam {
+			stateDB = evm.StateDB
+		}
+		ret, gas, err = RunPrecompiledContract(evm, stateDB, p, addr, input, gas, evm.Config.Tracer)
 	} else {
 		// Initialise a new contract and set the code that is to be used by the EVM.
 		// The contract is a scoped environment for this execution context only.

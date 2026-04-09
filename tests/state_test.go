@@ -92,6 +92,15 @@ func TestExecutionSpecState(t *testing.T) {
 	}
 	st := new(testMatcher)
 
+	// Story-geth registers P256VERIFY (0x100) and IPGRAPH (0x101) as precompiles from Cancun,
+	// so tests that assert those addresses are absent will always diverge from upstream fixtures.
+	st.skipLoad(`.*test_precompile_absence.*`)
+	st.skipLoad(`.*test_precompiles.*`)
+
+	// Story-geth defers ProcessBeaconBlockRoot to Osaka (upstream does it at Cancun).
+	// State tests that are sensitive to beacon root writes diverge for Cancun/Prague forks.
+	st.skipLoad(`.*failed_tx_xcf416c53_Paris.*`)
+
 	st.walk(t, executionSpecStateTestDir, func(t *testing.T, name string, test *StateTest) {
 		execStateTest(t, st, test)
 	})

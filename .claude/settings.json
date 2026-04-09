@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(go build:*)",
+      "Bash(grep -r \"transitiontrie\\\\|bintrie\" /Users/steven/go/src/stevemilk/story-geth/trie/*.go)",
+      "Bash(go list:*)",
+      "Bash(grep -rn \"bintrie\\\\|transitiontrie\" trie/*.go)",
+      "Bash(make test:*)",
+      "Bash(python3 -m json.tool)",
+      "Bash(grep -r \"GeneralStateTests\\\\|testdata\\\\|ExecutionSpec\" /Users/steven/go/src/stevemilk/story-geth/tests/*.go)",
+      "Bash(grep -n \"Cancun\\\\|fork_Cancun\\\\|GetChainConfig\" /Users/steven/go/src/stevemilk/story-geth/tests/init.go /Users/steven/go/src/stevemilk/story-geth/tests/helpers.go /Users/steven/go/src/stevemilk/story-geth/tests/gen_*.go)",
+      "Bash(ls -la /Users/steven/go/src/stevemilk/story-geth/tests/*.go)",
+      "Bash(grep -n \"TestExecutionSpecBlocktests\\\\|TestExecutionSpec\\\\|executionSpec\" /Users/steven/go/src/stevemilk/story-geth/tests/*.go)",
+      "Bash(python3 -c \" import json with open\\('tests/spec-tests/fixtures/blockchain_tests/osaka/eip7939_count_leading_zeros/test_clz_gas_cost.json'\\) as f: data = json.load\\(f\\) for k,v in data.items\\(\\): print\\(k[:80], '->', v.get\\('network', 'N/A'\\) if isinstance\\(v, dict\\) else '?'\\) \")",
+      "Bash(python3 -c \" import json with open\\('tests/spec-tests/fixtures/blockchain_tests/osaka/eip7934_block_rlp_limit/test_block_at_rlp_limit_with_logs.json'\\) as f: data = json.load\\(f\\) for k,v in list\\(data.items\\(\\)\\)[:3]: print\\(k[:100], '->', v.get\\('network', 'N/A'\\) if isinstance\\(v, dict\\) else '?'\\) \")",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(list\\(d.keys\\(\\)\\)\\); [print\\(k, d[k].get\\('network','?'\\)\\) for k in list\\(d.keys\\(\\)\\)[:5]]\")",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); keys=list\\(d.keys\\(\\)\\); print\\(len\\(keys\\), 'keys'\\); [print\\(k[:80], '|', d[k].get\\('network','?'\\)\\) for k in keys[:3]]\")",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); keys=list\\(d.keys\\(\\)\\); print\\(len\\(keys\\), 'keys'\\); [print\\(k[:100], '|', d[k].get\\('network','?'\\)\\) for k in keys[:3]]\")",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); keys=list\\(d.keys\\(\\)\\); print\\(keys[0]\\)\")",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); keys=list\\(d.keys\\(\\)\\); print\\(len\\(keys\\)\\); [print\\(k[:100], '|', d[k].get\\('network','?'\\)\\) for k in keys[:5]]\")",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); keys=list\\(d.keys\\(\\)\\); print\\(len\\(keys\\)\\); [print\\(k[:120], '|', d[k].get\\('network','?'\\)\\) for k in keys[:3]]\")",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(list\\(d.keys\\(\\)\\)[0]\\)\")",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); keys=list\\(d.keys\\(\\)\\); print\\(len\\(keys\\)\\); [print\\(k[:120]\\) for k in keys[:3]]\")"
+    ]
+  }
+}
