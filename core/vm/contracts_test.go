@@ -131,12 +131,6 @@ func testPrecompiledOOG(addr string, test precompiledTest, t *testing.T) {
 	in := common.Hex2Bytes(test.Input)
 	gas := test.Gas - 1
 
-	vmctx := BlockContext{
-		Transfer: func(StateDB, common.Address, common.Address, *uint256.Int) {},
-	}
-	statedb, _ := state.New(types.EmptyRootHash, state.NewDatabaseForTesting())
-	evm := NewEVM(vmctx, statedb, params.AllEthashProtocolChanges, Config{})
-
 	t.Run(fmt.Sprintf("%s-Gas=%d", test.Name, gas), func(t *testing.T) {
 		_, _, err := RunPrecompiledContract(evm, p, in, gas, nil)
 		if err.Error() != "out of gas" {
@@ -192,11 +186,6 @@ func benchmarkPrecompiled(addr string, test precompiledTest, bench *testing.B) {
 		bench.ReportAllocs()
 		start := time.Now()
 		for bench.Loop() {
-			vmctx := BlockContext{
-				Transfer: func(StateDB, common.Address, common.Address, *uint256.Int) {},
-			}
-			statedb, _ := state.New(types.EmptyRootHash, state.NewDatabaseForTesting())
-			evm := NewEVM(vmctx, statedb, params.AllEthashProtocolChanges, Config{})
 			copy(data, in)
 			res, _, err = RunPrecompiledContract(evm, p, data, reqGas, nil)
 		}

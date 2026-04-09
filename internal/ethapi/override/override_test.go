@@ -39,6 +39,10 @@ func (p *precompileContract) Name() string {
 	panic("implement me")
 }
 
+func (p *precompileContract) Name() string {
+	panic("implement me")
+}
+
 func TestStateOverrideMovePrecompile(t *testing.T) {
 	db := state.NewDatabase(triedb.NewDatabase(rawdb.NewMemoryDatabase(), nil), nil)
 	statedb, err := state.New(types.EmptyRootHash, db)
