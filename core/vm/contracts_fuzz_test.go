@@ -40,7 +40,7 @@ func FuzzPrecompiledContracts(f *testing.F) {
 			return
 		}
 		vmctx := BlockContext{
-			Transfer: func(StateDB, common.Address, common.Address, *uint256.Int) {},
+			Transfer: func(StateDB, common.Address, common.Address, *uint256.Int, *params.Rules) {},
 		}
 		statedb, _ := state.New(types.EmptyRootHash, state.NewDatabaseForTesting())
 		evm := NewEVM(vmctx, statedb, params.AllEthashProtocolChanges, Config{})

@@ -20,7 +20,14 @@
       "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); keys=list\\(d.keys\\(\\)\\); print\\(len\\(keys\\)\\); [print\\(k[:100], '|', d[k].get\\('network','?'\\)\\) for k in keys[:5]]\")",
       "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); keys=list\\(d.keys\\(\\)\\); print\\(len\\(keys\\)\\); [print\\(k[:120], '|', d[k].get\\('network','?'\\)\\) for k in keys[:3]]\")",
       "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(list\\(d.keys\\(\\)\\)[0]\\)\")",
-      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); keys=list\\(d.keys\\(\\)\\); print\\(len\\(keys\\)\\); [print\\(k[:120]\\) for k in keys[:3]]\")"
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); keys=list\\(d.keys\\(\\)\\); print\\(len\\(keys\\)\\); [print\\(k[:120]\\) for k in keys[:3]]\")",
+      "Bash(gh pr:*)",
+      "Bash(gh api:*)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:patch-diff.githubusercontent.com)",
+      "Bash(grep -n \"TransferFunc\\\\|type Transfer\" /Users/steven/go/src/stevemilk/story-geth/core/vm/*.go)",
+      "Bash(grep -v \"^[+-].*//\\\\|^[+-].*\\\\*\\\\|^[+-][[:space:]]*$\")",
+      "Bash(grep -v \"//\\\\|^\\\\+[[:space:]]*$\\\\|^-[[:space:]]*$\")"
     ]
   }
 }

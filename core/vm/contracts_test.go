@@ -105,7 +105,7 @@ func testPrecompiled(addr string, test precompiledTest, t *testing.T) {
 	in := common.Hex2Bytes(test.Input)
 	gas := p.RequiredGas(in)
 	vmctx := BlockContext{
-		Transfer: func(StateDB, common.Address, common.Address, *uint256.Int) {},
+		Transfer: func(StateDB, common.Address, common.Address, *uint256.Int, *params.Rules) {},
 	}
 	statedb, _ := state.New(types.EmptyRootHash, state.NewDatabaseForTesting())
 	evm := NewEVM(vmctx, statedb, params.AllEthashProtocolChanges, Config{})
@@ -131,7 +131,7 @@ func testPrecompiledOOG(addr string, test precompiledTest, t *testing.T) {
 	in := common.Hex2Bytes(test.Input)
 	gas := test.Gas - 1
 	vmctx := BlockContext{
-		Transfer: func(StateDB, common.Address, common.Address, *uint256.Int) {},
+		Transfer: func(StateDB, common.Address, common.Address, *uint256.Int, *params.Rules) {},
 	}
 	statedb, _ := state.New(types.EmptyRootHash, state.NewDatabaseForTesting())
 	evm := NewEVM(vmctx, statedb, params.AllEthashProtocolChanges, Config{})
@@ -154,7 +154,7 @@ func testPrecompiledFailure(addr string, test precompiledFailureTest, t *testing
 	gas := p.RequiredGas(in)
 
 	vmctx := BlockContext{
-		Transfer: func(StateDB, common.Address, common.Address, *uint256.Int) {},
+		Transfer: func(StateDB, common.Address, common.Address, *uint256.Int, *params.Rules) {},
 	}
 	statedb, _ := state.New(types.EmptyRootHash, state.NewDatabaseForTesting())
 	evm := NewEVM(vmctx, statedb, params.AllEthashProtocolChanges, Config{})
@@ -186,7 +186,7 @@ func benchmarkPrecompiled(addr string, test precompiledTest, bench *testing.B) {
 		data = make([]byte, len(in))
 	)
 	vmctx := BlockContext{
-		Transfer: func(StateDB, common.Address, common.Address, *uint256.Int) {},
+		Transfer: func(StateDB, common.Address, common.Address, *uint256.Int, *params.Rules) {},
 	}
 	statedb, _ := state.New(types.EmptyRootHash, state.NewDatabaseForTesting())
 	evm := NewEVM(vmctx, statedb, params.AllEthashProtocolChanges, Config{})
