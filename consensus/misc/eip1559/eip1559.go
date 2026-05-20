@@ -56,18 +56,19 @@ func VerifyEIP1559Header(config *params.ChainConfig, parent, header *types.Heade
 func CalcBaseFee(config *params.ChainConfig, parent *types.Header) *big.Int {
 	// If the current block is the first EIP-1559 block, return the InitialBaseFee.
 	if !config.IsLondon(parent.Number) {
-		return new(big.Int).SetUint64(params.InitialBaseFee)
+		return applyMinBaseFeeFloor(config, parent, new(big.Int).SetUint64(params.InitialBaseFee))
 	}
 
 	parentGasTarget := parent.GasLimit / config.ElasticityMultiplier()
 	// If the parent gasUsed is the same as the target, the baseFee remains unchanged.
 	if parent.GasUsed == parentGasTarget {
-		return new(big.Int).Set(parent.BaseFee)
+		return applyMinBaseFeeFloor(config, parent, new(big.Int).Set(parent.BaseFee))
 	}
 
 	var (
-		num   = new(big.Int)
-		denom = new(big.Int)
+		num    = new(big.Int)
+		denom  = new(big.Int)
+		result *big.Int
 	)
 
 	if parent.GasUsed > parentGasTarget {
@@ -78,9 +79,10 @@ func CalcBaseFee(config *params.ChainConfig, parent *types.Header) *big.Int {
 		num.Div(num, denom.SetUint64(parentGasTarget))
 		num.Div(num, denom.SetUint64(config.BaseFeeChangeDenominator()))
 		if num.Cmp(common.Big1) < 0 {
-			return num.Add(parent.BaseFee, common.Big1)
+			result = num.Add(parent.BaseFee, common.Big1)
+		} else {
+			result = num.Add(parent.BaseFee, num)
 		}
-		return num.Add(parent.BaseFee, num)
 	} else {
 		// Otherwise if the parent block used less gas than its target, the baseFee should decrease.
 		// max(0, parentBaseFee * gasUsedDelta / parentGasTarget / baseFeeChangeDenominator)
@@ -89,10 +91,24 @@ func CalcBaseFee(config *params.ChainConfig, parent *types.Header) *big.Int {
 		num.Div(num, denom.SetUint64(parentGasTarget))
 		num.Div(num, denom.SetUint64(config.BaseFeeChangeDenominator()))
 
-		baseFee := num.Sub(parent.BaseFee, num)
-		if baseFee.Cmp(common.Big0) < 0 {
-			baseFee = common.Big0
+		result = num.Sub(parent.BaseFee, num)
+		if result.Cmp(common.Big0) < 0 {
+			result = common.Big0
 		}
+	}
+	return applyMinBaseFeeFloor(config, parent, result)
+}
+
+// applyMinBaseFeeFloor clamps baseFee to the configured minimum once the
+// fork gating the floor is active. Applied to both increase and decrease
+// branches, matching the contract that "base fee never goes below floor".
+func applyMinBaseFeeFloor(config *params.ChainConfig, parent *types.Header, baseFee *big.Int) *big.Int {
+	floor := config.MinBaseFeeFloor(parent.Number, parent.Time)
+	if floor == nil {
 		return baseFee
 	}
+	if baseFee.Cmp(floor) < 0 {
+		return new(big.Int).Set(floor)
+	}
+	return baseFee
 }

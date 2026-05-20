@@ -18,4 +18,9 @@ const (
 
 	// Story protocol params
 	DefaultBaseFeeChangeDenomStory = 24 // EIP1559 denominator for Story
+
+	// DefaultMinBaseFeeStory is the floor for EIP-1559 base fee on Story chains
+	// once the Amsterdam hardfork has activated. Initial value chosen for testnet
+	// validation; final mainnet value is subject to foundation review.
+	DefaultMinBaseFeeStory uint64 = 1 * GWei // 1 gwei
 )

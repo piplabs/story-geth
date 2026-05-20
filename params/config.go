@@ -1284,6 +1284,16 @@ func (c *ChainConfig) BaseFeeChangeDenominator() uint64 {
 	return DefaultBaseFeeChangeDenominator
 }
 
+// MinBaseFeeFloor returns the protocol-enforced lower bound on the EIP-1559
+// base fee, gated by the Amsterdam hardfork on Story chains. A nil return
+// value means no floor is enforced for the (block, time) pair.
+func (c *ChainConfig) MinBaseFeeFloor(num *big.Int, time uint64) *big.Int {
+	if !c.IsStory() || !c.IsAmsterdam(num, time) {
+		return nil
+	}
+	return new(big.Int).SetUint64(DefaultMinBaseFeeStory)
+}
+
 // ElasticityMultiplier bounds the maximum gas limit an EIP-1559 block may have.
 func (c *ChainConfig) ElasticityMultiplier() uint64 {
 	return DefaultElasticityMultiplier

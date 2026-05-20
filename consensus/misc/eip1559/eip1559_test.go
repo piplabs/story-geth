@@ -129,3 +129,168 @@ func TestCalcBaseFee(t *testing.T) {
 		}
 	}
 }
+
+// storyConfig returns a Story-chain ChainConfig with Amsterdam optionally activated.
+// Caller passes activateAmsterdam=true to enable the minBaseFee floor.
+func storyConfig(activateAmsterdam bool) *params.ChainConfig {
+	cfg := &params.ChainConfig{
+		ChainID:                 big.NewInt(int64(params.IDStoryMainnet)),
+		HomesteadBlock:          big.NewInt(0),
+		EIP150Block:             big.NewInt(0),
+		EIP155Block:             big.NewInt(0),
+		EIP158Block:             big.NewInt(0),
+		ByzantiumBlock:          big.NewInt(0),
+		ConstantinopleBlock:     big.NewInt(0),
+		PetersburgBlock:         big.NewInt(0),
+		IstanbulBlock:           big.NewInt(0),
+		BerlinBlock:             big.NewInt(0),
+		LondonBlock:             big.NewInt(0),
+		TerminalTotalDifficulty: big.NewInt(0),
+		ShanghaiTime:            newUint64Ptr(0),
+		CancunTime:              newUint64Ptr(0),
+		PragueTime:              newUint64Ptr(0),
+		OsakaTime:               newUint64Ptr(0),
+	}
+	if activateAmsterdam {
+		cfg.AmsterdamTime = newUint64Ptr(0)
+	}
+	return cfg
+}
+
+func newUint64Ptr(v uint64) *uint64 { return &v }
+
+// TestCalcBaseFeeMinBaseFeeFloor verifies the Amsterdam-gated minBaseFee floor.
+func TestCalcBaseFeeMinBaseFeeFloor(t *testing.T) {
+	floor := new(big.Int).SetUint64(params.DefaultMinBaseFeeStory) // 1 gwei
+	belowFloor := big.NewInt(23)                                   // observed cold-state baseFee
+	aboveFloor := new(big.Int).Mul(floor, big.NewInt(5))           // 5 gwei
+
+	tests := []struct {
+		name              string
+		activateAmsterdam bool
+		parentBaseFee     *big.Int
+		parentGasLimit    uint64
+		parentGasUsed     uint64
+		parentTime        uint64
+		expected          *big.Int
+	}{
+		{
+			// Pre-Amsterdam: floor not enforced, baseFee decays freely toward 0.
+			name:              "pre-fork floor not applied",
+			activateAmsterdam: false,
+			parentBaseFee:     belowFloor,
+			parentGasLimit:    20000000,
+			parentGasUsed:     0,
+			parentTime:        0,
+			expected:          big.NewInt(23), // unchanged (zero gas decay produces ~same value)
+		},
+		{
+			// Post-Amsterdam, parent baseFee well below floor, low utilization:
+			// natural calculation would stay below floor; clamp to floor.
+			name:              "below floor + low util clamps up",
+			activateAmsterdam: true,
+			parentBaseFee:     belowFloor,
+			parentGasLimit:    20000000,
+			parentGasUsed:     0,
+			parentTime:        1,
+			expected:          floor,
+		},
+		{
+			// Post-Amsterdam, parent baseFee already at floor, zero utilization:
+			// would normally decay, but stays at floor.
+			name:              "at floor + low util stays at floor",
+			activateAmsterdam: true,
+			parentBaseFee:     new(big.Int).Set(floor),
+			parentGasLimit:    20000000,
+			parentGasUsed:     0,
+			parentTime:        1,
+			expected:          floor,
+		},
+		{
+			// Post-Amsterdam, baseFee above floor, high utilization:
+			// floor does not cap upward movement.
+			name:              "above floor + high util unaffected",
+			activateAmsterdam: true,
+			parentBaseFee:     aboveFloor,
+			parentGasLimit:    20000000,
+			parentGasUsed:     20000000, // 2x target -> baseFee rises
+			parentTime:        1,
+			expected: func() *big.Int {
+				// parent 5 gwei + 5 gwei/8 = 5.625 gwei (denom default 8 in non-Story test cfg)
+				// But storyConfig uses Story chain id; denom is 24 for non-Iliad/Aeneid.
+				delta := new(big.Int).Set(aboveFloor)
+				delta.Div(delta, big.NewInt(int64(params.DefaultBaseFeeChangeDenomStory)))
+				return new(big.Int).Add(aboveFloor, delta)
+			}(),
+		},
+		{
+			// Post-Amsterdam, parent at floor, high utilization: floor allows rise above.
+			name:              "at floor + high util rises above floor",
+			activateAmsterdam: true,
+			parentBaseFee:     new(big.Int).Set(floor),
+			parentGasLimit:    20000000,
+			parentGasUsed:     20000000,
+			parentTime:        1,
+			expected: func() *big.Int {
+				delta := new(big.Int).Set(floor)
+				delta.Div(delta, big.NewInt(int64(params.DefaultBaseFeeChangeDenomStory)))
+				return new(big.Int).Add(floor, delta)
+			}(),
+		},
+		{
+			// Post-Amsterdam, parent above floor, zero utilization: decay capped at floor.
+			name:              "above floor + zero util decays only to floor",
+			activateAmsterdam: true,
+			parentBaseFee:     new(big.Int).Mul(floor, big.NewInt(2)), // 2 gwei
+			parentGasLimit:    20000000,
+			parentGasUsed:     0,
+			parentTime:        1,
+			expected: func() *big.Int {
+				// natural decay: 2 gwei - 2 gwei / 24 = 1.9167 gwei (still above floor)
+				start := new(big.Int).Mul(floor, big.NewInt(2))
+				delta := new(big.Int).Set(start)
+				delta.Div(delta, big.NewInt(int64(params.DefaultBaseFeeChangeDenomStory)))
+				return new(big.Int).Sub(start, delta)
+			}(),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := storyConfig(tc.activateAmsterdam)
+			parent := &types.Header{
+				Number:   big.NewInt(100),
+				Time:     tc.parentTime,
+				GasLimit: tc.parentGasLimit,
+				GasUsed:  tc.parentGasUsed,
+				BaseFee:  tc.parentBaseFee,
+			}
+			got := CalcBaseFee(cfg, parent)
+			if got.Cmp(tc.expected) != 0 {
+				t.Errorf("baseFee mismatch: have %s, want %s", got, tc.expected)
+			}
+		})
+	}
+}
+
+// TestCalcBaseFeeFloorOnlyOnStoryChain verifies non-Story chains never enforce the floor.
+func TestCalcBaseFeeFloorOnlyOnStoryChain(t *testing.T) {
+	// Use the default (non-Story) test config, set Amsterdam, parent baseFee below floor.
+	cfg := copyConfig(params.TestChainConfig)
+	cfg.LondonBlock = big.NewInt(0)
+	cfg.AmsterdamTime = newUint64Ptr(0)
+
+	parent := &types.Header{
+		Number:   big.NewInt(100),
+		Time:     1,
+		GasLimit: 20000000,
+		GasUsed:  0,
+		BaseFee:  big.NewInt(23),
+	}
+	got := CalcBaseFee(cfg, parent)
+	// On non-Story chain, baseFee can decay freely below the Story floor.
+	// We just check that the result is NOT clamped to 1 gwei.
+	if got.Cmp(new(big.Int).SetUint64(params.DefaultMinBaseFeeStory)) >= 0 {
+		t.Errorf("expected baseFee below Story floor on non-Story chain, got %s", got)
+	}
+}
