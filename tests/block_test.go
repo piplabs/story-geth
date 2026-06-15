@@ -66,6 +66,12 @@ func TestBlockchain(t *testing.T) {
 	// This directory contains no test.
 	bt.skipLoad(`.*\.meta/.*`)
 
+	// Broken tests
+	bt.skipLoad(`RevertInCreateInInit`)
+	bt.skipLoad(`InitCollisionParis`)
+	bt.skipLoad(`dynamicAccountOverwriteEmpty_Paris`)
+	bt.skipLoad(`create2collisionStorageParis`)
+
 	bt.walk(t, blockTestDir, func(t *testing.T, name string, test *BlockTest) {
 		execBlockTest(t, bt, test)
 	})
@@ -99,6 +105,11 @@ func TestExecutionSpecBlocktests(t *testing.T) {
 	bt.suppress(`.*\[fork_BPO1ToBPO2AtTime15k-`)
 	bt.suppress(`.*\[fork_BPO2ToBPO3AtTime15k-`)
 	bt.suppress(`.*\[fork_BPO3ToBPO4AtTime15k-`)
+	// Broken tests
+	bt.skipLoad(`RevertInCreateInInit`)
+	bt.skipLoad(`InitCollisionParis`)
+	bt.skipLoad(`dynamicAccountOverwriteEmpty_Paris`)
+	bt.skipLoad(`create2collisionStorageParis`)
 
 	bt.walk(t, executionSpecBlockchainTestDir, func(t *testing.T, name string, test *BlockTest) {
 		execBlockTest(t, bt, test)

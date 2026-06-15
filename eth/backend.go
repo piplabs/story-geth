@@ -49,7 +49,6 @@ import (
 	"github.com/ethereum/go-ethereum/eth/protocols/snap"
 	"github.com/ethereum/go-ethereum/eth/tracers"
 	"github.com/ethereum/go-ethereum/ethdb"
-	"github.com/ethereum/go-ethereum/event"
 	"github.com/ethereum/go-ethereum/guardian"
 	"github.com/ethereum/go-ethereum/internal/ethapi"
 	"github.com/ethereum/go-ethereum/internal/shutdowncheck"
@@ -106,7 +105,6 @@ type Ethereum struct {
 	// DB interfaces
 	chainDb ethdb.Database // Block chain database
 
-	eventMux       *event.TypeMux
 	engine         consensus.Engine
 	accountManager *accounts.Manager
 
@@ -195,7 +193,6 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 	eth := &Ethereum{
 		config:          config,
 		chainDb:         chainDb,
-		eventMux:        stack.EventMux(),
 		accountManager:  stack.AccountManager(),
 		engine:          engine,
 		networkID:       networkID,
@@ -238,6 +235,7 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 			StateHistory:            config.StateHistory,
 			TrienodeHistory:         config.TrienodeHistory,
 			NodeFullValueCheckpoint: config.NodeFullValueCheckpoint,
+			BinTrieGroupDepth:       config.BinTrieGroupDepth,
 			StateScheme:             scheme,
 			HistoryPolicy:           histPolicy,
 			TxLookupLimit:           int64(min(config.TransactionHistory, math.MaxInt64)),
@@ -278,8 +276,8 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 	if config.OverrideBPO2 != nil {
 		overrides.OverrideBPO2 = config.OverrideBPO2
 	}
-	if config.OverrideVerkle != nil {
-		overrides.OverrideVerkle = config.OverrideVerkle
+	if config.OverrideUBT != nil {
+		overrides.OverrideUBT = config.OverrideUBT
 	}
 	if config.Enable4844 {
 		overrides.Override4844 = config.Enable4844
@@ -351,7 +349,6 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 		Network:        networkID,
 		Sync:           config.SyncMode,
 		BloomCache:     uint64(cacheLimit),
-		EventMux:       eth.eventMux,
 		RequiredBlocks: config.RequiredBlocks,
 	}); err != nil {
 		return nil, err
@@ -421,7 +418,7 @@ func (s *Ethereum) APIs() []rpc.API {
 			Service:   NewMinerAPI(s),
 		}, {
 			Namespace: "eth",
-			Service:   downloader.NewDownloaderAPI(s.handler.downloader, s.blockchain, s.eventMux),
+			Service:   downloader.NewDownloaderAPI(s.handler.downloader, s.blockchain),
 		}, {
 			Namespace: "admin",
 			Service:   NewAdminAPI(s),
@@ -616,7 +613,6 @@ func (s *Ethereum) Stop() error {
 	s.shutdownTracker.Stop()
 
 	s.chainDb.Close()
-	s.eventMux.Stop()
 
 	if instance := guardian.GetInstance(); instance != nil {
 		instance.Stop()

@@ -45,7 +45,7 @@ func FuzzPrecompiledContracts(f *testing.F) {
 		statedb, _ := state.New(types.EmptyRootHash, state.NewDatabaseForTesting())
 		evm := NewEVM(vmctx, statedb, params.AllEthashProtocolChanges, Config{})
 		inWant := string(input)
-		RunPrecompiledContract(evm, nil, p, a, input, gas, nil)
+		RunPrecompiledContract(evm, nil, p, a, input, NewGasBudget(gas), nil, params.Rules{})
 		if inHave := string(input); inWant != inHave {
 			t.Errorf("Precompiled %v modified input data", a)
 		}
