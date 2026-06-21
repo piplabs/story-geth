@@ -549,6 +549,12 @@ var (
 		Value:    ethconfig.Defaults.Miner.Recommit,
 		Category: flags.MinerCategory,
 	}
+	MinerTxExecTimeoutFlag = &cli.DurationFlag{
+		Name:     "miner.tx-exec-timeout",
+		Usage:    "Max wall-clock time a single transaction may run during block building before it is skipped (0 = disabled)",
+		Value:    ethconfig.Defaults.Miner.TxExecTimeout,
+		Category: flags.MinerCategory,
+	}
 	MinerPendingFeeRecipientFlag = &cli.StringFlag{
 		Name:     "miner.pending.feeRecipient",
 		Usage:    "0x prefixed public address for the pending block producer (not used for actual block production)",
@@ -1662,6 +1668,9 @@ func setMiner(ctx *cli.Context, cfg *miner.Config) {
 	}
 	if ctx.IsSet(MinerRecommitIntervalFlag.Name) {
 		cfg.Recommit = ctx.Duration(MinerRecommitIntervalFlag.Name)
+	}
+	if ctx.IsSet(MinerTxExecTimeoutFlag.Name) {
+		cfg.TxExecTimeout = ctx.Duration(MinerTxExecTimeoutFlag.Name)
 	}
 	if ctx.IsSet(MinerNewPayloadTimeoutFlag.Name) {
 		log.Warn("The flag --miner.newpayload-timeout is deprecated and will be removed, please use --miner.recommit")

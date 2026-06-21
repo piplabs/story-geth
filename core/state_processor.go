@@ -17,6 +17,7 @@
 package core
 
 import (
+	"errors"
 	"fmt"
 	"math/big"
 
@@ -36,6 +37,12 @@ const (
 	omitEIP7002 = true // EIP-7002 is the withdrawal queue system call
 	omitEIP7251 = true // EIP-7251 is the consolidation queue system call
 )
+
+// ErrExecutionCancelled is returned when the EVM was cancelled mid-execution.
+// Only the miner's block-building watchdog cancels; block import never does, so
+// this is inert there. Returning before the state is finalised lets the caller
+// revert the transaction's partial changes cleanly via its pre-tx snapshot.
+var ErrExecutionCancelled = errors.New("evm execution cancelled")
 
 // StateProcessor is a basic Processor, which takes care of transitioning
 // state from one point to another.
@@ -162,6 +169,11 @@ func ApplyTransactionWithEVM(msg *Message, gp *GasPool, statedb *state.StateDB, 
 	result, err := ApplyMessage(evm, msg, gp)
 	if err != nil {
 		return nil, err
+	}
+	// If the EVM was cancelled mid-execution (miner watchdog), bail out before
+	// finalising so the caller can revert the partial state via its snapshot.
+	if evm.Cancelled() {
+		return nil, ErrExecutionCancelled
 	}
 	// Update the state with pending changes.
 	var root []byte

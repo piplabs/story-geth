@@ -237,6 +237,12 @@ func (evm *EVM) Cancelled() bool {
 	return evm.abort.Load()
 }
 
+// ResetCancel clears a prior Cancel so a reused EVM can execute again. The miner
+// reuses a single EVM across a block, so it must re-arm between transactions.
+func (evm *EVM) ResetCancel() {
+	evm.abort.Store(false)
+}
+
 func isSystemCall(caller common.Address) bool {
 	return caller == params.SystemAddress
 }

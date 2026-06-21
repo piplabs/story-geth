@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -41,6 +42,7 @@ var (
 	errBlockInterruptedByNewHead  = errors.New("new head arrived while building block")
 	errBlockInterruptedByRecommit = errors.New("recommit interrupt while building block")
 	errBlockInterruptedByTimeout  = errors.New("timeout while building block")
+	errTxExecTimeout              = errors.New("transaction exceeded per-tx execution budget")
 )
 
 // environment is the worker's current environment and holds all
@@ -330,14 +332,48 @@ func (miner *Miner) commitBlobTransaction(env *environment, tx *types.Transactio
 
 // applyTransaction runs the transaction. If execution fails, state and gas pool are reverted.
 func (miner *Miner) applyTransaction(env *environment, tx *types.Transaction) (*types.Receipt, error) {
+	// Re-arm the per-block EVM in case a previous transaction's watchdog fired late.
+	env.evm.ResetCancel()
+	if d := miner.config.TxExecTimeout; d > 0 {
+		// timer.Stop does not wait for an already-running AfterFunc callback, so a
+		// stale watchdog could otherwise call Cancel after the next transaction has
+		// started and abort it by mistake. Guard the callback with a done flag held
+		// under the same mutex as the cleanup: once cleanup runs, the callback can no
+		// longer fire Cancel, and any Cancel it does fire is ordered before cleanup
+		// returns (and thus before the next tx's ResetCancel).
+		var (
+			mu   sync.Mutex
+			done bool
+		)
+		timer := time.AfterFunc(d, func() {
+			mu.Lock()
+			defer mu.Unlock()
+			if !done {
+				env.evm.Cancel()
+			}
+		})
+		defer func() {
+			mu.Lock()
+			done = true
+			mu.Unlock()
+			timer.Stop()
+		}()
+	}
 	var (
-		snap = env.state.Snapshot()
-		gp   = env.gasPool.Gas()
+		snap    = env.state.Snapshot()
+		gp      = env.gasPool.Gas()
+		gasUsed = env.header.GasUsed
 	)
 	receipt, err := core.ApplyTransaction(env.evm, env.gasPool, env.state, env.header, tx, &env.header.GasUsed)
+	// The watchdog makes ApplyTransaction bail out before finalising, so the
+	// snapshot is still valid here and reverts the tx's partial state cleanly.
+	if errors.Is(err, core.ErrExecutionCancelled) {
+		err = errTxExecTimeout
+	}
 	if err != nil {
 		env.state.RevertToSnapshot(snap)
 		env.gasPool.SetGas(gp)
+		env.header.GasUsed = gasUsed
 	}
 	return receipt, err
 }
@@ -448,6 +484,13 @@ func (miner *Miner) commitTransactions(env *environment, plainTxs, blobTxs *tran
 		case errors.Is(err, nil):
 			// Everything ok, collect the logs and shift in the next transaction from the same account
 			txs.Shift()
+
+		case errors.Is(err, errTxExecTimeout):
+			// Tx ran past the per-tx execution budget; drop the sender's run so the
+			// block builder isn't stalled by a single under-priced heavy transaction.
+			log.Warn("Ejected transaction exceeding per-tx execution budget",
+				"hash", ltx.Hash, "sender", from, "to", tx.To(), "gas", tx.Gas(), "budget", miner.config.TxExecTimeout)
+			txs.Pop()
 
 		default:
 			// Transaction is regarded as invalid, drop all consecutive transactions from

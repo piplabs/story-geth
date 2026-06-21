@@ -48,6 +48,7 @@ type Config struct {
 	GasCeil             uint64         // Target gas ceiling for mined blocks.
 	GasPrice            *big.Int       // Minimum gas price for mining a transaction
 	Recommit            time.Duration  // The time interval for miner to re-create mining work.
+	TxExecTimeout       time.Duration  // Max wall-clock time a single tx may run during block building (0 = disabled).
 }
 
 // DefaultConfig contains default settings for miner.
@@ -60,6 +61,10 @@ var DefaultConfig = Config{
 	// for payload generation. It should be enough for Geth to
 	// run 3 rounds.
 	Recommit: 2 * time.Second,
+
+	// A single transaction must never consume the whole build allowance, or one
+	// under-priced heavy tx can stall the builder into shipping empty payloads.
+	TxExecTimeout: 1 * time.Second,
 }
 
 // Miner is the main object which takes care of submitting new work to consensus
