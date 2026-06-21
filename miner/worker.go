@@ -45,6 +45,46 @@ var (
 	errTxExecTimeout              = errors.New("transaction exceeded per-tx execution budget")
 )
 
+// txExecSkipTTL is how long a watchdog-ejected transaction is skipped before the
+// builder will attempt it again. The transaction stays in the pool meanwhile.
+const txExecSkipTTL = 5 * time.Minute
+
+// ejectedTxSet remembers transactions the build-time watchdog ejected for
+// exceeding the per-tx execution budget, so the builder skips re-running the
+// same heavy transaction on every slot instead of burning the budget each time.
+type ejectedTxSet struct {
+	mu sync.Mutex
+	m  map[common.Hash]time.Time
+}
+
+func newEjectedTxSet() *ejectedTxSet { return &ejectedTxSet{m: make(map[common.Hash]time.Time)} }
+
+func (s *ejectedTxSet) add(h common.Hash) {
+	now := time.Now()
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for k, exp := range s.m {
+		if now.After(exp) {
+			delete(s.m, k)
+		}
+	}
+	s.m[h] = now.Add(txExecSkipTTL)
+}
+
+func (s *ejectedTxSet) has(h common.Hash) bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	exp, ok := s.m[h]
+	if !ok {
+		return false
+	}
+	if time.Now().After(exp) {
+		delete(s.m, h)
+		return false
+	}
+	return true
+}
+
 // environment is the worker's current environment and holds all
 // information of the sealing block generation.
 type environment struct {
@@ -428,6 +468,12 @@ func (miner *Miner) commitTransactions(env *environment, plainTxs, blobTxs *tran
 		if ltx == nil {
 			break
 		}
+		// Skip transactions the watchdog recently ejected so a single heavy tx
+		// doesn't burn the build budget again every slot while it sits in the pool.
+		if miner.ejected.has(ltx.Hash) {
+			txs.Pop()
+			continue
+		}
 		// If we don't have enough space for the next transaction, skip the account.
 		if env.gasPool.Gas() < ltx.Gas {
 			log.Trace("Not enough gas left for transaction", "hash", ltx.Hash, "left", env.gasPool.Gas(), "needed", ltx.Gas)
@@ -486,8 +532,9 @@ func (miner *Miner) commitTransactions(env *environment, plainTxs, blobTxs *tran
 			txs.Shift()
 
 		case errors.Is(err, errTxExecTimeout):
-			// Tx ran past the per-tx execution budget; drop the sender's run so the
-			// block builder isn't stalled by a single under-priced heavy transaction.
+			// Tx ran past the per-tx execution budget; drop the sender's run and
+			// remember it so later builds skip it instead of re-burning the budget.
+			miner.ejected.add(ltx.Hash)
 			log.Warn("Ejected transaction exceeding per-tx execution budget",
 				"hash", ltx.Hash, "sender", from, "to", tx.To(), "gas", tx.Gas(), "budget", miner.config.TxExecTimeout)
 			txs.Pop()

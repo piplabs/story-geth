@@ -30,7 +30,15 @@ import (
 	"github.com/ethereum/go-ethereum/core/state"
 	"github.com/ethereum/go-ethereum/core/txpool"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/params"
+)
+
+const (
+	// txExecTimeoutMin guards against ejecting normal heavy-but-valid transactions.
+	txExecTimeoutMin = 600 * time.Millisecond
+	// txExecTimeoutMax bounds the budget to the EL build window (CL timeout_commit).
+	txExecTimeoutMax = 1500 * time.Millisecond
 )
 
 // Backend wraps all methods required for mining. Only full node is capable
@@ -62,8 +70,8 @@ var DefaultConfig = Config{
 	// run 3 rounds.
 	Recommit: 2 * time.Second,
 
-	// A single transaction must never consume the whole build allowance, or one
-	// under-priced heavy tx can stall the builder into shipping empty payloads.
+	// Per-tx build budget, kept below the EL build window so ejecting one heavy tx
+	// still leaves time to pack and publish the rest before the CL fetches it.
 	TxExecTimeout: 1 * time.Second,
 }
 
@@ -79,10 +87,25 @@ type Miner struct {
 	chain       *core.BlockChain
 	pending     *pending
 	pendingMu   sync.Mutex // Lock protects the pending block
+	ejected     *ejectedTxSet
 }
 
 // New creates a new miner with provided config.
 func New(eth Backend, config Config, engine consensus.Engine) *Miner {
+	// Clamp the per-tx watchdog into a safe range: above txExecTimeoutMax it leaves
+	// no time to publish a non-empty block before the CL fetches the payload; below
+	// txExecTimeoutMin it would eject normal heavy-but-valid transactions.
+	if config.TxExecTimeout > 0 {
+		if config.TxExecTimeout > txExecTimeoutMax {
+			log.Warn("miner.tx-exec-timeout above EL build window; capping",
+				"given", config.TxExecTimeout, "max", txExecTimeoutMax)
+			config.TxExecTimeout = txExecTimeoutMax
+		} else if config.TxExecTimeout < txExecTimeoutMin {
+			log.Warn("miner.tx-exec-timeout too small; raising to floor",
+				"given", config.TxExecTimeout, "min", txExecTimeoutMin)
+			config.TxExecTimeout = txExecTimeoutMin
+		}
+	}
 	return &Miner{
 		config:      &config,
 		chainConfig: eth.BlockChain().Config(),
@@ -90,6 +113,7 @@ func New(eth Backend, config Config, engine consensus.Engine) *Miner {
 		txpool:      eth.TxPool(),
 		chain:       eth.BlockChain(),
 		pending:     &pending{},
+		ejected:     newEjectedTxSet(),
 	}
 }
 

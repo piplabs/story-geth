@@ -148,3 +148,102 @@ func TestMinerTxExecTimeoutEjectsSlowTx(t *testing.T) {
 		t.Fatal("generateWork stuck on spinner — watchdog never fired")
 	}
 }
+
+// TestMinerWatchdogSkipsReEjectedTx verifies the skip-set: once the watchdog
+// ejects a heavy transaction, later builds skip it (it stays in the pool) instead
+// of re-burning the per-tx budget every slot. The second build must be fast.
+func TestMinerWatchdogSkipsReEjectedTx(t *testing.T) {
+	loopCode := []byte{0x5b, 0x60, 0x00, 0x56} // JUMPDEST PUSH1 0 JUMP
+	loopAddr := common.HexToAddress("0x000000000000000000000000000000000000c0de")
+	attackerKey, _ := crypto.GenerateKey()
+	attackerAddr := crypto.PubkeyToAddress(attackerKey.PublicKey)
+
+	chainConfig := new(params.ChainConfig)
+	*chainConfig = *params.TestChainConfig
+	const blockGas = uint64(5_000_000_000)
+	hugeFunds := new(big.Int).Mul(big.NewInt(params.Ether), big.NewInt(1_000_000))
+
+	gspec := &core.Genesis{Config: chainConfig, GasLimit: blockGas, Alloc: types.GenesisAlloc{
+		testBankAddress: {Balance: hugeFunds},
+		attackerAddr:    {Balance: hugeFunds},
+		loopAddr:        {Code: loopCode, Balance: common.Big0},
+	}}
+	db := rawdb.NewMemoryDatabase()
+	engine := ethash.NewFaker()
+	chain, err := core.NewBlockChain(db, gspec, engine, &core.BlockChainConfig{ArchiveMode: true})
+	if err != nil {
+		t.Fatalf("create chain: %v", err)
+	}
+	defer chain.Stop()
+	pool := legacypool.New(testTxPoolConfig, chain)
+	pl, err := txpool.New(testTxPoolConfig.PriceLimit, chain, []txpool.SubPool{pool})
+	if err != nil {
+		t.Fatalf("txpool: %v", err)
+	}
+	defer pl.Close()
+	backend := &testWorkerBackend{db: db, chain: chain, txPool: pl, genesis: gspec}
+
+	const budget = 200 * time.Millisecond
+	w := New(backend, Config{PendingFeeRecipient: testBankAddress, Recommit: 2 * time.Second, GasCeil: blockGas, GasPrice: big.NewInt(0), TxExecTimeout: budget}, engine)
+
+	signer := types.LatestSigner(chainConfig)
+	spinner := types.MustSignNewTx(attackerKey, signer, &types.LegacyTx{Nonce: 0, To: &loopAddr, Gas: blockGas, GasPrice: big.NewInt(3 * params.InitialBaseFee)})
+	transfer := types.MustSignNewTx(testBankKey, signer, &types.LegacyTx{Nonce: 0, To: &testUserAddress, Value: big.NewInt(1000), Gas: params.TxGas, GasPrice: big.NewInt(2 * params.InitialBaseFee)})
+	for _, e := range backend.txPool.Add([]*types.Transaction{spinner, transfer}, true) {
+		if e != nil {
+			t.Fatalf("txpool add: %v", e)
+		}
+	}
+
+	genParams := &generateParams{timestamp: uint64(time.Now().Unix()), forceTime: true, coinbase: testBankAddress, noTxs: false}
+	build := func() (time.Duration, int) {
+		start := time.Now()
+		r := w.generateWork(genParams, false)
+		if r.err != nil {
+			t.Fatalf("generateWork: %v", r.err)
+		}
+		txs := r.block.Transactions()
+		if len(txs) != 1 || txs[0].Hash() != transfer.Hash() {
+			t.Fatalf("want only the transfer included, got %d txs", len(txs))
+		}
+		return time.Since(start), len(txs)
+	}
+
+	// First build runs the spinner up to the budget before ejecting it.
+	d1, _ := build()
+	if d1 < budget/2 {
+		t.Fatalf("first build %v too fast; spinner should have run ~budget %v before ejection", d1, budget)
+	}
+	if !w.ejected.has(spinner.Hash()) {
+		t.Fatal("spinner not recorded in skip-set after ejection")
+	}
+	// Second build must skip the spinner entirely (no re-run of the budget).
+	d2, _ := build()
+	if d2 > budget/2 {
+		t.Fatalf("second build %v ~ budget: spinner was re-run, not skipped", d2)
+	}
+	t.Logf("build1=%v (ran+ejected) build2=%v (skipped)", d1, d2)
+}
+
+// TestMinerTxExecTimeoutClamp checks New() clamps a misconfigured per-tx budget
+// into [txExecTimeoutMin, txExecTimeoutMax].
+func TestMinerTxExecTimeoutClamp(t *testing.T) {
+	db := rawdb.NewMemoryDatabase()
+	engine := ethash.NewFaker()
+	backend := newTestWorkerBackend(t, params.TestChainConfig, engine, db, 0)
+	defer backend.chain.Stop()
+	defer backend.txPool.Close()
+
+	for _, tc := range []struct{ given, want time.Duration }{
+		{3 * time.Second, txExecTimeoutMax},        // above ceiling -> capped
+		{100 * time.Millisecond, txExecTimeoutMin}, // below floor -> raised
+		{1 * time.Second, 1 * time.Second},         // in range -> unchanged
+		{0, 0},                                     // disabled -> left off
+	} {
+		cfg := Config{Recommit: 2 * time.Second, TxExecTimeout: tc.given, GasPrice: big.NewInt(0)}
+		w := New(backend, cfg, engine)
+		if w.config.TxExecTimeout != tc.want {
+			t.Fatalf("given %v: want clamped %v, got %v", tc.given, tc.want, w.config.TxExecTimeout)
+		}
+	}
+}
