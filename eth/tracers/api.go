@@ -1069,6 +1069,12 @@ func (api *API) traceTx(ctx context.Context, tx *types.Transaction, message *cor
 	statedb.SetTxContext(txctx.TxHash, txctx.TxIndex)
 	_, err = core.ApplyTransactionWithEVM(message, new(core.GasPool).AddGas(message.GasLimit), statedb, vmctx.BlockNumber, txctx.BlockHash, vmctx.Time, tx, &usedGas, evm)
 	if err != nil {
+		// A trace-deadline Cancel now surfaces as ErrExecutionCancelled; preserve the
+		// prior behaviour of returning the partial trace (the tracer was Stopped with
+		// "execution timeout") rather than failing with the internal cancel sentinel.
+		if errors.Is(err, core.ErrExecutionCancelled) {
+			return tracer.GetResult()
+		}
 		return nil, fmt.Errorf("tracing failed: %w", err)
 	}
 	return tracer.GetResult()

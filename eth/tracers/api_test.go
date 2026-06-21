@@ -26,6 +26,7 @@ import (
 	"os"
 	"reflect"
 	"slices"
+	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -1371,5 +1372,45 @@ func TestStandardTraceBlockToFile(t *testing.T) {
 				t.Fatalf("unexpected trace result.  expected\n'%s'\n\nreceived\n'%s'\n", tc.want[j], string(traceReceived))
 			}
 		}
+	}
+}
+
+// TestTraceCallTimeoutPreservesTimeoutError pins the trace-deadline error message.
+// The per-tx build watchdog makes evm.Cancel() surface as core.ErrExecutionCancelled
+// from ApplyTransactionWithEVM; traceTx must special-case it so a timeout still
+// reports the prior "execution timeout" rather than leaking "evm execution cancelled".
+func TestTraceCallTimeoutPreservesTimeoutError(t *testing.T) {
+	t.Parallel()
+
+	accounts := newAccounts(1)
+	spinner := common.HexToAddress("0x000000000000000000000000000000000000c0de")
+	genesis := &core.Genesis{
+		Config: params.TestChainConfig,
+		Alloc: types.GenesisAlloc{
+			accounts[0].addr: {Balance: big.NewInt(params.Ether)},
+			spinner:          {Code: []byte{0x5b, 0x60, 0x00, 0x56}, Balance: big.NewInt(0)}, // JUMPDEST PUSH1 0 JUMP
+		},
+	}
+	backend := newTestBackend(t, 1, genesis, func(i int, b *core.BlockGen) {})
+	api := NewAPI(backend)
+
+	gas := hexutil.Uint64(50_000_000)
+	timeout := "50ms"
+	res, err := api.TraceCall(context.Background(),
+		ethapi.TransactionArgs{From: &accounts[0].addr, To: &spinner, Gas: &gas},
+		rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber),
+		&TraceCallConfig{TraceConfig: TraceConfig{Timeout: &timeout}},
+	)
+	// Prior behaviour: the tracer is Stopped with "execution timeout", so GetResult
+	// surfaces that. The fix keeps this; without it the request would instead fail
+	// with "tracing failed: evm execution cancelled".
+	if err == nil {
+		t.Fatalf("expected a timeout error, got result: %v", res)
+	}
+	if strings.Contains(err.Error(), "evm execution cancelled") {
+		t.Fatalf("trace timeout leaked the internal cancel sentinel: %v", err)
+	}
+	if !strings.Contains(err.Error(), "execution timeout") {
+		t.Fatalf("want the prior 'execution timeout' error, got: %v", err)
 	}
 }
