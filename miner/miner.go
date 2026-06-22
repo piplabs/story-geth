@@ -87,7 +87,7 @@ type Miner struct {
 	chain       *core.BlockChain
 	pending     *pending
 	pendingMu   sync.Mutex // Lock protects the pending block
-	ejected     *ejectedTxSet
+	slowSenders *txpool.SlowSenders
 }
 
 // New creates a new miner with provided config.
@@ -113,7 +113,7 @@ func New(eth Backend, config Config, engine consensus.Engine) *Miner {
 		txpool:      eth.TxPool(),
 		chain:       eth.BlockChain(),
 		pending:     &pending{},
-		ejected:     newEjectedTxSet(),
+		slowSenders: eth.TxPool().SlowSenders(),
 	}
 }
 

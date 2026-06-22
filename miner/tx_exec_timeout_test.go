@@ -214,8 +214,8 @@ func TestMinerWatchdogSkipsReEjectedTx(t *testing.T) {
 	if d1 < budget/2 {
 		t.Fatalf("first build %v too fast; spinner should have run ~budget %v before ejection", d1, budget)
 	}
-	if !w.ejected.has(spinner.Hash()) {
-		t.Fatal("spinner not recorded in skip-set after ejection")
+	if !w.slowSenders.Has(attackerAddr) {
+		t.Fatal("spinner sender not recorded in skip-set after ejection")
 	}
 	// Second build must skip the spinner entirely (no re-run of the budget).
 	d2, _ := build()
@@ -223,6 +223,75 @@ func TestMinerWatchdogSkipsReEjectedTx(t *testing.T) {
 		t.Fatalf("second build %v ~ budget: spinner was re-run, not skipped", d2)
 	}
 	t.Logf("build1=%v (ran+ejected) build2=%v (skipped)", d1, d2)
+}
+
+// TestMinerWatchdogDenylistsSenderNotTarget pins the censorship-safe key: when two
+// distinct senders call the same heavy contract, each is detected and denylisted
+// independently (the shared recipient is never added), so blocking one sender can
+// never censor a contract that other users legitimately call.
+func TestMinerWatchdogDenylistsSenderNotTarget(t *testing.T) {
+	loopCode := []byte{0x5b, 0x60, 0x00, 0x56} // JUMPDEST PUSH1 0 JUMP
+	loopAddr := common.HexToAddress("0x000000000000000000000000000000000000c0de")
+	attackerKey1, _ := crypto.GenerateKey()
+	attackerKey2, _ := crypto.GenerateKey()
+	attacker1 := crypto.PubkeyToAddress(attackerKey1.PublicKey)
+	attacker2 := crypto.PubkeyToAddress(attackerKey2.PublicKey)
+
+	chainConfig := new(params.ChainConfig)
+	*chainConfig = *params.TestChainConfig
+	const blockGas = uint64(5_000_000_000)
+	hugeFunds := new(big.Int).Mul(big.NewInt(params.Ether), big.NewInt(1_000_000))
+
+	gspec := &core.Genesis{Config: chainConfig, GasLimit: blockGas, Alloc: types.GenesisAlloc{
+		testBankAddress: {Balance: hugeFunds},
+		attacker1:       {Balance: hugeFunds},
+		attacker2:       {Balance: hugeFunds},
+		loopAddr:        {Code: loopCode, Balance: common.Big0},
+	}}
+	db := rawdb.NewMemoryDatabase()
+	engine := ethash.NewFaker()
+	chain, err := core.NewBlockChain(db, gspec, engine, &core.BlockChainConfig{ArchiveMode: true})
+	if err != nil {
+		t.Fatalf("create chain: %v", err)
+	}
+	defer chain.Stop()
+	pool := legacypool.New(testTxPoolConfig, chain)
+	pl, err := txpool.New(testTxPoolConfig.PriceLimit, chain, []txpool.SubPool{pool})
+	if err != nil {
+		t.Fatalf("txpool: %v", err)
+	}
+	defer pl.Close()
+	backend := &testWorkerBackend{db: db, chain: chain, txPool: pl, genesis: gspec}
+
+	w := New(backend, Config{PendingFeeRecipient: testBankAddress, Recommit: 2 * time.Second, GasCeil: blockGas, GasPrice: big.NewInt(0), TxExecTimeout: 200 * time.Millisecond}, engine)
+
+	signer := types.LatestSigner(chainConfig)
+	staller1 := types.MustSignNewTx(attackerKey1, signer, &types.LegacyTx{Nonce: 0, To: &loopAddr, Gas: blockGas, GasPrice: big.NewInt(4 * params.InitialBaseFee)})
+	staller2 := types.MustSignNewTx(attackerKey2, signer, &types.LegacyTx{Nonce: 0, To: &loopAddr, Gas: blockGas, GasPrice: big.NewInt(3 * params.InitialBaseFee)})
+	transfer := types.MustSignNewTx(testBankKey, signer, &types.LegacyTx{Nonce: 0, To: &testUserAddress, Value: big.NewInt(1000), Gas: params.TxGas, GasPrice: big.NewInt(2 * params.InitialBaseFee)})
+	for _, e := range backend.txPool.Add([]*types.Transaction{staller1, staller2, transfer}, true) {
+		if e != nil {
+			t.Fatalf("txpool add: %v", e)
+		}
+	}
+
+	genParams := &generateParams{timestamp: uint64(time.Now().Unix()), forceTime: true, coinbase: testBankAddress, noTxs: false}
+	r := w.generateWork(genParams, false)
+	if r.err != nil {
+		t.Fatalf("generateWork: %v", r.err)
+	}
+	txs := r.block.Transactions()
+	if len(txs) != 1 || txs[0].Hash() != transfer.Hash() {
+		t.Fatalf("want only the transfer included, got %d txs", len(txs))
+	}
+	// Both senders are detected independently; neither collapses the other.
+	if !w.slowSenders.Has(attacker1) || !w.slowSenders.Has(attacker2) {
+		t.Fatalf("both senders must be denylisted independently: a1=%v a2=%v", w.slowSenders.Has(attacker1), w.slowSenders.Has(attacker2))
+	}
+	// The shared recipient is never denylisted - that is what keeps it censorship-safe.
+	if w.slowSenders.Has(loopAddr) {
+		t.Fatal("recipient contract must never be denylisted (would censor its other users)")
+	}
 }
 
 // TestMinerTxExecTimeoutClamp checks New() clamps a misconfigured per-tx budget

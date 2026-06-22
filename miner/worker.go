@@ -45,46 +45,6 @@ var (
 	errTxExecTimeout              = errors.New("transaction exceeded per-tx execution budget")
 )
 
-// txExecSkipTTL is how long a watchdog-ejected transaction is skipped before the
-// builder will attempt it again. The transaction stays in the pool meanwhile.
-const txExecSkipTTL = 5 * time.Minute
-
-// ejectedTxSet remembers transactions the build-time watchdog ejected for
-// exceeding the per-tx execution budget, so the builder skips re-running the
-// same heavy transaction on every slot instead of burning the budget each time.
-type ejectedTxSet struct {
-	mu sync.Mutex
-	m  map[common.Hash]time.Time
-}
-
-func newEjectedTxSet() *ejectedTxSet { return &ejectedTxSet{m: make(map[common.Hash]time.Time)} }
-
-func (s *ejectedTxSet) add(h common.Hash) {
-	now := time.Now()
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	for k, exp := range s.m {
-		if now.After(exp) {
-			delete(s.m, k)
-		}
-	}
-	s.m[h] = now.Add(txExecSkipTTL)
-}
-
-func (s *ejectedTxSet) has(h common.Hash) bool {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	exp, ok := s.m[h]
-	if !ok {
-		return false
-	}
-	if time.Now().After(exp) {
-		delete(s.m, h)
-		return false
-	}
-	return true
-}
-
 // environment is the worker's current environment and holds all
 // information of the sealing block generation.
 type environment struct {
@@ -400,9 +360,8 @@ func (miner *Miner) applyTransaction(env *environment, tx *types.Transaction) (*
 		}()
 	}
 	var (
-		snap    = env.state.Snapshot()
-		gp      = env.gasPool.Gas()
-		gasUsed = env.header.GasUsed
+		snap = env.state.Snapshot()
+		gp   = env.gasPool.Gas()
 	)
 	receipt, err := core.ApplyTransaction(env.evm, env.gasPool, env.state, env.header, tx, &env.header.GasUsed)
 	// The watchdog makes ApplyTransaction bail out before finalising, so the
@@ -411,9 +370,11 @@ func (miner *Miner) applyTransaction(env *environment, tx *types.Transaction) (*
 		err = errTxExecTimeout
 	}
 	if err != nil {
+		// On any error ApplyTransactionWithEVM returns before it bumps header.GasUsed
+		// (the cancel check sits ahead of the *usedGas update), so only the state
+		// snapshot and gas pool need reverting here.
 		env.state.RevertToSnapshot(snap)
 		env.gasPool.SetGas(gp)
-		env.header.GasUsed = gasUsed
 	}
 	return receipt, err
 }
@@ -468,12 +429,6 @@ func (miner *Miner) commitTransactions(env *environment, plainTxs, blobTxs *tran
 		if ltx == nil {
 			break
 		}
-		// Skip transactions the watchdog recently ejected so a single heavy tx
-		// doesn't burn the build budget again every slot while it sits in the pool.
-		if miner.ejected.has(ltx.Hash) {
-			txs.Pop()
-			continue
-		}
 		// If we don't have enough space for the next transaction, skip the account.
 		if env.gasPool.Gas() < ltx.Gas {
 			log.Trace("Not enough gas left for transaction", "hash", ltx.Hash, "left", env.gasPool.Gas(), "needed", ltx.Gas)
@@ -500,7 +455,6 @@ func (miner *Miner) commitTransactions(env *environment, plainTxs, blobTxs *tran
 			txs.Pop()
 			continue
 		}
-
 		// if inclusion of the transaction would put the block size over the
 		// maximum we allow, don't add any more txs to the payload.
 		if !env.txFitsSize(tx) {
@@ -509,6 +463,14 @@ func (miner *Miner) commitTransactions(env *environment, plainTxs, blobTxs *tran
 		// Error may be ignored here. The error has already been checked
 		// during transaction acceptance in the transaction pool.
 		from, _ := types.Sender(env.signer, tx)
+
+		// Skip a sender the watchdog recently ejected; the pool also rejects and
+		// evicts these, so this is defense-in-depth against a race where one slips
+		// into the build snapshot before eviction runs.
+		if miner.slowSenders != nil && miner.slowSenders.Has(from) {
+			txs.Pop()
+			continue
+		}
 
 		// Check whether the tx is replay protected. If we're not in the EIP155 hf
 		// phase, start ignoring the sender until we do.
@@ -532,9 +494,12 @@ func (miner *Miner) commitTransactions(env *environment, plainTxs, blobTxs *tran
 			txs.Shift()
 
 		case errors.Is(err, errTxExecTimeout):
-			// Tx ran past the per-tx execution budget; drop the sender's run and
-			// remember it so later builds skip it instead of re-burning the budget.
-			miner.ejected.add(ltx.Hash)
+			// Denylist the sender so the pool evicts and rejects its further txs;
+			// keyed on the signer, this only throttles the address that sent the slow
+			// call, never a shared recipient contract.
+			if miner.slowSenders != nil {
+				miner.slowSenders.Add(from)
+			}
 			log.Warn("Ejected transaction exceeding per-tx execution budget",
 				"hash", ltx.Hash, "sender", from, "to", tx.To(), "gas", tx.Gas(), "budget", miner.config.TxExecTimeout)
 			txs.Pop()

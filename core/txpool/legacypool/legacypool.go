@@ -102,6 +102,7 @@ var (
 	underpricedTxMeter = metrics.NewRegisteredMeter("txpool/underpriced", nil)
 	overflowedTxMeter  = metrics.NewRegisteredMeter("txpool/overflowed", nil)
 	filteredTxMeter    = metrics.NewRegisteredMeter("txpool/filtered", nil)
+	slowSenderTxMeter  = metrics.NewRegisteredMeter("txpool/slowsender", nil)
 
 	// throttleTxMeter counts how many transactions are rejected due to too-many-changes between
 	// txpool reorgs.
@@ -253,7 +254,13 @@ type LegacyPool struct {
 	initDoneCh      chan struct{}  // is closed once the pool is initialized (for tests)
 
 	changesSinceReorg int // A counter for how many drops we've performed in-between reorg.
+
+	slowSenders *txpool.SlowSenders // Senders ejected by the build watchdog; rejected at ingress and evicted from the pool
 }
+
+// slowSenderTTL is how long a sender stays denylisted after the build watchdog
+// ejects one of its transactions, before it is re-evaluated.
+const slowSenderTTL = 5 * time.Minute
 
 type txpoolResetRequest struct {
 	oldHead, newHead *types.Header
@@ -283,8 +290,35 @@ func New(config Config, chain BlockChain) *LegacyPool {
 		initDoneCh:      make(chan struct{}),
 	}
 	pool.priced = newPricedList(pool.all)
+	pool.slowSenders = txpool.NewSlowSenders(slowSenderTTL)
+	pool.slowSenders.SetEvictHook(pool.dropTxsBySender)
 
 	return pool
+}
+
+// SlowSenders exposes the slow-sender denylist so the miner can add a sender the
+// build watchdog ejected; adding one also evicts that sender's pooled transactions.
+func (pool *LegacyPool) SlowSenders() *txpool.SlowSenders { return pool.slowSenders }
+
+// dropTxsBySender removes every pooled transaction from addr, so a sender flooding
+// the pool with calls the watchdog ejects stops occupying slots once denylisted.
+// Runs under pool.mu via the SlowSenders evict hook.
+func (pool *LegacyPool) dropTxsBySender(addr common.Address) {
+	pool.mu.Lock()
+	defer pool.mu.Unlock()
+
+	var victims []common.Hash
+	if list := pool.pending[addr]; list != nil {
+		for _, tx := range list.Flatten() {
+			victims = append(victims, tx.Hash())
+		}
+	}
+	for _, tx := range pool.queue.contentFrom(addr) {
+		victims = append(victims, tx.Hash())
+	}
+	for _, hash := range victims {
+		pool.removeTx(hash, true, true)
+	}
 }
 
 // Filter returns whether the given transaction can be consumed by the legacy
@@ -674,6 +708,16 @@ func (pool *LegacyPool) add(tx *types.Transaction) (replaced bool, err error) {
 		if instance.CheckTransaction(pool.signer, tx) {
 			filteredTxMeter.Mark(1)
 			return false, txpool.ErrFilteredByGuardian
+		}
+	}
+	// Reject a sender the build watchdog recently ejected for exceeding the per-tx
+	// execution budget, so its flood cannot occupy pool slots that legitimate
+	// transactions need. Keyed on the signer, so only addresses the attacker controls
+	// are throttled - never a shared recipient contract.
+	if pool.slowSenders != nil {
+		if from, err := types.Sender(pool.signer, tx); err == nil && pool.slowSenders.Has(from) {
+			slowSenderTxMeter.Mark(1)
+			return false, txpool.ErrSlowSender
 		}
 	}
 	// If the transaction fails basic validation, discard it

@@ -476,6 +476,19 @@ func (p *TxPool) Sync() error {
 	}
 }
 
+// SlowSenders returns the slow-sender denylist of the first subpool that keeps one
+// (the legacy pool), or nil if none does.
+func (p *TxPool) SlowSenders() *SlowSenders {
+	for _, subpool := range p.subpools {
+		if st, ok := subpool.(interface{ SlowSenders() *SlowSenders }); ok {
+			if t := st.SlowSenders(); t != nil {
+				return t
+			}
+		}
+	}
+	return nil
+}
+
 // Clear removes all tracked txs from the subpools.
 //
 // Note, this method invokes Sync() and is only used for testing, because it is

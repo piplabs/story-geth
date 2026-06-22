@@ -74,6 +74,10 @@ var (
 	// ErrNotInWhitelist is returned if the transaction sender is not in the whitelist
 	ErrNotInWhitelist = errors.New("not in whitelist")
 
+	// ErrSlowSender is returned if the transaction's sender is temporarily
+	// denylisted for exceeding the per-tx execution budget during block building.
+	ErrSlowSender = errors.New("sender temporarily denylisted for exceeding execution budget")
+
 	// ErrInflightTxLimitReached is returned when the maximum number of in-flight
 	// transactions is reached for specific accounts.
 	ErrInflightTxLimitReached = errors.New("in-flight transaction limit reached for delegated accounts")
